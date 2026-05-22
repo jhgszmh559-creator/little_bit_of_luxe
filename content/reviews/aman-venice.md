@@ -1,19 +1,19 @@
 ---
 title: "Aman Venice: Palazzo Elegance Refined"
 excerpt: "Overlooking the Grand Canal, Aman Venice seamlessly blends museum-quality Renaissance frescoes with contemporary minimalist elegance, offering an unparalleled Venetian retreat."
-hotel_name: "Aman Venice"
+date: "2026-05-22"
+category: "Hotel Review"
+draft: false
+hotelName: "Aman Venice"
 brand: "Aman"
 location: "San Polo, Venice, Italy"
 rating: 9.8
-room_type: "Alcova Palazzo Chamber"
-youtube_id: "dQw4w9WgXcQ"
-show_qx_perks: true
-meta_title: "Aman Venice Review | Little bit of LUXE"
-meta_description: "An in-depth review of Aman Venice, exploring its Renaissance frescoes, canal views, and the signature Aman service."
-og_image: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=1200&q=80"
-date: "2026-05-22"
-draft: false
-category: "Hotel Review"
+roomType: "Alcova Palazzo Chamber"
+youtubeId: "dQw4w9WgXcQ"
+showQxPerks: true
+metaTitle: ""
+metaDescription: ""
+ogImage: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=1200&q=80"
 ---
 
 # Aman Venice: Palazzo Elegance Refined
@@ -24,7 +24,7 @@ The palazzo itself is a work of art, featuring soaring ceilings, gilded mirrors,
 
 ### The Historic Accommodations
 
-Each room and suite is unique, configured around the palazzo's original layout. The Alcova Palazzo Chamber is particularly noteworthy, featuring a ceiling painted by Tiepolo, a carved fireplace, and views over the canal. The integration of modern technology and luxury amenities is handled with signature Aman subtlety, ensuring nothing detracts from the historic character of the room.
+<span style="color: rgb(107, 31, 42)">Each room and suite is unique, configured around the palazzo's original layout.</span> The Alcova Palazzo Chamber is particularly noteworthy, featuring a ceiling painted by Tiepolo, a carved fireplace, and views over the canal. The integration of modern technology and luxury amenities is handled with signature Aman subtlety, ensuring nothing detracts from the historic character of the room.
 
 The gardens, a rarity in Venice, offer a tranquil green sanctuary on the Grand Canal, providing the perfect setting for an unhurried breakfast or a sunset cocktail. The service is intuitive and warm, operating with the effortless grace that is the hallmark of the Aman brand.
 
