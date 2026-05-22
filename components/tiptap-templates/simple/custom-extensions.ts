@@ -91,7 +91,7 @@ export const GlobalAttributes = Extension.create({
 export const DivNode = TiptapNode.create({
   name: 'divNode',
   group: 'block',
-  content: '(block | inline | text)*',
+  content: 'block*',
   defining: true,
   parseHTML() {
     return [{ tag: 'div' }];
@@ -104,7 +104,7 @@ export const DivNode = TiptapNode.create({
 export const FigureNode = TiptapNode.create({
   name: 'figureNode',
   group: 'block',
-  content: '(block | inline | text)*',
+  content: 'inline*',
   defining: true,
   parseHTML() {
     return [{ tag: 'figure' }];
@@ -116,7 +116,8 @@ export const FigureNode = TiptapNode.create({
 
 export const FigcaptionNode = TiptapNode.create({
   name: 'figcaptionNode',
-  group: 'block',
+  group: 'inline',
+  inline: true,
   content: 'inline*',
   defining: true,
   parseHTML() {
