@@ -1,6 +1,16 @@
 ---
 title: "The Quiet * **Alchemy** * of Amanvari Baja"
 excerpt: " *An elemental symphony composed in Baja's embrace, awaiting its first, hushed notes.* "
+date: "2026-05-22"
+category: "Hotel Review"
+draft: true
+status: "draft"
+sources:
+  - "https://www.travelweekly.com/Travel-News/Hotel-News/Amanvari-resort-to-open-in-spring-2026"
+  - "https://www.hotelmanagement.net/development/aman-open-mexican-resort-spring"
+  - "https://costapalmas.com/resorts/aman/"
+  - "https://www.aman.com/resorts/amanvari"
+  - "https://www.aman.com/new-developments"
 hotelName: "Amanvari"
 brand: "Aman"
 location: "Baja's East Cape, Mexico"
@@ -8,13 +18,11 @@ rating: 9.2
 roomType: "Casita"
 youtubeId: ""
 showQxPerks: true
-date: "2026-05-22"
-category: "Hotel Review"
-draft: true
-status: "draft"
-sources: ["https://www.travelweekly.com/Travel-News/Hotel-News/Amanvari-resort-to-open-in-spring-2026","https://www.hotelmanagement.net/development/aman-open-mexican-resort-spring","https://costapalmas.com/resorts/aman/","https://www.aman.com/resorts/amanvari","https://www.aman.com/new-developments"]
+metaTitle: ""
+metaDescription: ""
 ogImage: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
 ---
+
 On Baja's East Cape, where the Sonoran Desert yields to the Sea of Cortez, a new narrative of profound tranquility is poised to unfold. Amanvari, a name derived from the Sanskrit for 'peace' and 'water', embodies this duality with an inherent grace, promising a sanctuary where the raw beauty of Mexico's shifting landscapes—desert, estuary, and ocean—converges in elemental harmony. This is not merely a resort, but a meticulously crafted experience, a testament to Aman's enduring philosophy of privacy, exquisite design, and an unparalleled sense of place. Here, the very air seems to hum with an ancient wisdom, inviting a deep connection to the earth and sea, a quietude that resonates long after departure. The anticipation for its 2026 debut is palpable among those who seek luxury not in ostentation, but in the purity of experience and the seamless integration with nature.
 
 The architecture of Amanvari speaks a language of understated elegance, each of its secluded Casitas designed as a private world, a hushed retreat from the everyday. Crafted with a reverence for local materials and traditions, the structures emerge from the landscape rather than imposing upon it, their lines clean, their forms organic. Tactile textures—polished stone, warm timber, woven natural fibers—invite touch, grounding guests in their surroundings. Expansive windows frame breathtaking vistas, blurring the boundaries between interior comfort and the wild beauty outside, allowing the desert light and ocean breeze to become integral elements of the living space. This thoughtful design extends to every detail, from the placement of a private plunge pool to the subtle interplay of shadow and light across a sun-drenched terrace, ensuring that every moment spent within these walls is one of serene contemplation and absolute comfort.
