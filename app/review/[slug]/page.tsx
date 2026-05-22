@@ -206,7 +206,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
                 />
 
                 {/* QX Preferred Partner Perks CTA */}
-                {review.showQxPerks && (
+                {review.showQxPerks && !review.content.includes('article-cta-box') && (
                   <div className="article-cta-box">
                     <p className="lbl-eyebrow mb-2 text-sand/70">The Preferred Privilege</p>
                     <h3 className="lbl-h3 mb-4">Book {review.hotelName} with Perks</h3>
@@ -225,31 +225,33 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
                 )}
 
                 {/* The Verdict Box (Detailed) */}
-                <aside className="verdict">
-                  <div>
-                    <div className="verdict__eyebrow">The Verdict</div>
-                    <div 
-                      className="verdict__head" 
-                      dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(`A considered residency *inspected*`) }}
-                    />
-                    <dl className="verdict__rows">
-                      <dt className="k">Hotel</dt>
-                      <dd style={{ margin: 0 }}>{review.hotelName}</dd>
-                      
-                      <dt className="k">Tested Room</dt>
-                      <dd style={{ margin: 0 }}>{review.roomType || 'Standard Room'}</dd>
-                      
-                      <dt className="k">Key Highlight</dt>
-                      <dd style={{ margin: 0 }}>Exceptional architecture and local integration</dd>
-                    </dl>
-                  </div>
-                  <div className="verdict__score">
-                    <div className="verdict__num">
-                      {whole}.<em>{decimal || '0'}</em>
+                {!review.content.includes('class="verdict"') && !review.content.includes('<aside') && (
+                  <aside className="verdict">
+                    <div>
+                      <div className="verdict__eyebrow">The Verdict</div>
+                      <div 
+                        className="verdict__head" 
+                        dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(`A considered residency *inspected*`) }}
+                      />
+                      <dl className="verdict__rows">
+                        <dt className="k">Hotel</dt>
+                        <dd style={{ margin: 0 }}>{review.hotelName}</dd>
+                        
+                        <dt className="k">Tested Room</dt>
+                        <dd style={{ margin: 0 }}>{review.roomType || 'Standard Room'}</dd>
+                        
+                        <dt className="k">Key Highlight</dt>
+                        <dd style={{ margin: 0 }}>Exceptional architecture and local integration</dd>
+                      </dl>
                     </div>
-                    <div className="verdict__den">/ 10</div>
-                  </div>
-                </aside>
+                    <div className="verdict__score">
+                      <div className="verdict__num">
+                        {whole}.<em>{decimal || '0'}</em>
+                      </div>
+                      <div className="verdict__den">/ 10</div>
+                    </div>
+                  </aside>
+                )}
               </section>
             </div>
           </div>

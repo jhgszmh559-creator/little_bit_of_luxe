@@ -66,7 +66,7 @@ function nodeToMarkdown(node: Node): string {
     const tagName = element.tagName.toLowerCase();
     
     // Check if it's a specific custom block we preserve as raw HTML
-    const isCustomBlock = tagName === 'div' || tagName === 'figure' || tagName === 'figcaption' || tagName === 'iframe' || tagName === 'video';
+    const isCustomBlock = tagName === 'div' || tagName === 'figure' || tagName === 'figcaption' || tagName === 'iframe' || tagName === 'video' || tagName === 'aside' || tagName === 'dl' || tagName === 'dt' || tagName === 'dd';
     
     if (isCustomBlock) {
       let html = element.outerHTML.trim();
@@ -513,6 +513,35 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
     }
   };
 
+  const handleInsertVerdict = () => {
+    const scoreStr = (Number(rating) || 9.0).toFixed(1);
+    const [whole, decimal] = scoreStr.split('.');
+    const html = `<aside class="verdict"><div><div class="verdict__eyebrow">The Verdict</div><div class="verdict__head">A considered residency <em>inspected</em></div><dl class="verdict__rows"><dt class="k">Hotel</dt><dd style="margin: 0;">${hotelName || '[Hotel Name]'}</dd><dt class="k">Tested Room</dt><dd style="margin: 0;">${roomType || '[Tested Room Type]'}</dd><dt class="k">Key Highlight</dt><dd style="margin: 0;">Exceptional architecture and local integration</dd></dl></div><div class="verdict__score"><div class="verdict__num">${whole}.<em>${decimal || '0'}</em></div><div class="verdict__den">/ 10</div></div></aside>`;
+    if (editorInstanceRef.current) {
+      editorInstanceRef.current.commands.insertContent(html);
+    } else {
+      setContent((prev: string) => prev + '\n\n' + html);
+    }
+  };
+
+  const handleInsertQxPerks = () => {
+    const html = `<div class="article-cta-box"><p class="lbl-eyebrow mb-2 text-sand/70">The Preferred Privilege</p><h3 class="lbl-h3 mb-4">Book ${hotelName || '[Hotel Name]'} with Perks</h3><p class="lbl-body mb-6">Through our preferred partnerships, we unlock daily breakfast, priority upgrades, and property credits for standard direct bookings.</p><a href="https://www.qxtravel.io/search-hotels" target="_blank" rel="noopener noreferrer" class="btn-subscribe">Book with Perks <span class="btn-subscribe__arrow">→</span></a></div>`;
+    if (editorInstanceRef.current) {
+      editorInstanceRef.current.commands.insertContent(html);
+    } else {
+      setContent((prev: string) => prev + '\n\n' + html);
+    }
+  };
+
+  const handleInsertTldr = () => {
+    const html = `<div class="tldr-box"><h4 class="tldr-box__title">The TL;DR</h4><ul class="tldr-box__list"><li>[Key takeaway point one]</li><li>[Key takeaway point two]</li><li>[Key takeaway point three]</li></ul></div>`;
+    if (editorInstanceRef.current) {
+      editorInstanceRef.current.commands.insertContent(html);
+    } else {
+      setContent((prev: string) => prev + '\n\n' + html);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-paper flex flex-col font-sans text-ink transition-colors selection:bg-sand selection:text-midnight">
       
@@ -687,6 +716,9 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                         setContent((prev: string) => prev + '\n\n' + html);
                       }
                     }}
+                    onInsertVerdict={handleInsertVerdict}
+                    onInsertQxPerks={handleInsertQxPerks}
+                    onInsertTldr={handleInsertTldr}
                   />
                 </div>
               </div>
@@ -839,7 +871,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   )}
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
                   <span className="text-ink-2 font-medium">Internal Links Present</span>
                   {internalLinksPresent() ? (
                     <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
@@ -847,6 +879,38 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                     <span className="text-bordeaux font-medium">— No</span>
                   )}
                 </div>
+
+                {currentType === 'review' && (
+                  <>
+                    <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                      <span className="text-ink-2 font-medium">Verdict Box Embedded</span>
+                      {content.includes('class="verdict"') || content.includes('<aside') ? (
+                        <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                      ) : (
+                        <span className="text-bordeaux font-medium">— Missing</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-ink-2 font-medium">Preferred Privilege CTA Embedded</span>
+                      {content.includes('class="article-cta-box"') ? (
+                        <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                      ) : (
+                        <span className="text-bordeaux font-medium">— Missing</span>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {currentType === 'news' && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-ink-2 font-medium">TL;DR Box Embedded</span>
+                    {content.includes('class="tldr-box"') ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">— Missing</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* GEO & Manual SEO Toggles */}

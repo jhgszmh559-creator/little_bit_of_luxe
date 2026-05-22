@@ -14,7 +14,7 @@ export function parseMarkdown(md: string): string {
   let inHtmlBlock = false;
   let htmlBlockStack: string[] = [];
 
-  const blockTags = new Set(['div', 'a', 'table', 'figure', 'iframe', 'video', 'blockquote', 'section', 'p']);
+  const blockTags = new Set(['div', 'a', 'table', 'figure', 'iframe', 'video', 'blockquote', 'section', 'p', 'aside', 'dl', 'dt', 'dd']);
 
   const flushParagraph = () => {
     if (currentBlock.length > 0) {

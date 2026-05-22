@@ -55,7 +55,11 @@ export const GlobalAttributes = Extension.create({
           'figureNode',
           'figcaptionNode',
           'iframeNode',
-          'videoNode'
+          'videoNode',
+          'asideNode',
+          'dlNode',
+          'dtNode',
+          'ddNode'
         ],
         attributes: {
           class: {
@@ -236,5 +240,57 @@ export const VideoNode = TiptapNode.create({
   },
   renderHTML({ HTMLAttributes }) {
     return ['video', mergeAttributes(HTMLAttributes)];
+  },
+});
+
+export const AsideNode = TiptapNode.create({
+  name: 'asideNode',
+  group: 'block',
+  content: 'block*',
+  defining: true,
+  parseHTML() {
+    return [{ tag: 'aside' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['aside', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+export const DlNode = TiptapNode.create({
+  name: 'dlNode',
+  group: 'block',
+  content: 'block*',
+  defining: true,
+  parseHTML() {
+    return [{ tag: 'dl' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['dl', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+export const DtNode = TiptapNode.create({
+  name: 'dtNode',
+  group: 'block',
+  content: 'inline*',
+  defining: true,
+  parseHTML() {
+    return [{ tag: 'dt' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['dt', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+export const DdNode = TiptapNode.create({
+  name: 'ddNode',
+  group: 'block',
+  content: 'inline*',
+  defining: true,
+  parseHTML() {
+    return [{ tag: 'dd' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['dd', mergeAttributes(HTMLAttributes), 0];
   },
 });
