@@ -25,13 +25,7 @@ metaDescription: ""
 ogImage: "https://assets.hyatt.com/content/dam/hyatt/hyattdam/images/2024/10/07/0430/LISAZ-P0007-Lift-Landing.jpg/LISAZ-P0007-Lift-Landing.16x9.jpg?imwidth=2560"
 ---
 
-# *
-
-<figure class="my-8">
-  <figcaption class="lbl-caption mt-2">Andaz Lisbon exterior — Editor</figcaption>
-</figure>
-
-The quiet rebirth of a historic **Lisbon** icon*
+The quiet rebirth of a historic **Lisbon** icon
 
 *Where the Atlantic breeze meets the ancient stone of Baixa, a new sanctuary of understated Portuguese modernism unfolds.*
 
@@ -44,9 +38,9 @@ In the residential-style suites, this commitment to local materiality translates
 <div class="my-12 p-8 bg-midnight text-sand border-none">
   <p class="lbl-eyebrow mb-2 text-sand/70">The Preferred Privilege</p>
   <h3 class="lbl-h3 text-sand mb-4">Book Andaz Lisbon with Perks</h3>
-  <p class="lbl-body text-sand/85 mb-6">
+  <p class="lbl-body text-sand/85 mb-6"><span style="color: rgb(250, 248, 242);">
     Through our preferred partnership, we unlock daily breakfast, priority upgrades, and property credits — matching the best flexible rates available directly, with all your standard loyalty nights and points fully recognized.
-  </p>
+  </span></p>
   <a href="https://www.qxtravel.io/search-hotels" target="_blank" rel="noopener noreferrer" class="btn--subscribe">
     Book with Perks <span class="arrow">→</span>
   </a>
