@@ -73,7 +73,7 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss"
 
-import { DivNode, FigureNode, FigcaptionNode, FontSize, GlobalAttributes } from "./custom-extensions"
+import { DivNode, FigureNode, FigcaptionNode, FontSize, GlobalAttributes, IframeNode, VideoNode } from "./custom-extensions"
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -86,7 +86,6 @@ const MainToolbarContent = ({
 }) => {
   return (
     <>
-      <Spacer />
 
       <ToolbarGroup>
         <UndoRedoButton action="undo" />
@@ -183,7 +182,15 @@ const MobileToolbarContent = ({
   </>
 )
 
-export function SimpleEditor({ content, onUpdate }: { content: string, onUpdate: (html: string) => void }) {
+export function SimpleEditor({ 
+  content, 
+  onUpdate, 
+  onEditorReady 
+}: { 
+  content: string
+  onUpdate: (html: string) => void
+  onEditorReady?: (editor: any) => void
+}) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
@@ -199,7 +206,7 @@ export function SimpleEditor({ content, onUpdate }: { content: string, onUpdate:
         autocorrect: "off",
         autocapitalize: "off",
         "aria-label": "Main content area, start typing to enter text.",
-        class: "simple-editor",
+        class: "simple-editor prose max-w-none",
       },
     },
     extensions: [
@@ -232,12 +239,20 @@ export function SimpleEditor({ content, onUpdate }: { content: string, onUpdate:
       FigcaptionNode,
       FontSize,
       GlobalAttributes,
+      IframeNode,
+      VideoNode,
     ],
     content,
     onUpdate: ({ editor }) => {
       onUpdate(editor.getHTML())
     },
   })
+
+  useEffect(() => {
+    if (editor && onEditorReady) {
+      onEditorReady(editor)
+    }
+  }, [editor, onEditorReady])
 
   const rect = useCursorVisibility({
     editor,

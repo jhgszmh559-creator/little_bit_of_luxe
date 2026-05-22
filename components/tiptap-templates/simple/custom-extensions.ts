@@ -46,7 +46,17 @@ export const GlobalAttributes = Extension.create({
   addGlobalAttributes() {
     return [
       {
-        types: ['paragraph', 'heading', 'textStyle', 'image', 'divNode', 'figureNode', 'figcaptionNode'],
+        types: [
+          'paragraph',
+          'heading',
+          'textStyle',
+          'image',
+          'divNode',
+          'figureNode',
+          'figcaptionNode',
+          'iframeNode',
+          'videoNode'
+        ],
         attributes: {
           class: {
             default: null,
@@ -81,7 +91,7 @@ export const GlobalAttributes = Extension.create({
 export const DivNode = TiptapNode.create({
   name: 'divNode',
   group: 'block',
-  content: 'block+',
+  content: '(block | inline | text)*',
   defining: true,
   parseHTML() {
     return [{ tag: 'div' }];
@@ -94,7 +104,7 @@ export const DivNode = TiptapNode.create({
 export const FigureNode = TiptapNode.create({
   name: 'figureNode',
   group: 'block',
-  content: 'block+',
+  content: '(block | inline | text)*',
   defining: true,
   parseHTML() {
     return [{ tag: 'figure' }];
@@ -114,5 +124,116 @@ export const FigcaptionNode = TiptapNode.create({
   },
   renderHTML({ HTMLAttributes }) {
     return ['figcaption', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+export const IframeNode = TiptapNode.create({
+  name: 'iframeNode',
+  group: 'block',
+  selectable: true,
+  draggable: true,
+  atom: true,
+  addAttributes() {
+    return {
+      src: {
+        default: null,
+      },
+      allow: {
+        default: null,
+      },
+      allowfullscreen: {
+        default: 'true',
+        parseHTML: element => element.hasAttribute('allowfullscreen') ? 'true' : null,
+        renderHTML: attributes => {
+          if (!attributes.allowfullscreen) return {};
+          return { allowfullscreen: 'true' };
+        },
+      },
+      width: {
+        default: null,
+      },
+      height: {
+        default: null,
+      },
+      frameborder: {
+        default: null,
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'iframe' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['iframe', mergeAttributes(HTMLAttributes)];
+  },
+});
+
+export const VideoNode = TiptapNode.create({
+  name: 'videoNode',
+  group: 'block',
+  selectable: true,
+  draggable: true,
+  atom: true,
+  addAttributes() {
+    return {
+      src: {
+        default: null,
+      },
+      controls: {
+        default: 'true',
+        parseHTML: element => element.hasAttribute('controls') ? 'true' : null,
+        renderHTML: attributes => {
+          if (!attributes.controls) return {};
+          return { controls: 'true' };
+        },
+      },
+      autoplay: {
+        default: null,
+        parseHTML: element => element.hasAttribute('autoplay') ? 'true' : null,
+        renderHTML: attributes => {
+          if (!attributes.autoplay) return {};
+          return { autoplay: 'true' };
+        },
+      },
+      loop: {
+        default: null,
+        parseHTML: element => element.hasAttribute('loop') ? 'true' : null,
+        renderHTML: attributes => {
+          if (!attributes.loop) return {};
+          return { loop: 'true' };
+        },
+      },
+      muted: {
+        default: null,
+        parseHTML: element => element.hasAttribute('muted') ? 'true' : null,
+        renderHTML: attributes => {
+          if (!attributes.muted) return {};
+          return { muted: 'true' };
+        },
+      },
+      playsinline: {
+        default: null,
+        parseHTML: element => element.hasAttribute('playsinline') ? 'true' : null,
+        renderHTML: attributes => {
+          if (!attributes.playsinline) return {};
+          return { playsinline: 'true' };
+        },
+      },
+      width: {
+        default: null,
+      },
+      height: {
+        default: null,
+      },
+      poster: {
+        default: null,
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'video' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['video', mergeAttributes(HTMLAttributes)];
   },
 });

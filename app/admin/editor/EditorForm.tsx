@@ -165,6 +165,7 @@ function convertHtmlToMarkdown(html: string): string {
 export default function EditorForm({ type, slug: initialSlug, initialData, allArticles = [] }: EditorFormProps) {
   const router = useRouter();
   const editorRef = useRef<HTMLDivElement>(null);
+  const editorInstanceRef = useRef<any>(null);
   
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -504,8 +505,12 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
 
   const handleInsertLink = (article: ArticleItem) => {
     const relativeUrl = getArticleUrl(article);
-    const linkMd = `[${article.title}](${relativeUrl})`;
-    setContent((prev: string) => prev + '\n\n' + linkMd);
+    const linkHtml = `<a href="${relativeUrl}">${article.title}</a>`;
+    if (editorInstanceRef.current) {
+      editorInstanceRef.current.commands.insertContent(linkHtml);
+    } else {
+      setContent((prev: string) => prev + '\n\n' + `[${article.title}](${relativeUrl})`);
+    }
   };
 
   return (
@@ -674,12 +679,25 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   <button type="button" onClick={() => setVideoOpen(true)} className="text-[10px] uppercase font-bold tracking-wider px-3 py-2 hover:bg-ink/5 text-ink transition-colors border border-transparent whitespace-nowrap">
                     Video
                   </button>
-                  <button type="button" onClick={() => { const html = `\n<div class="gallery gallery-${galleryStyle}">[Gallery Placeholder]</div>\n`; setContent((prev: string) => prev + '\n\n' + html); }} className="text-[10px] uppercase font-bold tracking-wider px-3 py-2 hover:bg-ink/5 text-ink transition-colors border border-transparent whitespace-nowrap">
+                  <button type="button" onClick={() => {
+                    const html = `<div class="gallery gallery-${galleryStyle}">[Gallery Placeholder]</div>`;
+                    if (editorInstanceRef.current) {
+                      editorInstanceRef.current.commands.insertContent(html);
+                    } else {
+                      setContent((prev: string) => prev + '\n\n' + html);
+                    }
+                  }} className="text-[10px] uppercase font-bold tracking-wider px-3 py-2 hover:bg-ink/5 text-ink transition-colors border border-transparent whitespace-nowrap">
                     Gallery Block
                   </button>
                 </div>
                 <div className="bg-transparent relative">
-                  <SimpleEditor content={parseMarkdown(content)} onUpdate={(html) => setContent(convertHtmlToMarkdown(html))} />
+                  <SimpleEditor 
+                    content={parseMarkdown(content)} 
+                    onUpdate={(html) => setContent(convertHtmlToMarkdown(html))} 
+                    onEditorReady={(editor) => {
+                      editorInstanceRef.current = editor;
+                    }}
+                  />
                 </div>
               </div>
 
@@ -954,8 +972,12 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                 type="button" 
                 onClick={() => {
                   if (cloudinaryUrl) {
-                    const imgTag = `\n<figure class="my-8">\n  <img src="${cloudinaryUrl}" alt="${cloudinaryCaption || 'Luxury travel image'}" class="w-full h-auto object-cover" />\n  ${cloudinaryCaption ? `<figcaption class="lbl-caption mt-2">${cloudinaryCaption} — Editor</figcaption>` : ''}\n</figure>\n`;
-                    setContent((prev: string) => prev + '\n\n' + imgTag);
+                    const imgTag = `<figure class="my-8"><img src="${cloudinaryUrl}" alt="${cloudinaryCaption || 'Luxury travel image'}" class="w-full h-auto object-cover" />${cloudinaryCaption ? `<figcaption class="lbl-caption mt-2">${cloudinaryCaption} — Editor</figcaption>` : ''}</figure>`;
+                    if (editorInstanceRef.current) {
+                      editorInstanceRef.current.commands.insertContent(imgTag);
+                    } else {
+                      setContent((prev: string) => prev + '\n\n' + imgTag);
+                    }
                     setCloudinaryUrl('');
                     setCloudinaryCaption('');
                     setCloudinaryOpen(false);
@@ -1015,15 +1037,19 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                     let markup = '';
                     if (ytMatch) {
                       embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
-                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <iframe src="${embedUrl}" class="absolute inset-0 w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n</div>\n`;
+                      markup = `<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10"><iframe src="${embedUrl}" class="absolute inset-0 w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
                     } else if (vimeoMatch) {
                       embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <iframe src="${embedUrl}" class="absolute inset-0 w-full h-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>\n</div>\n`;
+                      markup = `<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10"><iframe src="${embedUrl}" class="absolute inset-0 w-full h-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>`;
                     } else {
-                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <video src="${videoUrl}" controls class="absolute inset-0 w-full h-full object-cover"></video>\n</div>\n`;
+                      markup = `<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10"><video src="${videoUrl}" controls class="absolute inset-0 w-full h-full object-cover"></video></div>`;
                     }
                     
-                    setContent((prev: string) => prev + '\n\n' + markup);
+                    if (editorInstanceRef.current) {
+                      editorInstanceRef.current.commands.insertContent(markup);
+                    } else {
+                      setContent((prev: string) => prev + '\n\n' + markup);
+                    }
                     setVideoUrl('');
                     setVideoOpen(false);
                   }
