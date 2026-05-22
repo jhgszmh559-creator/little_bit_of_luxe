@@ -37,12 +37,28 @@ interface ReviewData {
   ogImage?: string;
 }
 
+interface NewsData {
+  slug: string;
+  title: string;
+  excerpt: string;
+  brand: string;
+  propertyName: string;
+  location: string;
+  projectedOpening: string;
+  earlyNewsletterCta: boolean;
+  sourceUrl?: string;
+  date: string;
+  image: string;
+  category: string;
+}
+
 interface SearchPageClientProps {
   programs: ProgramData[];
   reviews: ReviewData[];
+  news?: NewsData[];
 }
 
-export default function SearchPageClient({ programs, reviews }: SearchPageClientProps) {
+export default function SearchPageClient({ programs, reviews, news = [] }: SearchPageClientProps) {
   const searchParams = useSearchParams();
 
   // Unified list of articles formatted to match ArticleCard requirements
@@ -56,7 +72,7 @@ export default function SearchPageClient({ programs, reviews }: SearchPageClient
       author: 'Our Editors',
       readTime: '5 MIN READ',
       date: p.date,
-      rating: 9.8,
+      rating: undefined,
       cover: p.image,
       category: 'Preferred Partner',
       link: `/program/${p.slug}`,
@@ -74,6 +90,20 @@ export default function SearchPageClient({ programs, reviews }: SearchPageClient
       cover: r.ogImage || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
       category: 'Hotel Review',
       link: `/review/${r.slug}`,
+    })),
+    ...news.map((n) => ({
+      slug: n.slug,
+      title: n.title,
+      excerpt: n.excerpt,
+      location: n.location,
+      eyebrow: 'HOTEL NEWS · ' + n.location.toUpperCase(),
+      author: 'Our Editors',
+      readTime: '3 MIN READ',
+      date: n.date,
+      rating: undefined,
+      cover: n.image,
+      category: 'Hotel News',
+      link: `/news/${n.slug}`,
     })),
   ].sort((a, b) => b.date.localeCompare(a.date));
 
@@ -125,6 +155,7 @@ export default function SearchPageClient({ programs, reviews }: SearchPageClient
     { value: 'Dispatch', label: 'Dispatches' },
     { value: 'Preferred Partner', label: 'The Edit' },
     { value: 'Guides', label: 'Guides' },
+    { value: 'Hotel News', label: 'News' },
   ];
 
   return (

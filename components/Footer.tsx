@@ -6,16 +6,45 @@ import Link from 'next/link';
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
+  const [theme, setTheme] = React.useState<'light' | 'dark'>('light');
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+    const isDark = document.documentElement.classList.contains('dark');
+    setTheme(isDark ? 'dark' : 'light');
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const isDarkNow = document.documentElement.classList.contains('dark');
+          setTheme(isDarkNow ? 'dark' : 'light');
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <footer className="footer">
       <div className="container footer__inner">
         {/* Brand Block */}
         <div className="footer__brand">
-          <img
-            src="/logos/logo-sand.png"
-            alt="Little Bit of Luxe"
-            style={{ height: '48px', width: 'auto', marginBottom: '16px' }}
-          />
+          {mounted ? (
+            <img
+              src={theme === 'dark' ? '/logos/logo-darkblue.png' : '/logos/logo-sand.png'}
+              alt="Little Bit of Luxe"
+              style={{ height: '48px', width: 'auto', marginBottom: '16px' }}
+            />
+          ) : (
+            <img
+              src="/logos/logo-sand.png"
+              alt="Little Bit of Luxe"
+              style={{ height: '48px', width: 'auto', marginBottom: '16px' }}
+            />
+          )}
           <p className="footer__tag">
             A travel journal for the kind of places worth going slowly.
           </p>

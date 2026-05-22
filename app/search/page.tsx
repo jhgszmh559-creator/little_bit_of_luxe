@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { getPrograms, getReviews } from '@/lib/content';
+import { getPrograms, getReviews, getNews } from '@/lib/content';
 import SearchPageClient from './SearchPageClient';
 
 export const revalidate = 3600;
@@ -7,6 +7,7 @@ export const revalidate = 3600;
 export default function SearchPage() {
   const programs = getPrograms();
   const reviews = getReviews();
+  const news = getNews();
 
   return (
     <Suspense fallback={
@@ -17,6 +18,7 @@ export default function SearchPage() {
       <SearchPageClient 
         programs={programs} 
         reviews={reviews} 
+        news={news}
       />
     </Suspense>
   );

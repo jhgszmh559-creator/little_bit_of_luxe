@@ -37,13 +37,29 @@ interface ReviewData {
   ogImage?: string;
 }
 
+interface NewsData {
+  slug: string;
+  title: string;
+  excerpt: string;
+  brand: string;
+  propertyName: string;
+  location: string;
+  projectedOpening: string;
+  earlyNewsletterCta: boolean;
+  sourceUrl?: string;
+  date: string;
+  image: string;
+  category: string;
+}
+
 interface HomepageContentProps {
   programs: ProgramData[];
   reviews: ReviewData[];
+  news: NewsData[];
 }
 
-export default function HomepageContent({ programs, reviews }: HomepageContentProps) {
-  // Combine programs and reviews into a unified list of articles
+export default function HomepageContent({ programs, reviews, news = [] }: HomepageContentProps) {
+  // Combine programs, reviews, and news into a unified list of articles
   const allArticles = [
     ...programs.map((p) => ({
       slug: p.slug,
@@ -72,6 +88,20 @@ export default function HomepageContent({ programs, reviews }: HomepageContentPr
       cover: r.ogImage || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
       category: 'Hotel Review',
       link: `/review/${r.slug}`,
+    })),
+    ...news.map((n) => ({
+      slug: n.slug,
+      title: n.title,
+      excerpt: n.excerpt,
+      location: n.location,
+      eyebrow: 'HOTEL NEWS · ' + n.location.toUpperCase(),
+      author: 'Our Editors',
+      readTime: '3 MIN READ',
+      date: n.date,
+      rating: undefined, // Informational articles do not show a rating
+      cover: n.image,
+      category: 'Hotel News',
+      link: `/news/${n.slug}`,
     })),
   ].sort((a, b) => b.date.localeCompare(a.date));
 

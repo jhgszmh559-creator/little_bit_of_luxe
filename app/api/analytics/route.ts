@@ -39,12 +39,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const creds = JSON.parse(credsJson);
-    const auth = new google.auth.JWT(
-      creds.client_email,
-      undefined,
-      creds.private_key,
-      ['https://www.googleapis.com/auth/webmasters.readonly']
-    );
+    const auth = new google.auth.JWT({
+      email: creds.client_email,
+      key: creds.private_key,
+      scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
+    });
 
     const searchconsole = google.searchconsole({ version: 'v1', auth });
 
