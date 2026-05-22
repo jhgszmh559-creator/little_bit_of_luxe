@@ -1425,7 +1425,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
       {/* MODAL: WRITE NEW ARTICLE */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-midnight/60 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-sand dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[560px] w-full shadow-2xl rounded-none flex flex-col gap-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-ivory dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[560px] w-full shadow-2xl rounded-none flex flex-col gap-6 max-h-[90vh] overflow-y-auto">
             
             <div className="flex items-center justify-between border-b border-midnight/10 dark:border-sand/10 pb-4">
               <h3 className="font-serif text-2xl font-semibold">Write New Article</h3>

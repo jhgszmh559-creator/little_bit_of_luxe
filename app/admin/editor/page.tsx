@@ -1,5 +1,12 @@
 import React from 'react';
-import { getProgramBySlug, getReviewBySlug, getNewsBySlug } from '@/lib/content';
+import { 
+  getProgramBySlug, 
+  getReviewBySlug, 
+  getNewsBySlug, 
+  getPrograms, 
+  getReviews, 
+  getNews 
+} from '@/lib/content';
 import EditorForm from './EditorForm';
 
 interface EditorPageProps {
@@ -79,12 +86,20 @@ export default async function EditorPage({ searchParams }: EditorPageProps) {
     }
   }
 
+  const allArticles = [
+    ...getPrograms().map(p => ({ title: p.title, slug: p.slug, category: p.category, type: 'program' as const })),
+    ...getReviews().map(r => ({ title: r.title, slug: r.slug, category: r.category, type: 'review' as const })),
+    ...getNews().map(n => ({ title: n.title, slug: n.slug, category: n.category, type: 'news' as const }))
+  ];
+
   return (
     <EditorForm 
       type={type as 'review' | 'program' | 'news'} 
       slug={slug} 
       initialData={initialData} 
+      allArticles={allArticles}
     />
   );
 }
+
 

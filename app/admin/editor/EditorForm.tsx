@@ -1,18 +1,60 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Save, FileText, Settings, BookOpen, Sun, Moon } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  Save, 
+  BookOpen, 
+  Settings, 
+  Sun, 
+  Moon,
+  Bold,
+  Italic,
+  Underline,
+  Palette,
+  Type,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  Check,
+  Link2,
+  ExternalLink,
+  Sparkles,
+  Layers,
+  Clock,
+  BookOpenCheck
+} from 'lucide-react';
+
+interface ArticleItem {
+  title: string;
+  slug: string;
+  category: string;
+  type: 'program' | 'review' | 'news';
+}
 
 interface EditorFormProps {
   type: 'review' | 'program' | 'news';
   slug: string;
   initialData: any;
+  allArticles?: ArticleItem[];
 }
 
-export default function EditorForm({ type, slug: initialSlug, initialData }: EditorFormProps) {
+const BRAND_COLORS = [
+  { name: 'Midnight', hex: '#0D152D', bgClass: 'bg-[#0D152D]' },
+  { name: 'Sand', hex: '#F4F1D3', bgClass: 'bg-[#F4F1D3] text-midnight' },
+  { name: 'Bordeaux', hex: '#6B1F2A', bgClass: 'bg-[#6B1F2A]' },
+  { name: 'Sage', hex: '#6F7A5C', bgClass: 'bg-[#6F7A5C]' },
+  { name: 'Terracotta', hex: '#B96A4A', bgClass: 'bg-[#B96A4A]' },
+  { name: 'Gold', hex: '#B08442', bgClass: 'bg-[#B08442]' },
+  { name: 'Paper', hex: '#FAF8F2', bgClass: 'bg-[#FAF8F2] text-midnight border border-ink/10' },
+  { name: 'Paper 2', hex: '#F0ECE0', bgClass: 'bg-[#F0ECE0] text-midnight' },
+  { name: 'Ivory', hex: '#FFFFFF', bgClass: 'bg-white text-midnight border border-ink/10' },
+];
+
+export default function EditorForm({ type, slug: initialSlug, initialData, allArticles = [] }: EditorFormProps) {
   const router = useRouter();
+  const bodyTextareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -71,8 +113,61 @@ export default function EditorForm({ type, slug: initialSlug, initialData }: Edi
   const [message, setMessage] = useState('');
   const [editorTab, setEditorTab] = useState<'content' | 'metadata'>('content');
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Rich Text Toolbars & Popups State
+  const [isColorDropdownOpen, setIsColorDropdownOpen] = useState(false);
+  const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
+  
+  // Cloudinary Loader Modal State
+  const [cloudinaryOpen, setCloudinaryOpen] = useState(false);
+  const [cloudinaryUrl, setCloudinaryUrl] = useState('');
+  const [cloudinaryCaption, setCloudinaryCaption] = useState('');
+
+  // Video Loader Modal State
+  const [videoOpen, setVideoOpen] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
+
+  // SEO Sidebar State
+  const [targetKeyword, setTargetKeyword] = useState('');
+
+  // Auto-close dropdowns when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.color-picker-container')) {
+        setIsColorDropdownOpen(false);
+      }
+      if (!target.closest('.font-picker-container')) {
+        setIsFontDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  // Text Replacement Helper for Toolbar
+  const insertTextAtCursor = (before: string, after: string = '') => {
+    const textarea = bodyTextareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selection = text.substring(start, end);
+
+    const replacement = before + (selection || 'text') + after;
+    const newValue = text.substring(0, start) + replacement + text.substring(end);
+    
+    setContent(newValue);
+    
+    // Maintain selection and focus after React state updates
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + before.length, start + before.length + (selection || 'text').length);
+    }, 50);
+  };
+
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!slug) {
       alert('Please provide a unique URL slug.');
       return;
@@ -147,8 +242,100 @@ export default function EditorForm({ type, slug: initialSlug, initialData }: Edi
     }
   };
 
+  // SEO Helper Calculations
+  const getWordCount = () => {
+    return content ? content.trim().split(/\s+/).filter(Boolean).length : 0;
+  };
+
+  const getCharCount = () => {
+    return content ? content.length : 0;
+  };
+
+  const getReadingTime = () => {
+    const words = getWordCount();
+    return Math.ceil(words / 200) || 1;
+  };
+
+  // Focus Keyword Density Tracker
+  const isKeywordInTitle = () => {
+    if (!targetKeyword) return false;
+    return title.toLowerCase().includes(targetKeyword.toLowerCase());
+  };
+
+  const isKeywordInExcerpt = () => {
+    if (!targetKeyword) return false;
+    return excerpt.toLowerCase().includes(targetKeyword.toLowerCase());
+  };
+
+  const getKeywordDensity = () => {
+    if (!targetKeyword || !content) return 0;
+    const cleanKeyword = targetKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`\\b${cleanKeyword}\\b`, 'gi');
+    const matches = content.match(regex);
+    const words = getWordCount();
+    if (words === 0) return 0;
+    const count = matches ? matches.length : 0;
+    return parseFloat(((count / words) * 100).toFixed(2));
+  };
+
+  // Dynamic Internal Link Suggester
+  const getSuggestedLinks = () => {
+    if (!content && !title) {
+      return allArticles.filter(a => a.slug !== initialSlug).slice(0, 4);
+    }
+    
+    const combinedText = (title + ' ' + excerpt + ' ' + content).toLowerCase();
+    
+    // Score other articles based on matching occurrences
+    const scored = allArticles
+      .filter(article => article.slug !== initialSlug)
+      .map(article => {
+        let score = 0;
+        
+        // Match words in title
+        const titleWords = article.title.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+        titleWords.forEach(word => {
+          if (combinedText.includes(word)) score += 3;
+        });
+
+        // Match category
+        if (article.category && combinedText.includes(article.category.toLowerCase())) {
+          score += 1;
+        }
+
+        // Match slug fragments
+        const slugWords = article.slug.split('-');
+        slugWords.forEach(word => {
+          if (word.length > 4 && combinedText.includes(word)) score += 2;
+        });
+
+        return { article, score };
+      })
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(item => item.article);
+
+    if (scored.length > 0) {
+      return scored.slice(0, 4);
+    }
+
+    // Default Fallbacks
+    return allArticles.filter(a => a.slug !== initialSlug).slice(0, 4);
+  };
+
+  const getArticleUrl = (article: ArticleItem) => {
+    if (article.type === 'review') return `/review/${article.slug}`;
+    if (article.type === 'news') return `/news/${article.slug}`;
+    return `/program/${article.slug}`;
+  };
+
+  const handleInsertLink = (article: ArticleItem) => {
+    const relativeUrl = getArticleUrl(article);
+    insertTextAtCursor(`[${article.title}](${relativeUrl})`);
+  };
+
   return (
-    <div className="min-h-screen bg-paper flex flex-col font-sans text-ink transition-colors">
+    <div className="min-h-screen bg-paper flex flex-col font-sans text-ink transition-colors selection:bg-sand selection:text-midnight">
       
       {/* Editor Top Bar */}
       <header className="bg-card text-ink py-4 px-6 md:px-12 flex items-center justify-between border-b border-ink/10 sticky top-0 z-40">
@@ -160,25 +347,24 @@ export default function EditorForm({ type, slug: initialSlug, initialData }: Edi
             <ChevronLeft className="w-4 h-4" /> Back to CMS
           </Link>
           <span className="text-ink/30 font-light">|</span>
-          <span className="text-xs uppercase tracking-widest font-semibold">
+          <span className="text-xs uppercase tracking-widest font-semibold font-sans">
             {initialSlug ? `Edit ${type}` : `New ${type}`}
           </span>
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
-            className="p-2 border border-ink/15 hover:border-ink/30 text-ink rounded-[3px] min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+            className="p-2 border border-ink/15 hover:border-ink/30 text-ink rounded-none min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer transition-colors"
             aria-label="Theme toggle"
           >
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           
           <button 
-            onClick={handleSave}
+            onClick={() => handleSave()}
             disabled={saving}
-            className="btn--sand text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50"
+            className="btn--sand text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-midnight rounded-none"
           >
             <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Draft'}
           </button>
@@ -194,437 +380,846 @@ export default function EditorForm({ type, slug: initialSlug, initialData }: Edi
         </div>
       )}
 
-      {/* Editor Workspace Container */}
+      {/* Workspace Wrapper */}
       <main className="flex-grow max-w-[1280px] w-full mx-auto p-4 md:p-8 flex flex-col gap-6">
         
         {/* Segmented Editor Tabs */}
-        <div className="flex bg-card border border-ink/10 p-1 rounded-[3px] shadow-sm max-w-[480px] mx-auto w-full">
+        <div className="flex bg-card border border-ink/10 p-1 rounded-none shadow-sm max-w-[480px] mx-auto w-full">
           <button
             onClick={() => setEditorTab('content')}
-            className={`flex-1 py-3 text-xs uppercase font-bold tracking-wider rounded-[2px] transition-colors flex items-center justify-center gap-2 min-h-[44px] ${
-              editorTab === 'content' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight' : 'text-ink-3 hover:text-ink bg-transparent'
+            className={`flex-1 py-3 text-xs uppercase font-bold tracking-wider rounded-none transition-colors flex items-center justify-center gap-2 min-h-[44px] cursor-pointer ${
+              editorTab === 'content' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink bg-transparent font-medium'
             }`}
           >
             <BookOpen className="w-4 h-4" /> Editorial Body
           </button>
           <button
             onClick={() => setEditorTab('metadata')}
-            className={`flex-1 py-3 text-xs uppercase font-bold tracking-wider rounded-[2px] transition-colors flex items-center justify-center gap-2 min-h-[44px] ${
-              editorTab === 'metadata' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight' : 'text-ink-3 hover:text-ink bg-transparent'
+            className={`flex-1 py-3 text-xs uppercase font-bold tracking-wider rounded-none transition-colors flex items-center justify-center gap-2 min-h-[44px] cursor-pointer ${
+              editorTab === 'metadata' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink bg-transparent font-medium'
             }`}
           >
             <Settings className="w-4 h-4" /> Metadata Dossier
           </button>
         </div>
 
-        {/* Editor Form Body */}
-        <form onSubmit={handleSave} className="flex-grow flex flex-col gap-6 bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-[2px]">
-          
+        {/* Dynamic Split Layout */}
+        <div className="flex-grow">
           {editorTab === 'content' ? (
-            /* Tab 1: Editorial Title & Body Content */
-            <div className="flex-grow flex flex-col gap-6">
+            /* TWO-COLUMN SPLIT LAYOUT (EDITOR + SEO SIDEBAR) */
+            <div className="flex flex-col lg:flex-row gap-8 items-start w-full">
               
-              {/* Creative Title */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                  Creative Headline (Italicize one *word* signature)
-                </label>
-                <input 
-                  type="text"
-                  placeholder="e.g. A weekend at the Splendido that lived up to its *name*."
-                  className="w-full text-lg md:text-2xl font-serif bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-[2px] min-h-[52px]"
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  required
-                />
+              {/* Left Column (Core Article Editing Form - 70%) */}
+              <div className="w-full lg:w-[68%] flex flex-col gap-6 bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none">
+                
+                {/* Article Title Field */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
+                    Article Title
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="e.g. A weekend at the Splendido that lived up to its *name*."
+                    className="w-full text-lg md:text-2xl font-serif bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none min-h-[52px]"
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {/* Excerpt / Summary Field */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
+                    Short Excerpt / Summary (Shows on homepage & newsletters)
+                  </label>
+                  <textarea 
+                    rows={2}
+                    placeholder="One elegant, poetic, serif italic sentence setting the scene."
+                    className="w-full text-sm font-serif italic bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none resize-none"
+                    value={excerpt}
+                    onChange={e => setExcerpt(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {/* Main Body Content Field */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-2">
+                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
+                      Main Body Content
+                    </label>
+                    
+                    {/* PREMIUM RICH TEXT FORMATTING TOOLBAR */}
+                    <div className="flex flex-wrap items-center bg-paper/50 dark:bg-midnight/30 border border-ink/10 p-1 rounded-none select-none">
+                      
+                      {/* Bold */}
+                      <button
+                        type="button"
+                        onClick={() => insertTextAtCursor('**', '**')}
+                        title="Bold text"
+                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                      >
+                        <Bold className="w-4 h-4" />
+                      </button>
+
+                      {/* Italic */}
+                      <button
+                        type="button"
+                        onClick={() => insertTextAtCursor('*', '*')}
+                        title="Italic text"
+                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                      >
+                        <Italic className="w-4 h-4" />
+                      </button>
+
+                      {/* Underline */}
+                      <button
+                        type="button"
+                        onClick={() => insertTextAtCursor('<u>', '</u>')}
+                        title="Underline text"
+                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                      >
+                        <Underline className="w-4 h-4" />
+                      </button>
+
+                      {/* Divider */}
+                      <div className="w-px h-6 bg-ink/10 mx-1" />
+
+                      {/* Color Picker Dropdown */}
+                      <div className="relative color-picker-container">
+                        <button
+                          type="button"
+                          onClick={() => setIsColorDropdownOpen(!isColorDropdownOpen)}
+                          title="Text Color"
+                          className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                        >
+                          <Palette className="w-4 h-4" />
+                        </button>
+                        {isColorDropdownOpen && (
+                          <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 p-3 shadow-xl rounded-none w-52 grid grid-cols-3 gap-2">
+                            {BRAND_COLORS.map((color) => (
+                              <button
+                                key={color.name}
+                                type="button"
+                                title={color.name}
+                                onClick={() => {
+                                  insertTextAtCursor(`<span style="color: ${color.hex}">`, '</span>');
+                                  setIsColorDropdownOpen(false);
+                                }}
+                                className={`w-full aspect-square text-[9px] font-bold rounded-none flex items-center justify-center shadow-sm cursor-pointer transition-transform hover:scale-105 ${color.bgClass}`}
+                              >
+                                {color.name.substring(0, 2)}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Font Toggle Dropdown */}
+                      <div className="relative font-picker-container">
+                        <button
+                          type="button"
+                          onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
+                          title="Font Family Override"
+                          className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                        >
+                          <Type className="w-4 h-4" />
+                        </button>
+                        {isFontDropdownOpen && (
+                          <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 py-1.5 shadow-xl rounded-none w-44 flex flex-col">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                insertTextAtCursor('<span style="font-family: var(--lbl-serif)">', '</span>');
+                                setIsFontDropdownOpen(false);
+                              }}
+                              className="px-4 py-2.5 text-left text-xs font-serif hover:bg-ink/5 text-ink cursor-pointer"
+                            >
+                              Serif (Cormorant)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                insertTextAtCursor('<span style="font-family: var(--lbl-sans)">', '</span>');
+                                setIsFontDropdownOpen(false);
+                              }}
+                              className="px-4 py-2.5 text-left text-xs font-sans hover:bg-ink/5 text-ink cursor-pointer"
+                            >
+                              Sans-serif (Manrope)
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Divider */}
+                      <div className="w-px h-6 bg-ink/10 mx-1" />
+
+                      {/* Cloudinary Image Loader */}
+                      <button
+                        type="button"
+                        onClick={() => setCloudinaryOpen(true)}
+                        title="Add Cloudinary Image"
+                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                      >
+                        <ImageIcon className="w-4 h-4" />
+                      </button>
+
+                      {/* Vimeo/Video Loader */}
+                      <button
+                        type="button"
+                        onClick={() => setVideoOpen(true)}
+                        title="Add Video Player Embed"
+                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                      >
+                        <VideoIcon className="w-4 h-4" />
+                      </button>
+
+                    </div>
+                  </div>
+
+                  {/* Body Textarea */}
+                  <textarea 
+                    id="body-textarea"
+                    ref={bodyTextareaRef}
+                    placeholder="Write the full luxury travel prose article. HTML and markdown are fully supported."
+                    className="w-full text-base font-serif bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none min-h-[500px] resize-y leading-relaxed"
+                    value={content}
+                    onChange={e => setContent(e.target.value)}
+                  />
+                </div>
+
               </div>
 
-              {/* Poetic Serif Dek / Excerpt */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                  Poetic Serif Dek / Excerpt
-                </label>
-                <textarea 
-                  rows={2}
-                  placeholder="One elegant, poetic, serif italic sentence setting the scene."
-                  className="w-full text-sm font-serif italic bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-[2px] resize-none"
-                  value={excerpt}
-                  onChange={e => setExcerpt(e.target.value)}
-                  required
-                />
-              </div>
+              {/* Right Column (Sticky Real-Time SEO & AI Strategy Hub - 30%) */}
+              <div className="w-full lg:w-[32%] lg:sticky lg:top-[96px] flex flex-col gap-6 bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none">
+                
+                <div className="border-b border-ink/10 pb-4">
+                  <h4 className="font-serif text-lg font-semibold flex items-center gap-2">
+                    <Sparkles className="w-4.5 h-4.5 text-bordeaux dark:text-gold-soft" />
+                    Strategy & SEO Hub
+                  </h4>
+                  <p className="text-[10px] text-ink-3 uppercase tracking-wider mt-1">Real-time content scoring</p>
+                </div>
 
-              {/* Markdown Body Content */}
-              <div className="flex-grow flex flex-col gap-2 min-h-[300px]">
-                <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                  Journal Markdown Body
-                </label>
-                <textarea 
-                  placeholder="Write the full luxury travel prose article. HTML tags like <div class='verdict-box'> or <div class='my-12 p-8 bg-midnight text-sand'> are automatically supported."
-                  className="w-full flex-grow text-base font-serif bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-[2px] min-h-[300px] resize-y"
-                  value={content}
-                  onChange={e => setContent(e.target.value)}
-                />
+                {/* Focus Keyword Section */}
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">Target Keyword</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Splendido Hotel" 
+                    value={targetKeyword}
+                    onChange={e => setTargetKeyword(e.target.value)}
+                    className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
+                  />
+                </div>
+
+                {/* Keyword Analysis Metrics */}
+                {targetKeyword ? (
+                  <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs">
+                    <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                      <span className="text-ink-2 font-medium">Found in Title</span>
+                      {isKeywordInTitle() ? (
+                        <span className="text-sage font-semibold flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5" /> Yes
+                        </span>
+                      ) : (
+                        <span className="text-bordeaux font-medium">— No</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                      <span className="text-ink-2 font-medium">Found in Excerpt</span>
+                      {isKeywordInExcerpt() ? (
+                        <span className="text-sage font-semibold flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5" /> Yes
+                        </span>
+                      ) : (
+                        <span className="text-bordeaux font-medium">— No</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-ink-2 font-medium">Body Density</span>
+                      <span className={`font-mono font-bold ${
+                        getKeywordDensity() >= 0.8 && getKeywordDensity() <= 2.5
+                          ? 'text-sage'
+                          : 'text-terracotta'
+                      }`}>
+                        {getKeywordDensity()}%
+                      </span>
+                    </div>
+                    <div className="text-[9px] text-ink-3 mt-1 leading-normal italic">
+                      Recommended keyword density is 0.8% - 2.5%.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-paper/20 p-4 border border-ink/5 border-dashed text-center text-xs text-ink-3 italic">
+                    Enter a focus keyword above to begin live analysis.
+                  </div>
+                )}
+
+                {/* Copy Stats Block */}
+                <div className="border-t border-ink/10 pt-4 flex flex-col gap-3">
+                  <span className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5" /> Copy Statistics
+                  </span>
+                  
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="bg-paper/40 p-2.5 border border-ink/5">
+                      <div className="text-sm font-mono font-bold text-ink">{getWordCount()}</div>
+                      <div className="text-[9px] text-ink-3 uppercase mt-0.5">Words</div>
+                    </div>
+                    <div className="bg-paper/40 p-2.5 border border-ink/5">
+                      <div className="text-sm font-mono font-bold text-ink">{getCharCount()}</div>
+                      <div className="text-[9px] text-ink-3 uppercase mt-0.5">Chars</div>
+                    </div>
+                    <div className="bg-paper/40 p-2.5 border border-ink/5">
+                      <div className="text-sm font-mono font-bold text-ink flex items-center justify-center gap-1">
+                        <Clock className="w-3 h-3 text-ink-3" />
+                        {getReadingTime()}m
+                      </div>
+                      <div className="text-[9px] text-ink-3 uppercase mt-0.5">Reading</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Link Suggestions Analyzer */}
+                <div className="border-t border-ink/10 pt-4 flex flex-col gap-3">
+                  <span className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold flex items-center gap-1.5">
+                    <BookOpenCheck className="w-3.5 h-3.5" /> Internal Link Suggester
+                  </span>
+
+                  <div className="flex flex-col gap-2">
+                    {getSuggestedLinks().length > 0 ? (
+                      getSuggestedLinks().map((article) => (
+                        <div 
+                          key={article.slug}
+                          className="bg-paper/30 hover:bg-paper/60 p-3 border border-ink/5 flex flex-col gap-1.5 transition-colors group"
+                        >
+                          <div className="flex justify-between items-start gap-1">
+                            <span className="text-[9px] uppercase tracking-wider text-ink-3 font-medium">
+                              {article.category}
+                            </span>
+                            <span className="text-[8px] px-1.5 py-0.5 bg-ink/5 text-ink-2 rounded-none">
+                              {article.type}
+                            </span>
+                          </div>
+                          <h5 className="font-serif text-xs font-semibold text-ink leading-snug group-hover:text-bordeaux dark:group-hover:text-gold-soft transition-colors">
+                            {article.title}
+                          </h5>
+                          <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-ink/5">
+                            <span className="text-[9px] font-mono text-ink-3 truncate max-w-[120px]">
+                              {getArticleUrl(article)}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleInsertLink(article)}
+                              className="text-[9px] uppercase tracking-wider font-bold text-bordeaux dark:text-gold-soft hover:underline flex items-center gap-0.5 cursor-pointer"
+                            >
+                              <Link2 className="w-2.5 h-2.5" /> Insert Link
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-xs text-ink-3 italic text-center p-3">
+                        No linking candidates found.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
               </div>
 
             </div>
           ) : (
-            /* Tab 2: Core Metadata Dossier */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            /* TAB 2: METADATA DOSSIER (Original Full Details Layout) */
+            <div className="bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none flex flex-col gap-6">
               
-              {/* Type Switcher info */}
-              <div className="md:col-span-2 p-4 bg-paper border border-ink/5 text-xs text-ink-2">
+              <div className="p-4 bg-paper border border-ink/5 text-xs text-ink-2">
                 You are editing a <strong>{type === 'program' ? 'Preferred Partner Guide' : type === 'news' ? 'Hotel News Opening' : 'Hotel Inspection Review'}</strong>.
               </div>
 
-              {/* URL Slug */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold flex justify-between items-center">
-                  <span>URL Slug (Unique identifier)</span>
-                  <button 
-                    type="button" 
-                    onClick={autoGenerateSlug}
-                    className="text-[9px] uppercase tracking-wider text-bordeaux dark:text-gold-soft hover:underline min-h-[32px] px-2 flex items-center"
-                  >
-                    Auto-Generate
-                  </button>
-                </label>
-                <input 
-                  type="text"
-                  placeholder="e.g. virtuoso"
-                  className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                  value={slug}
-                  onChange={e => setSlug(e.target.value)}
-                  disabled={!!initialSlug}
-                  required
-                />
-              </div>
-
-              {/* Category */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                  Journal Category
-                </label>
-                <input 
-                  type="text"
-                  placeholder="e.g. Hotel Review, Hotel News, Preferred Partner"
-                  className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                  value={category}
-                  onChange={e => setCategory(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* Date */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                  Publish Date
-                </label>
-                <input 
-                  type="date"
-                  className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                  value={date}
-                  onChange={e => setDate(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* Draft Status */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                  Publishing Status
-                </label>
-                <select 
-                  className="w-full text-sm bg-card border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                  value={draft ? 'true' : 'false'}
-                  onChange={e => setDraft(e.target.value === 'true')}
-                >
-                  <option value="true">Save as Draft (Private)</option>
-                  <option value="false">Publish (Public to Journal)</option>
-                </select>
-              </div>
-
-              {/* Conditionally render fields based on Content Type */}
-              {type === 'review' && (
-                /* REVIEW FIELDS */
-                <>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Hotel Property Name
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. Belmond Hotel Caruso"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={hotelName}
-                      onChange={e => setHotelName(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Hotel Brand Network
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. Belmond, Rosewood, Aman"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={brand}
-                      onChange={e => setBrand(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Location / Region
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. Ravello, Italy"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={location}
-                      onChange={e => setLocation(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Inspection Rating Score (1.0 to 10.0)
-                    </label>
-                    <input 
-                      type="number"
-                      step="0.1"
-                      min="1.0"
-                      max="10.0"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={rating}
-                      onChange={e => setRating(Number(e.target.value))}
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Room Type Tested
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. Junior Suite Superior"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={roomType}
-                      onChange={e => setRoomType(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      YouTube Video ID (Optional preview embed)
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. dQw4w9WgXcQ"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={youtubeId}
-                      onChange={e => setYoutubeId(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2 justify-center pt-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold flex items-center gap-2 cursor-pointer min-h-[44px]">
-                      <input 
-                        type="checkbox" 
-                        className="w-5 h-5 rounded-[2px] border-ink text-ink bg-transparent focus:ring-0 cursor-pointer"
-                        checked={showQxPerks}
-                        onChange={e => setShowQxPerks(e.target.checked)}
-                      />
-                      <span>Inject QX Perks Booking Banner</span>
-                    </label>
-                  </div>
-                </>
-              )}
-
-              {type === 'program' && (
-                /* PROGRAM FIELDS */
-                <>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Program Name
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. Rosewood Elite"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={programName}
-                      onChange={e => setProgramName(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Loyalty Network Core
-                    </label>
-                    <select 
-                      className="w-full text-sm bg-card border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={loyaltyNetwork}
-                      onChange={e => setLoyaltyNetwork(e.target.value)}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* URL Slug */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold flex justify-between items-center">
+                    <span>URL Slug (Unique identifier)</span>
+                    <button 
+                      type="button" 
+                      onClick={autoGenerateSlug}
+                      className="text-[9px] uppercase tracking-wider text-bordeaux dark:text-gold-soft hover:underline min-h-[32px] px-2 flex items-center"
                     >
-                      <option value="Hilton">Hilton</option>
-                      <option value="Marriott">Marriott</option>
-                      <option value="Hyatt">Hyatt</option>
-                      <option value="Accor">Accor</option>
-                      <option value="IHG">IHG</option>
-                      <option value="Independent">Independent</option>
-                    </select>
-                  </div>
+                      Auto-Generate
+                    </button>
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="e.g. virtuoso"
+                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                    value={slug}
+                    onChange={e => setSlug(e.target.value)}
+                    disabled={!!initialSlug}
+                    required
+                  />
+                </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Participating Brands (Comma separated list)
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. Waldorf Astoria, LXR, Conrad"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={brands}
-                      onChange={e => setBrands(e.target.value)}
-                    />
-                  </div>
+                {/* Category */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                    Journal Category
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="e.g. Hotel Review, Hotel News, Preferred Partner"
+                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                    value={category}
+                    onChange={e => setCategory(e.target.value)}
+                    required
+                  />
+                </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Official Website Link
-                    </label>
-                    <input 
-                      type="url"
-                      placeholder="https://..."
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={officialLink}
-                      onChange={e => setOfficialLink(e.target.value)}
-                    />
-                  </div>
+                {/* Date */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                    Publish Date
+                  </label>
+                  <input 
+                    type="date"
+                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                    value={date}
+                    onChange={e => setDate(e.target.value)}
+                    required
+                  />
+                </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Partner Booking CTA Link
-                    </label>
-                    <input 
-                      type="url"
-                      placeholder="https://..."
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={partnerLink}
-                      onChange={e => setPartnerLink(e.target.value)}
-                    />
-                  </div>
-                </>
-              )}
+                {/* Draft Status */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                    Publishing Status
+                  </label>
+                  <select 
+                    className="w-full text-sm bg-card border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                    value={draft ? 'true' : 'false'}
+                    onChange={e => setDraft(e.target.value === 'true')}
+                  >
+                    <option value="true">Save as Draft (Private)</option>
+                    <option value="false">Publish (Public to Journal)</option>
+                  </select>
+                </div>
 
-              {type === 'news' && (
-                /* NEWS FIELDS */
-                <>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Property Name
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. The Emory"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={propertyName}
-                      onChange={e => setPropertyName(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Brand
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. Maybourne Hotel Group"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={brand}
-                      onChange={e => setBrand(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Location
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. Belgravia, London"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={location}
-                      onChange={e => setLocation(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Projected Opening Time
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="e.g. Opened Spring 2024"
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={projectedOpening}
-                      onChange={e => setProjectedOpening(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                      Original Citation Link
-                    </label>
-                    <input 
-                      type="url"
-                      placeholder="https://..."
-                      className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                      value={sourceUrl}
-                      onChange={e => setSourceUrl(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2 justify-center pt-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold flex items-center gap-2 cursor-pointer min-h-[44px]">
+                {/* Conditionally render fields based on Content Type */}
+                {type === 'review' && (
+                  <>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Hotel Property Name
+                      </label>
                       <input 
-                        type="checkbox" 
-                        className="w-5 h-5 rounded-[2px] border-ink text-ink bg-transparent focus:ring-0 cursor-pointer"
-                        checked={earlyNewsletterCta}
-                        onChange={e => setEarlyNewsletterCta(e.target.checked)}
+                        type="text"
+                        placeholder="e.g. Belmond Hotel Caruso"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={hotelName}
+                        onChange={e => setHotelName(e.target.value)}
+                        required
                       />
-                      <span>Inject Early Newsletter CTA</span>
-                    </label>
-                  </div>
-                </>
-              )}
+                    </div>
 
-              {/* Cover/OG Image URL */}
-              <div className="md:col-span-2 flex flex-col gap-2">
-                <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                  Cover / OG Image URL (High-res Unsplash placeholder)
-                </label>
-                <input 
-                  type="text"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-[2px] min-h-[44px]"
-                  value={ogImage}
-                  onChange={e => setOgImage(e.target.value)}
-                />
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Hotel Brand Network
+                      </label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. Belmond, Rosewood, Aman"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={brand}
+                        onChange={e => setBrand(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Location / Region
+                      </label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. Ravello, Italy"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={location}
+                        onChange={e => setLocation(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Inspection Rating Score (1.0 to 10.0)
+                      </label>
+                      <input 
+                        type="number"
+                        step="0.1"
+                        min="1.0"
+                        max="10.0"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={rating}
+                        onChange={e => setRating(Number(e.target.value))}
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Room Type Tested
+                      </label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. Junior Suite Superior"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={roomType}
+                        onChange={e => setRoomType(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        YouTube Video ID (Optional preview embed)
+                      </label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. dQw4w9WgXcQ"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={youtubeId}
+                        onChange={e => setYoutubeId(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2 justify-center pt-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold flex items-center gap-2 cursor-pointer min-h-[44px]">
+                        <input 
+                          type="checkbox" 
+                          className="w-5 h-5 rounded-none border-ink text-ink bg-transparent focus:ring-0 cursor-pointer"
+                          checked={showQxPerks}
+                          onChange={e => setShowQxPerks(e.target.checked)}
+                        />
+                        <span>Inject QX Perks Booking Banner</span>
+                      </label>
+                    </div>
+                  </>
+                )}
+
+                {type === 'program' && (
+                  <>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Program Name
+                      </label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. Rosewood Elite"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={programName}
+                        onChange={e => setProgramName(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Loyalty Network Core
+                      </label>
+                      <select 
+                        className="w-full text-sm bg-card border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={loyaltyNetwork}
+                        onChange={e => setLoyaltyNetwork(e.target.value)}
+                      >
+                        <option value="Hilton">Hilton</option>
+                        <option value="Marriott">Marriott</option>
+                        <option value="Hyatt">Hyatt</option>
+                        <option value="Accor">Accor</option>
+                        <option value="IHG">IHG</option>
+                        <option value="Independent">Independent</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Participating Brands (Comma separated list)
+                      </label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. Waldorf Astoria, LXR, Conrad"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={brands}
+                        onChange={e => setBrands(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Official Website Link
+                      </label>
+                      <input 
+                        type="url"
+                        placeholder="https://..."
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={officialLink}
+                        onChange={e => setOfficialLink(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Partner Booking CTA Link
+                      </label>
+                      <input 
+                        type="url"
+                        placeholder="https://..."
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={partnerLink}
+                        onChange={e => setPartnerLink(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {type === 'news' && (
+                  <>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Property Name
+                      </label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. The Emory"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={propertyName}
+                        onChange={e => setPropertyName(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Brand
+                      </label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. Maybourne Hotel Group"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={brand}
+                        onChange={e => setBrand(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Location
+                      </label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. Belgravia, London"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={location}
+                        onChange={e => setLocation(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Projected Opening Time
+                      </label>
+                      <input 
+                        type="text"
+                        placeholder="e.g. Opened Spring 2024"
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={projectedOpening}
+                        onChange={e => setProjectedOpening(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                        Original Citation Link
+                      </label>
+                      <input 
+                        type="url"
+                        placeholder="https://..."
+                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                        value={sourceUrl}
+                        onChange={e => setSourceUrl(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2 justify-center pt-2">
+                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold flex items-center gap-2 cursor-pointer min-h-[44px]">
+                        <input 
+                          type="checkbox" 
+                          className="w-5 h-5 rounded-none border-ink text-ink bg-transparent focus:ring-0 cursor-pointer"
+                          checked={earlyNewsletterCta}
+                          onChange={e => setEarlyNewsletterCta(e.target.checked)}
+                        />
+                        <span>Inject Early Newsletter CTA</span>
+                      </label>
+                    </div>
+                  </>
+                )}
+
+                {/* Cover/OG Image URL */}
+                <div className="md:col-span-2 flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                    Cover / OG Image URL (High-res Unsplash placeholder)
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="https://images.unsplash.com/photo-..."
+                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                    value={ogImage}
+                    onChange={e => setOgImage(e.target.value)}
+                  />
+                </div>
               </div>
 
             </div>
           )}
-
-        </form>
+        </div>
 
       </main>
+
+      {/* CLOUDINARY LOADER POPUP */}
+      {cloudinaryOpen && (
+        <div className="fixed inset-0 bg-midnight/60 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-ivory dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[480px] w-full shadow-2xl rounded-none flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-ink/10 pb-2">
+              <h4 className="font-serif text-lg font-semibold text-ink">Load Cloudinary Media</h4>
+              <button 
+                type="button"
+                onClick={() => setCloudinaryOpen(false)}
+                className="text-ink/60 hover:text-ink text-xl font-bold min-h-[32px] min-w-[32px] cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Cloudinary Image URL</label>
+                <input 
+                  type="text" 
+                  placeholder="https://res.cloudinary.com/..." 
+                  value={cloudinaryUrl}
+                  onChange={e => setCloudinaryUrl(e.target.value)}
+                  className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Image Caption</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Grand Canal view from Aman Venice balcony" 
+                  value={cloudinaryCaption}
+                  onChange={e => setCloudinaryCaption(e.target.value)}
+                  className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-2">
+              <button 
+                type="button" 
+                onClick={() => setCloudinaryOpen(false)}
+                className="px-4 py-2 border border-ink/20 text-xs uppercase tracking-wider hover:bg-ink/5 cursor-pointer rounded-none min-h-[44px]"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (cloudinaryUrl) {
+                    const imgTag = `\n<figure class="my-8">\n  <img src="${cloudinaryUrl}" alt="${cloudinaryCaption || 'Luxury travel image'}" class="w-full h-auto object-cover" />\n  ${cloudinaryCaption ? `<figcaption class="lbl-caption mt-2">${cloudinaryCaption} — Editor</figcaption>` : ''}\n</figure>\n`;
+                    insertTextAtCursor(imgTag);
+                    setCloudinaryUrl('');
+                    setCloudinaryCaption('');
+                    setCloudinaryOpen(false);
+                  }
+                }}
+                className="px-4 py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight text-xs uppercase tracking-wider font-bold cursor-pointer rounded-none min-h-[44px]"
+              >
+                Insert Image
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIDEO LOADER POPUP */}
+      {videoOpen && (
+        <div className="fixed inset-0 bg-midnight/60 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-ivory dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[480px] w-full shadow-2xl rounded-none flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-ink/10 pb-2">
+              <h4 className="font-serif text-lg font-semibold text-ink">Load Video Media</h4>
+              <button 
+                type="button"
+                onClick={() => setVideoOpen(false)}
+                className="text-ink/60 hover:text-ink text-xl font-bold min-h-[32px] min-w-[32px] cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Vimeo, YouTube, or Custom Video Link</label>
+              <input 
+                type="text" 
+                placeholder="e.g. https://vimeo.com/839485" 
+                value={videoUrl}
+                onChange={e => setVideoUrl(e.target.value)}
+                className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-2">
+              <button 
+                type="button" 
+                onClick={() => setVideoOpen(false)}
+                className="px-4 py-2 border border-ink/20 text-xs uppercase tracking-wider hover:bg-ink/5 cursor-pointer rounded-none min-h-[44px]"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (videoUrl) {
+                    let embedUrl = videoUrl;
+                    const ytMatch = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+                    const vimeoMatch = videoUrl.match(/(?:vimeo\.com\/(?:[a-z0-9-_]+\/)*|player\.vimeo\.com\/video\/)([0-9]+)/i);
+                    
+                    let markup = '';
+                    if (ytMatch) {
+                      embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <iframe src="${embedUrl}" class="absolute inset-0 w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n</div>\n`;
+                    } else if (vimeoMatch) {
+                      embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <iframe src="${embedUrl}" class="absolute inset-0 w-full h-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>\n</div>\n`;
+                    } else {
+                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <video src="${videoUrl}" controls class="absolute inset-0 w-full h-full object-cover"></video>\n</div>\n`;
+                    }
+                    
+                    insertTextAtCursor(markup);
+                    setVideoUrl('');
+                    setVideoOpen(false);
+                  }
+                }}
+                className="px-4 py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight text-xs uppercase tracking-wider font-bold cursor-pointer rounded-none min-h-[44px]"
+              >
+                Insert Video
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

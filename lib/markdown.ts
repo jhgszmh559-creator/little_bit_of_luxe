@@ -12,6 +12,9 @@ export function parseMarkdown(md: string): string {
   const resultBlocks: string[] = [];
   let currentBlock: string[] = [];
   let inHtmlBlock = false;
+  let htmlBlockStack: string[] = [];
+
+  const blockTags = new Set(['div', 'a', 'table', 'figure', 'iframe', 'video', 'blockquote', 'section', 'p']);
 
   const flushParagraph = () => {
     if (currentBlock.length > 0) {
@@ -27,19 +30,43 @@ export function parseMarkdown(md: string): string {
     const line = lines[i];
     const trimmed = line.trim();
 
-    // Handle HTML blocks
-    if (trimmed.startsWith('<div') || trimmed.startsWith('<a') || trimmed.startsWith('<table')) {
-      flushParagraph();
-      inHtmlBlock = true;
-      currentBlock.push(line);
-      continue;
+    // Check if we are starting a block HTML section
+    if (!inHtmlBlock) {
+      const startMatch = trimmed.match(/^<([a-zA-Z0-9]+)\b/i);
+      if (startMatch && blockTags.has(startMatch[1].toLowerCase())) {
+        flushParagraph();
+        inHtmlBlock = true;
+        htmlBlockStack = [];
+      }
     }
 
     if (inHtmlBlock) {
       currentBlock.push(line);
-      // Close HTML block if line contains closing tags for block items
-      // (Simplified check: check if it closes div or if it's the end of a block)
-      if (trimmed === '</div>' || trimmed === '</a>' || trimmed === '</table>') {
+      
+      // Parse tags in the current line to track open/close state
+      // Tag opening: <tag...>, excluding self-closing or comments
+      // Tag closing: </tag>
+      const tagRegex = /<\/?([a-zA-Z0-9]+)\b[^>]*>/g;
+      let match;
+      while ((match = tagRegex.exec(line)) !== null) {
+        const fullTag = match[0];
+        const tagName = match[1].toLowerCase();
+        
+        if (blockTags.has(tagName)) {
+          if (fullTag.startsWith('</')) {
+            // Closing tag
+            if (htmlBlockStack.length > 0 && htmlBlockStack[htmlBlockStack.length - 1] === tagName) {
+              htmlBlockStack.pop();
+            }
+          } else if (!fullTag.endsWith('/>')) {
+            // Opening tag
+            htmlBlockStack.push(tagName);
+          }
+        }
+      }
+
+      // If stack becomes empty, the block has ended
+      if (htmlBlockStack.length === 0) {
         resultBlocks.push(currentBlock.join('\n'));
         currentBlock = [];
         inHtmlBlock = false;
