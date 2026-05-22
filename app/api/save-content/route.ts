@@ -69,7 +69,11 @@ export async function POST(request: NextRequest) {
       const oldLocalPath = path.join(process.cwd(), oldRelPath);
 
       if (fs.existsSync(oldLocalPath)) {
-        fs.unlinkSync(oldLocalPath);
+        try {
+          fs.unlinkSync(oldLocalPath);
+        } catch (localDelErr: any) {
+          console.warn('Failed to delete old file locally (read-only filesystem):', localDelErr.message);
+        }
       }
 
       try {
@@ -148,9 +152,13 @@ export async function POST(request: NextRequest) {
     const fileContents = `${yamlLines.join('\n')}\n${bodyContent}`;
 
     // Write content locally
-    const localPath = path.join(process.cwd(), relPath);
-    fs.mkdirSync(path.dirname(localPath), { recursive: true });
-    fs.writeFileSync(localPath, fileContents, 'utf-8');
+    try {
+      const localPath = path.join(process.cwd(), relPath);
+      fs.mkdirSync(path.dirname(localPath), { recursive: true });
+      fs.writeFileSync(localPath, fileContents, 'utf-8');
+    } catch (localWriteErr: any) {
+      console.warn('Failed to write file locally (read-only filesystem):', localWriteErr.message);
+    }
 
     await saveContentToGithub(relPath, fileContents, `Update ${type}: ${slug}`);
 
