@@ -25,6 +25,7 @@ import {
   Clock,
   BookOpenCheck
 } from 'lucide-react';
+import { parseMarkdown } from '@/lib/markdown';
 
 interface ArticleItem {
   title: string;
@@ -52,9 +53,86 @@ const BRAND_COLORS = [
   { name: 'Ivory', hex: '#FFFFFF', bgClass: 'bg-white text-midnight border border-ink/10' },
 ];
 
+function nodeToMarkdown(node: Node): string {
+  let result = '';
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent || '';
+  }
+  
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    const element = node as HTMLElement;
+    const tagName = element.tagName.toLowerCase();
+    
+    // Check if it's a specific custom block we preserve as raw HTML
+    const isCustomBlock = tagName === 'figure' || tagName === 'iframe' || tagName === 'video' || 
+      (tagName === 'div' && (element.className.includes('bg-midnight') || element.className.includes('aspect-video')));
+    
+    if (isCustomBlock) {
+      return '\n\n' + element.outerHTML.trim() + '\n\n';
+    }
+    
+    let childrenMarkdown = '';
+    element.childNodes.forEach(child => {
+      childrenMarkdown += nodeToMarkdown(child);
+    });
+    
+    switch (tagName) {
+      case 'h1':
+        return `\n\n# ${childrenMarkdown.trim()}\n\n`;
+      case 'h2':
+        return `\n\n## ${childrenMarkdown.trim()}\n\n`;
+      case 'h3':
+        return `\n\n### ${childrenMarkdown.trim()}\n\n`;
+      case 'p':
+        return `\n\n${childrenMarkdown.trim()}\n\n`;
+      case 'strong':
+      case 'b':
+        return `**${childrenMarkdown}**`;
+      case 'em':
+      case 'i':
+        return `*${childrenMarkdown}*`;
+      case 'u':
+        return `<u>${childrenMarkdown}</u>`;
+      case 'a':
+        const href = element.getAttribute('href') || '';
+        return `[${childrenMarkdown}](${href})`;
+      case 'span':
+        const styleColor = element.style.color;
+        const styleFontFamily = element.style.fontFamily;
+        if (styleColor && styleFontFamily) {
+          return `<span style="color: ${styleColor}; font-family: ${styleFontFamily}">${childrenMarkdown}</span>`;
+        }
+        if (styleColor) {
+          return `<span style="color: ${styleColor}">${childrenMarkdown}</span>`;
+        }
+        if (styleFontFamily) {
+          return `<span style="font-family: ${styleFontFamily}">${childrenMarkdown}</span>`;
+        }
+        return childrenMarkdown;
+      case 'br':
+        return '\n';
+      case 'ul':
+        return `\n\n${childrenMarkdown}\n\n`;
+      case 'li':
+        return `- ${childrenMarkdown.trim()}\n`;
+      default:
+        return childrenMarkdown;
+    }
+  }
+  return result;
+}
+
+function convertHtmlToMarkdown(html: string): string {
+  if (typeof window === 'undefined') return '';
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const markdown = nodeToMarkdown(doc.body);
+  return markdown.replace(/\n{3,}/g, '\n\n').trim();
+}
+
 export default function EditorForm({ type, slug: initialSlug, initialData, allArticles = [] }: EditorFormProps) {
   const router = useRouter();
-  const bodyTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -126,8 +204,10 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
 
-  // SEO Sidebar State
+  // SEO Sidebar & Keyword Suggestions State
   const [targetKeyword, setTargetKeyword] = useState('');
+  const [keywordSuggestions, setKeywordSuggestions] = useState<Array<{ context: string; suggestion: string }>>([]);
+  const [analyzingKeyword, setAnalyzingKeyword] = useState(false);
 
   // Auto-close dropdowns when clicking outside
   useEffect(() => {
@@ -144,26 +224,127 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
     return () => document.removeEventListener('click', handleOutsideClick);
   }, []);
 
-  // Text Replacement Helper for Toolbar
-  const insertTextAtCursor = (before: string, after: string = '') => {
-    const textarea = bodyTextareaRef.current;
-    if (!textarea) return;
+  // Sync markdown content to editor innerHTML
+  useEffect(() => {
+    if (editorRef.current) {
+      const currentMarkdown = convertHtmlToMarkdown(editorRef.current.innerHTML);
+      if (currentMarkdown !== content) {
+        editorRef.current.innerHTML = parseMarkdown(content);
+      }
+    }
+  }, [content]);
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selection = text.substring(start, end);
+  // Configure styleWithCSS on load
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      try {
+        document.execCommand('styleWithCSS', false, 'true');
+      } catch (e) {
+        console.warn('styleWithCSS not supported/allowed in this context');
+      }
+    }
+  }, []);
 
-    const replacement = before + (selection || 'text') + after;
-    const newValue = text.substring(0, start) + replacement + text.substring(end);
+  // Exec command helper for rich text formatting
+  const applyStyle = (command: string, value: string = '') => {
+    if (typeof document === 'undefined') return;
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    document.execCommand(command, false, value);
+    if (editorRef.current) {
+      const md = convertHtmlToMarkdown(editorRef.current.innerHTML);
+      setContent(md);
+    }
+  };
+
+  // Font family helper wrapping selection in styles
+  const applyFontFamily = (fontFamily: string) => {
+    if (typeof window === 'undefined') return;
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
     
-    setContent(newValue);
+    const span = document.createElement('span');
+    span.style.fontFamily = fontFamily;
+    if (range.collapsed) {
+      span.textContent = 'text';
+    } else {
+      span.appendChild(range.extractContents());
+    }
+    range.insertNode(span);
     
-    // Maintain selection and focus after React state updates
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + before.length, start + before.length + (selection || 'text').length);
-    }, 50);
+    const newRange = document.createRange();
+    newRange.selectNodeContents(span);
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+    
+    if (editorRef.current) {
+      const md = convertHtmlToMarkdown(editorRef.current.innerHTML);
+      setContent(md);
+    }
+  };
+
+  // Insert HTML helper at cursor
+  const insertHtmlAtCursor = (html: string) => {
+    if (typeof window === 'undefined') return;
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || !editorRef.current?.contains(selection.anchorNode)) {
+      if (editorRef.current) {
+        editorRef.current.innerHTML += html;
+        const md = convertHtmlToMarkdown(editorRef.current.innerHTML);
+        setContent(md);
+      }
+      return;
+    }
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    const fragment = document.createDocumentFragment();
+    let node;
+    while ((node = tempDiv.firstChild)) {
+      fragment.appendChild(node);
+    }
+    
+    range.insertNode(fragment);
+    
+    if (editorRef.current) {
+      const md = convertHtmlToMarkdown(editorRef.current.innerHTML);
+      setContent(md);
+    }
+  };
+
+  // Gemini keyword insertion suggestions utility route call
+  const analyzeKeywordInsertion = async () => {
+    if (!targetKeyword || !content) return;
+    setAnalyzingKeyword(true);
+    setKeywordSuggestions([]);
+    try {
+      const res = await fetch('/api/analyze-keyword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, keyword: targetKeyword }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setKeywordSuggestions(data.suggestions || []);
+      } else {
+        console.error('Failed to analyze keyword');
+      }
+    } catch (err) {
+      console.error('Error analyzing keyword:', err);
+    } finally {
+      setAnalyzingKeyword(false);
+    }
   };
 
   const handleSave = async (e?: React.FormEvent) => {
@@ -280,47 +461,41 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
 
   // Dynamic Internal Link Suggester
   const getSuggestedLinks = () => {
-    if (!content && !title) {
-      return allArticles.filter(a => a.slug !== initialSlug).slice(0, 4);
+    if (!title) {
+      return [];
     }
-    
-    const combinedText = (title + ' ' + excerpt + ' ' + content).toLowerCase();
-    
-    // Score other articles based on matching occurrences
+
+    // Split title into lowercase descriptive tokens (filtering common filler words)
+    const stopWords = new Set(['the', 'and', 'with', 'that', 'this', 'for', 'hotel', 'review', 'news', 'preferred', 'partner', 'about', 'from', 'your', 'guide', 'luxe', 'little', 'a', 'an', 'at', 'in', 'on', 'of', 'to']);
+    const tokens = title
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .split(/[\s-]+/)
+      .filter((token: string) => token.length > 2 && !stopWords.has(token));
+
+    if (tokens.length === 0) {
+      return [];
+    }
+
     const scored = allArticles
       .filter(article => article.slug !== initialSlug)
       .map(article => {
         let score = 0;
+        const articleText = (article.title + ' ' + article.category + ' ' + article.slug).toLowerCase();
         
-        // Match words in title
-        const titleWords = article.title.toLowerCase().split(/\s+/).filter(w => w.length > 4);
-        titleWords.forEach(word => {
-          if (combinedText.includes(word)) score += 3;
+        tokens.forEach((token: string) => {
+          if (articleText.includes(token)) {
+            score += 1;
+          }
         });
-
-        // Match category
-        if (article.category && combinedText.includes(article.category.toLowerCase())) {
-          score += 1;
-        }
-
-        // Match slug fragments
-        const slugWords = article.slug.split('-');
-        slugWords.forEach(word => {
-          if (word.length > 4 && combinedText.includes(word)) score += 2;
-        });
-
+        
         return { article, score };
       })
       .filter(item => item.score > 0)
       .sort((a, b) => b.score - a.score)
       .map(item => item.article);
 
-    if (scored.length > 0) {
-      return scored.slice(0, 4);
-    }
-
-    // Default Fallbacks
-    return allArticles.filter(a => a.slug !== initialSlug).slice(0, 4);
+    return scored.slice(0, 4);
   };
 
   const getArticleUrl = (article: ArticleItem) => {
@@ -331,7 +506,8 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
 
   const handleInsertLink = (article: ArticleItem) => {
     const relativeUrl = getArticleUrl(article);
-    insertTextAtCursor(`[${article.title}](${relativeUrl})`);
+    const linkHtml = `<a href="${relativeUrl}" class="text-midnight hover:text-bordeaux underline underline-offset-4 decoration-1 transition-colors" target="_blank" rel="noopener noreferrer">${article.title}</a>`;
+    insertHtmlAtCursor(linkHtml);
   };
 
   return (
@@ -366,7 +542,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
             disabled={saving}
             className="btn--sand text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-midnight rounded-none"
           >
-            <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Draft'}
+            <Save className="w-4 h-4" /> {saving ? 'Saving...' : initialSlug ? 'Update Article' : 'Save Draft'}
           </button>
         </div>
       </header>
@@ -442,6 +618,29 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   />
                 </div>
 
+                {/* Dedicated Featured Hero Image URL */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
+                    Featured Hero Image URL
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="e.g. https://images.unsplash.com/photo-... or https://res.cloudinary.com/..."
+                    className="w-full text-sm bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                    value={ogImage}
+                    onChange={e => setOgImage(e.target.value)}
+                  />
+                  {ogImage && (ogImage.includes('unsplash.com') || ogImage.includes('cloudinary.com') || ogImage.startsWith('http')) && (
+                    <div className="relative w-full aspect-[16/9] overflow-hidden border border-ink/10 bg-paper/50 rounded-none">
+                      <img 
+                        src={ogImage} 
+                        alt="Hero preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+
                 {/* Main Body Content Field */}
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-col md:flex-row md:items-end justify-between gap-2">
@@ -455,7 +654,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                       {/* Bold */}
                       <button
                         type="button"
-                        onClick={() => insertTextAtCursor('**', '**')}
+                        onClick={() => applyStyle('bold')}
                         title="Bold text"
                         className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
                       >
@@ -465,7 +664,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                       {/* Italic */}
                       <button
                         type="button"
-                        onClick={() => insertTextAtCursor('*', '*')}
+                        onClick={() => applyStyle('italic')}
                         title="Italic text"
                         className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
                       >
@@ -475,7 +674,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                       {/* Underline */}
                       <button
                         type="button"
-                        onClick={() => insertTextAtCursor('<u>', '</u>')}
+                        onClick={() => applyStyle('underline')}
                         title="Underline text"
                         className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
                       >
@@ -503,7 +702,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                                 type="button"
                                 title={color.name}
                                 onClick={() => {
-                                  insertTextAtCursor(`<span style="color: ${color.hex}">`, '</span>');
+                                  applyStyle('foreColor', color.hex);
                                   setIsColorDropdownOpen(false);
                                 }}
                                 className={`w-full aspect-square text-[9px] font-bold rounded-none flex items-center justify-center shadow-sm cursor-pointer transition-transform hover:scale-105 ${color.bgClass}`}
@@ -530,7 +729,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                             <button
                               type="button"
                               onClick={() => {
-                                insertTextAtCursor('<span style="font-family: var(--lbl-serif)">', '</span>');
+                                applyFontFamily('var(--lbl-serif)');
                                 setIsFontDropdownOpen(false);
                               }}
                               className="px-4 py-2.5 text-left text-xs font-serif hover:bg-ink/5 text-ink cursor-pointer"
@@ -540,7 +739,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                             <button
                               type="button"
                               onClick={() => {
-                                insertTextAtCursor('<span style="font-family: var(--lbl-sans)">', '</span>');
+                                applyFontFamily('var(--lbl-sans)');
                                 setIsFontDropdownOpen(false);
                               }}
                               className="px-4 py-2.5 text-left text-xs font-sans hover:bg-ink/5 text-ink cursor-pointer"
@@ -577,14 +776,19 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                     </div>
                   </div>
 
-                  {/* Body Textarea */}
-                  <textarea 
-                    id="body-textarea"
-                    ref={bodyTextareaRef}
-                    placeholder="Write the full luxury travel prose article. HTML and markdown are fully supported."
-                    className="w-full text-base font-serif bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none min-h-[500px] resize-y leading-relaxed"
-                    value={content}
-                    onChange={e => setContent(e.target.value)}
+                  {/* Visual contentEditable Editor Container */}
+                  <div 
+                    id="body-editor"
+                    ref={editorRef}
+                    contentEditable
+                    onInput={(e) => {
+                      const html = e.currentTarget.innerHTML;
+                      const md = convertHtmlToMarkdown(html);
+                      setContent(md);
+                    }}
+                    data-placeholder="Write the full luxury travel prose article. HTML styles, images, and videos render immediately."
+                    className="w-full text-base font-serif bg-transparent border border-ink/15 p-6 outline-none focus:border-ink text-ink rounded-none min-h-[500px] overflow-y-auto leading-relaxed prose prose-stone dark:prose-invert max-w-none focus:ring-0 empty:before:content-[attr(data-placeholder)] empty:before:text-ink-3/50 empty:before:pointer-events-none"
+                    style={{ minHeight: '500px' }}
                   />
                 </div>
 
@@ -648,9 +852,37 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                         {getKeywordDensity()}%
                       </span>
                     </div>
-                    <div className="text-[9px] text-ink-3 mt-1 leading-normal italic">
+                    <div className="text-[9px] text-ink-3 mt-1 leading-normal italic pb-2 border-b border-ink/5">
                       Recommended keyword density is 0.8% - 2.5%.
                     </div>
+
+                    {/* Gemini Optimization Analysis Trigger */}
+                    <button
+                      type="button"
+                      onClick={analyzeKeywordInsertion}
+                      disabled={analyzingKeyword || !content}
+                      className="w-full text-xs py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight cursor-pointer rounded-none hover:opacity-90 font-semibold uppercase tracking-wider disabled:opacity-50 min-h-[38px] flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      {analyzingKeyword ? 'Analyzing...' : 'Analyze Insertion Points'}
+                    </button>
+                    
+                    {/* Suggestions List */}
+                    {keywordSuggestions.length > 0 && (
+                      <div className="mt-3 border-t border-ink/10 pt-3 flex flex-col gap-3">
+                        <span className="text-[9px] uppercase tracking-wider text-ink-3 font-semibold">Semantic Optimization Hints</span>
+                        {keywordSuggestions.map((item, index) => (
+                          <div key={index} className="p-3 bg-paper/50 border border-ink/5 flex flex-col gap-2">
+                            <div className="text-[10px] text-ink-3 italic">
+                              &ldquo;{item.context}&rdquo;
+                            </div>
+                            <div className="text-[11px] text-ink-2 font-medium leading-relaxed border-l-2 border-bordeaux dark:border-gold pl-2">
+                              {item.suggestion}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="bg-paper/20 p-4 border border-ink/5 border-dashed text-center text-xs text-ink-3 italic">
@@ -1138,7 +1370,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                 onClick={() => {
                   if (cloudinaryUrl) {
                     const imgTag = `\n<figure class="my-8">\n  <img src="${cloudinaryUrl}" alt="${cloudinaryCaption || 'Luxury travel image'}" class="w-full h-auto object-cover" />\n  ${cloudinaryCaption ? `<figcaption class="lbl-caption mt-2">${cloudinaryCaption} — Editor</figcaption>` : ''}\n</figure>\n`;
-                    insertTextAtCursor(imgTag);
+                    insertHtmlAtCursor(imgTag);
                     setCloudinaryUrl('');
                     setCloudinaryCaption('');
                     setCloudinaryOpen(false);
@@ -1206,7 +1438,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                       markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <video src="${videoUrl}" controls class="absolute inset-0 w-full h-full object-cover"></video>\n</div>\n`;
                     }
                     
-                    insertTextAtCursor(markup);
+                    insertHtmlAtCursor(markup);
                     setVideoUrl('');
                     setVideoOpen(false);
                   }

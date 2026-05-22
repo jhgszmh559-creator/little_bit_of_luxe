@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
+import { saveContentToGithub } from '@/lib/github';
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,13 +46,7 @@ export async function POST(request: NextRequest) {
     } else if (type === 'news') {
       subfolder = 'news';
     }
-    const contentDir = path.join(process.cwd(), 'content', subfolder);
-    
-    if (!fs.existsSync(contentDir)) {
-      fs.mkdirSync(contentDir, { recursive: true });
-    }
-
-    const filePath = path.join(contentDir, `${slug}.md`);
+    const relPath = `content/${subfolder}/${slug}.md`;
 
     // Build the frontmatter object based on type
     const frontmatter: Record<string, any> = {
@@ -111,9 +103,9 @@ export async function POST(request: NextRequest) {
     const bodyContent = content ? content.trim() : '';
     const fileContents = `${yamlLines.join('\n')}\n${bodyContent}`;
 
-    fs.writeFileSync(filePath, fileContents, 'utf-8');
+    await saveContentToGithub(relPath, fileContents, `Update ${type}: ${slug}`);
 
-    return NextResponse.json({ success: true, path: filePath });
+    return NextResponse.json({ success: true, path: relPath });
   } catch (error: any) {
     console.error('Error saving content:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });

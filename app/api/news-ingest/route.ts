@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import fs from 'fs';
-import path from 'path';
+import { saveContentToGithub } from '@/lib/github';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -106,7 +105,7 @@ export async function POST(request: NextRequest) {
 
     // Step 3: Claude/Gemini Drafting - Generate the structured, editorial, on-brand article
     const draftingModel = genAI.getGenerativeModel({ 
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: { temperature: 0.3 }
     });
 
@@ -135,7 +134,7 @@ export async function POST(request: NextRequest) {
     - Inject a signature QX Perks CTA block using this EXACT HTML:
       <div className="my-12 p-8 bg-midnight text-sand border-none">
         <p className="lbl-eyebrow mb-2 text-sand/70">The Preferred Privilege</p>
-        <h3 className="lbl-h3 text-sand mb-4">Book ${hotelName} with Perks</h3>
+        <h3 className="lbl-h3 text-sand mb-4">Book \${hotelName} with Perks</h3>
         <p className="lbl-body text-sand/85 mb-6">
           Through our preferred partnership, we unlock daily breakfast, priority upgrades, and property credits — matching the best flexible rates available directly, with all your standard loyalty nights and points fully recognized.
         </p>
@@ -175,20 +174,16 @@ export async function POST(request: NextRequest) {
 
     // Save draft directly to content/reviews/
     const slug = slugify(hotelName);
-    const reviewsDir = path.join(process.cwd(), 'content', 'reviews');
-    if (!fs.existsSync(reviewsDir)) {
-      fs.mkdirSync(reviewsDir, { recursive: true });
-    }
-    const outputPath = path.join(reviewsDir, `${slug}.md`);
-    fs.writeFileSync(outputPath, draftContent.trim(), 'utf-8');
+    const relPath = `content/reviews/${slug}.md`;
+    await saveContentToGithub(relPath, draftContent.trim(), `News Ingest: ${slug}`);
 
-    console.log(`Successfully ingested and saved news-ingest review draft at: ${outputPath}`);
+    console.log(`Successfully ingested and saved news-ingest review draft at: ${relPath}`);
 
     return NextResponse.json({
       success: true,
       hotelName,
       slug,
-      path: outputPath,
+      path: relPath,
       intel: {
         extractedInfo,
         perplexityContext

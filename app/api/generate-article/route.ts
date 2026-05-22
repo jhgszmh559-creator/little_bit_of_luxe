@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import Anthropic from '@anthropic-ai/sdk';
+import { saveContentToGithub } from '@/lib/github';
 
 export const dynamic = 'force-dynamic';
 
@@ -120,12 +119,7 @@ Please return the response as a single valid JSON object following the format co
       subfolder = 'news';
     }
 
-    const contentDir = path.join(process.cwd(), 'content', subfolder);
-    if (!fs.existsSync(contentDir)) {
-      fs.mkdirSync(contentDir, { recursive: true });
-    }
-
-    const filePath = path.join(contentDir, `${slug}.md`);
+    const relPath = `content/${subfolder}/${slug}.md`;
 
     // Prepare frontmatter
     const frontmatter: Record<string, any> = {
@@ -191,12 +185,12 @@ Please return the response as a single valid JSON object following the format co
     yamlLines.push('');
 
     const fileContents = `${yamlLines.join('\n')}\n${content.trim()}`;
-    fs.writeFileSync(filePath, fileContents, 'utf-8');
+    await saveContentToGithub(relPath, fileContents, `Generate ${type}: ${slug}`);
 
     return NextResponse.json({
       success: true,
       slug,
-      filePath,
+      filePath: relPath,
       article: {
         title,
         excerpt,
