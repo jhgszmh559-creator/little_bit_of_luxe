@@ -866,14 +866,16 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
           
           {status === 'published' ? (
             <>
-              <button 
+              <button
+                type="button"
                 onClick={() => handleSave('archived')}
                 disabled={saving}
                 className="btn--secondary text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-bordeaux text-bordeaux hover:bg-bordeaux hover:text-white rounded-none transition-colors"
               >
                 Archive
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={() => handleSave('published')}
                 disabled={saving}
                 className="btn--sand text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-midnight rounded-none"
@@ -883,14 +885,16 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
             </>
           ) : (
             <>
-              <button 
+              <button
+                type="button"
                 onClick={() => handleSave('draft')}
                 disabled={saving}
                 className="text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-ink/20 text-ink/70 hover:bg-ink/5 rounded-none transition-colors"
               >
                 Save Draft
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={() => handleSave('published')}
                 disabled={saving}
                 className="btn--sand text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-midnight rounded-none"
