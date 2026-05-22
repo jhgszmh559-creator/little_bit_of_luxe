@@ -26,6 +26,11 @@ import {
   BookOpenCheck
 } from 'lucide-react';
 import { parseMarkdown } from '@/lib/markdown';
+import { useEditor, EditorContent } from '@tiptap/react';
+import { FloatingMenu } from '@tiptap/react/menus';
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import Placeholder from '@tiptap/extension-placeholder';
 
 interface ArticleItem {
   title: string;
@@ -180,10 +185,11 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
 
   // Form State
   const [slug, setSlug] = useState(initialSlug || '');
+  const [currentType, setCurrentType] = useState(type);
   const [title, setTitle] = useState(initialData?.title || '');
   const [excerpt, setExcerpt] = useState(initialData?.excerpt || '');
   const [content, setContent] = useState(initialData?.content || '');
-  const [category, setCategory] = useState(initialData?.category || (type === 'program' ? 'Preferred Partner' : type === 'news' ? 'Hotel News' : 'Hotel Review'));
+  const [category, setCategory] = useState(initialData?.category || (currentType === 'program' ? 'Preferred Partner' : currentType === 'news' ? 'Hotel News' : 'Hotel Review'));
   const [draft, setDraft] = useState(initialData?.draft !== undefined ? initialData.draft : true);
   const [date, setDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
 
@@ -202,7 +208,10 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [brands, setBrands] = useState(initialData?.brands || '');
   const [officialLink, setOfficialLink] = useState(initialData?.officialLink || '');
   const [partnerLink, setPartnerLink] = useState(initialData?.partnerLink || '');
-  const [ogImage, setOgImage] = useState(initialData?.image || initialData?.ogImage || '');
+  const defaultHero = "https://cdn.prod.website-files.com/678444b2dafe38769d2ef04e/6895092d01a98987f2bbc29e_Light%20Gradient%2007.avif";
+  const [ogImage, setOgImage] = useState(initialData?.image || initialData?.ogImage || defaultHero);
+  const [galleryStyle, setGalleryStyle] = useState('grid');
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   // News specific fields
   const [propertyName, setPropertyName] = useState(initialData?.propertyName || '');
@@ -213,7 +222,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   // UI state
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const [editorTab, setEditorTab] = useState<'content' | 'metadata'>('content');
+  const [editorTab, setEditorTab] = useState<'write' | 'design' | 'strategy'>('write');
 
   // Lifecycle & Citations State
   const [status, setStatus] = useState<'published' | 'draft' | 'archived'>(initialData?.status || (initialData?.draft === false ? 'published' : 'draft'));
@@ -247,6 +256,47 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [entityDensity, setEntityDensity] = useState(false);
   const [citationReadiness, setCitationReadiness] = useState(false);
   const [directAnswerFormatting, setDirectAnswerFormatting] = useState(false);
+
+    // AI Summary Generator
+  const generateSummary = async () => {
+    if (!content) return;
+    setIsGeneratingSummary(true);
+    try {
+      const res = await fetch('/api/generate-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setExcerpt(data.summary);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Image,
+      Placeholder.configure({ placeholder: 'Write the full luxury travel prose article...' }),
+    ],
+    content: parseMarkdown(content),
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      const md = convertHtmlToMarkdown(html);
+      setContent(md);
+    },
+    editorProps: {
+      attributes: {
+        class: 'w-full text-base font-serif bg-transparent p-6 outline-none text-ink rounded-none min-h-[500px] overflow-y-auto leading-relaxed prose prose-stone dark:prose-invert max-w-none focus:ring-0',
+        style: 'min-height: 500px;'
+      },
+    },
+  });
 
   // Auto-close dropdowns when clicking outside
   useEffect(() => {
@@ -518,7 +568,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
     }
 
     const payload = {
-      type,
+      type: currentType,
       slug,
       title,
       excerpt,
@@ -574,7 +624,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   };
 
   const autoGenerateSlug = () => {
-    const text = type === 'program' ? programName : type === 'news' ? propertyName : hotelName;
+    const text = currentType === 'program' ? programName : currentType === 'news' ? propertyName : hotelName;
     if (text) {
       const slugified = text
         .toLowerCase()
@@ -750,835 +800,160 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
       <main className="flex-grow max-w-[1280px] w-full mx-auto p-4 md:p-8 flex flex-col gap-6">
         
         {/* Segmented Editor Tabs */}
-        <div className="flex bg-card border border-ink/10 p-1 rounded-none shadow-sm max-w-[480px] mx-auto w-full">
+        <div className="flex bg-card border border-ink/10 p-1 rounded-none shadow-sm max-w-[720px] mx-auto w-full">
           <button
-            onClick={() => setEditorTab('content')}
+            onClick={() => setEditorTab('write')}
             className={`flex-1 py-3 text-xs uppercase font-bold tracking-wider rounded-none transition-colors flex items-center justify-center gap-2 min-h-[44px] cursor-pointer ${
-              editorTab === 'content' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink bg-transparent font-medium'
+              editorTab === 'write' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink bg-transparent font-medium'
             }`}
           >
-            <BookOpen className="w-4 h-4" /> Editorial Body
+            <BookOpen className="w-4 h-4" /> Write
           </button>
           <button
-            onClick={() => setEditorTab('metadata')}
+            onClick={() => setEditorTab('design')}
             className={`flex-1 py-3 text-xs uppercase font-bold tracking-wider rounded-none transition-colors flex items-center justify-center gap-2 min-h-[44px] cursor-pointer ${
-              editorTab === 'metadata' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink bg-transparent font-medium'
+              editorTab === 'design' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink bg-transparent font-medium'
             }`}
           >
-            <Settings className="w-4 h-4" /> Metadata Dossier
+            <ImageIcon className="w-4 h-4" /> Design & Media
+          </button>
+          <button
+            onClick={() => setEditorTab('strategy')}
+            className={`flex-1 py-3 text-xs uppercase font-bold tracking-wider rounded-none transition-colors flex items-center justify-center gap-2 min-h-[44px] cursor-pointer ${
+              editorTab === 'strategy' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink bg-transparent font-medium'
+            }`}
+          >
+            <Settings className="w-4 h-4" /> SEO & Strategy
           </button>
         </div>
 
         {/* Dynamic Split Layout */}
         <div className="flex-grow">
-          {editorTab === 'content' ? (
-            /* TWO-COLUMN SPLIT LAYOUT (EDITOR + SEO SIDEBAR) */
-            <div className="flex flex-col lg:flex-row gap-8 items-start w-full">
+          
+          {editorTab === 'write' && (
+            <div className="w-full lg:w-[800px] mx-auto flex flex-col gap-6 bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none">
               
-              {/* Left Column (Core Article Editing Form - 70%) */}
-              <div className="w-full lg:w-[68%] flex flex-col gap-6 bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none">
-                
-                {/* Article Title Field */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
-                    Article Title
-                  </label>
-                  <input 
-                    type="text"
-                    placeholder="e.g. A weekend at the Splendido that lived up to its *name*."
-                    className="w-full text-lg md:text-2xl font-serif bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none min-h-[52px]"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    required
-                  />
-                </div>
+              {/* Article Title Field */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
+                  Article Title
+                </label>
+                <input 
+                  type="text"
+                  placeholder="e.g. A weekend at the Splendido that lived up to its name."
+                  className="w-full text-lg md:text-2xl font-serif bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none min-h-[52px]"
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  required
+                />
+              </div>
 
-                {/* Excerpt / Summary Field */}
-                <div className="flex flex-col gap-2">
+              {/* Excerpt / Summary Field */}
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center">
                   <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
                     Short Excerpt / Summary (Shows on homepage & newsletters)
                   </label>
-                  <textarea 
-                    rows={2}
-                    placeholder="One elegant, poetic, serif italic sentence setting the scene."
-                    className="w-full text-sm font-serif italic bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none resize-none"
-                    value={excerpt}
-                    onChange={e => setExcerpt(e.target.value)}
-                    required
-                  />
+                  <button type="button" onClick={generateSummary} disabled={isGeneratingSummary} className="text-[10px] uppercase tracking-wider text-bordeaux dark:text-gold-soft hover:underline flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> {isGeneratingSummary ? 'Generating...' : 'AI Summary'}
+                  </button>
                 </div>
-
-                {/* Dedicated Featured Hero Image URL */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
-                    Featured Hero Image URL
-                  </label>
-                  <input 
-                    type="text"
-                    placeholder="e.g. https://images.unsplash.com/photo-... or https://res.cloudinary.com/..."
-                    className="w-full text-sm bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                    value={ogImage}
-                    onChange={e => setOgImage(e.target.value)}
-                  />
-                  {ogImage && (ogImage.includes('unsplash.com') || ogImage.includes('cloudinary.com') || ogImage.startsWith('http')) && (
-                    <div className="relative w-full aspect-[16/9] overflow-hidden border border-ink/10 bg-paper/50 rounded-none">
-                      <img 
-                        src={ogImage} 
-                        alt="Hero preview" 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Main Body Content Field */}
-                <div className="flex flex-col gap-2 relative">
-                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
-                    Main Body Content
-                  </label>
-                  
-                  {/* PREMIUM RICH TEXT FORMATTING TOOLBAR */}
-                  <div className="sticky top-0 z-50 bg-card border-b border-ink/10 py-2 flex flex-wrap items-center gap-1 select-none">
-                    
-                    {/* Bold */}
-                    <button
-                      type="button"
-                      onClick={() => applyStyle('bold')}
-                      title="Bold text"
-                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                    >
-                      <Bold className="w-4 h-4" />
-                    </button>
-
-                    {/* Italic */}
-                    <button
-                      type="button"
-                      onClick={() => applyStyle('italic')}
-                      title="Italic text"
-                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                    >
-                      <Italic className="w-4 h-4" />
-                    </button>
-
-                    {/* Underline */}
-                    <button
-                      type="button"
-                      onClick={() => applyStyle('underline')}
-                      title="Underline text"
-                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                    >
-                      <Underline className="w-4 h-4" />
-                    </button>
-
-                    {/* Divider */}
-                    <div className="w-px h-6 bg-ink/10 mx-1" />
-
-                    {/* Color Picker Dropdown */}
-                    <div className="relative color-picker-container">
-                      <button
-                        type="button"
-                        onClick={() => setIsColorDropdownOpen(!isColorDropdownOpen)}
-                        title="Text Color"
-                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                      >
-                        <Palette className="w-4 h-4" />
-                      </button>
-                      {isColorDropdownOpen && (
-                        <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 p-3 shadow-xl rounded-none w-52 grid grid-cols-3 gap-2">
-                          {BRAND_COLORS.map((color) => (
-                            <button
-                              key={color.name}
-                              type="button"
-                              title={color.name}
-                              onClick={() => {
-                                applyStyle('foreColor', color.hex);
-                                setIsColorDropdownOpen(false);
-                              }}
-                              className={`w-full aspect-square text-[9px] font-bold rounded-none flex items-center justify-center shadow-sm cursor-pointer transition-transform hover:scale-105 ${color.bgClass}`}
-                            >
-                              {color.name.substring(0, 2)}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Font Toggle Dropdown */}
-                    <div className="relative font-picker-container">
-                      <button
-                        type="button"
-                        onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
-                        title="Font Family Override"
-                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                      >
-                        <Type className="w-4 h-4" />
-                      </button>
-                      {isFontDropdownOpen && (
-                        <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 py-1.5 shadow-xl rounded-none w-44 flex flex-col">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              applyFontFamily('var(--lbl-serif)');
-                              setIsFontDropdownOpen(false);
-                            }}
-                            className="px-4 py-2.5 text-left text-xs font-serif hover:bg-ink/5 text-ink cursor-pointer"
-                          >
-                            Serif (Cormorant)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              applyFontFamily('var(--lbl-sans)');
-                              setIsFontDropdownOpen(false);
-                            }}
-                            className="px-4 py-2.5 text-left text-xs font-sans hover:bg-ink/5 text-ink cursor-pointer"
-                          >
-                            Sans-serif (Manrope)
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Font Size Dropdown */}
-                    <div className="relative size-picker-container font-sans">
-                      <button
-                        type="button"
-                        onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
-                        title="Font Size"
-                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent text-sm font-semibold"
-                      >
-                        A<span className="text-[10px] ml-0.5 font-normal">±</span>
-                      </button>
-                      {isSizeDropdownOpen && (
-                        <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 py-1.5 shadow-xl rounded-none w-44 flex flex-col font-sans">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              applyFontSize('14px');
-                              setIsSizeDropdownOpen(false);
-                            }}
-                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-xs"
-                          >
-                            Small (14px)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              applyFontSize('17px');
-                              setIsSizeDropdownOpen(false);
-                            }}
-                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-sm font-medium"
-                          >
-                            Base (17px)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              applyFontSize('22px');
-                              setIsSizeDropdownOpen(false);
-                            }}
-                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-base font-semibold"
-                          >
-                            Large (22px)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              applyFontSize('28px');
-                              setIsSizeDropdownOpen(false);
-                            }}
-                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-lg font-bold"
-                          >
-                            Extra Large (28px)
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Hyperlink Tool */}
-                    <button
-                      type="button"
-                      onClick={openLinkModal}
-                      title="Add Custom Hyperlink"
-                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                    >
-                      <Link2 className="w-4 h-4" />
-                    </button>
-
-                    {/* Divider */}
-                    <div className="w-px h-6 bg-ink/10 mx-1" />
-
-                    {/* Cloudinary Image Loader */}
-                    <button
-                      type="button"
-                      onClick={() => setCloudinaryOpen(true)}
-                      title="Add Cloudinary Image"
-                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                    >
-                      <ImageIcon className="w-4 h-4" />
-                    </button>
-
-                    {/* Vimeo/Video Loader */}
-                    <button
-                      type="button"
-                      onClick={() => setVideoOpen(true)}
-                      title="Add Video Player Embed"
-                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                    >
-                      <VideoIcon className="w-4 h-4" />
-                    </button>
-
-                  </div>
-
-                  {/* Visual contentEditable Editor Container */}
-                  <div 
-                    id="body-editor"
-                    ref={editorRef}
-                    contentEditable
-                    onInput={(e) => {
-                      const html = e.currentTarget.innerHTML;
-                      const md = convertHtmlToMarkdown(html);
-                      setContent(md);
-                    }}
-                    data-placeholder="Write the full luxury travel prose article. HTML styles, images, and videos render immediately."
-                    className="w-full text-base font-serif bg-transparent border border-ink/15 p-6 outline-none focus:border-ink text-ink rounded-none min-h-[500px] overflow-y-auto leading-relaxed prose prose-stone dark:prose-invert max-w-none focus:ring-0 empty:before:content-[attr(data-placeholder)] empty:before:text-ink-3/50 empty:before:pointer-events-none"
-                    style={{ minHeight: '500px' }}
-                  />
-                </div>
-
+                <textarea 
+                  rows={2}
+                  placeholder="One elegant, poetic, serif italic sentence setting the scene."
+                  className="w-full text-sm font-serif italic bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none resize-none"
+                  value={excerpt}
+                  onChange={e => setExcerpt(e.target.value)}
+                  required
+                />
               </div>
 
-              {/* Right Column (Sticky Real-Time SEO & AI Strategy Hub - 30%) */}
-              <div className="w-full lg:w-[32%] lg:sticky lg:top-[96px] flex flex-col gap-6 bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none">
+              {/* Main Body Content Field */}
+              <div className="flex flex-col gap-2 relative border border-ink/15">
+                <div className="bg-card px-4 py-2 border-b border-ink/10 text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans flex justify-between items-center">
+                  <span>Main Body Canvas</span>
+                  <span className="text-ink-3/50">TipTap Editor Active</span>
+                </div>
                 
-                <div className="border-b border-ink/10 pb-4">
-                  <h4 className="font-serif text-lg font-semibold flex items-center gap-2">
-                    <Sparkles className="w-4.5 h-4.5 text-bordeaux dark:text-gold-soft" />
-                    Strategy & SEO Hub
-                  </h4>
-                  <p className="text-[10px] text-ink-3 uppercase tracking-wider mt-1">Real-time content scoring</p>
+                {editor && (
+                  <FloatingMenu editor={editor} className="flex bg-card border border-ink/10 shadow-lg rounded-none p-1 gap-1">
+                    <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className="text-[10px] uppercase font-bold tracking-wider px-3 py-2 hover:bg-ink/5 text-ink transition-colors">
+                      H2
+                    </button>
+                    <button type="button" onClick={() => { const url = window.prompt('Image URL:'); if (url) editor.chain().focus().setImage({ src: url }).run(); }} className="text-[10px] uppercase font-bold tracking-wider px-3 py-2 hover:bg-ink/5 text-ink transition-colors">
+                      Image
+                    </button>
+                    <button type="button" onClick={() => editor.chain().focus().toggleBlockquote().run()} className="text-[10px] uppercase font-bold tracking-wider px-3 py-2 hover:bg-ink/5 text-ink transition-colors">
+                      Quote
+                    </button>
+                    <button type="button" onClick={() => { const html = `<div class="gallery gallery-${galleryStyle}">[Gallery Placeholder]</div>`; insertHtmlAtCursor(html); }} className="text-[10px] uppercase font-bold tracking-wider px-3 py-2 hover:bg-ink/5 text-ink transition-colors">
+                      Gallery
+                    </button>
+                  </FloatingMenu>
+                )}
+
+                <div className="bg-transparent relative">
+                  <EditorContent editor={editor} />
                 </div>
-
-                {/* Focus Keyword Section */}
-                <div className="flex flex-col gap-3">
-                  <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">Target Keyword</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Splendido Hotel" 
-                    value={targetKeyword}
-                    onChange={e => setTargetKeyword(e.target.value)}
-                    className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
-                  />
-                </div>
-
-                {/* On-Page SEO Checklist */}
-                <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs">
-                  <div className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold mb-1">On-Page Automated Checks</div>
-                  
-                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                    <span className="text-ink-2 font-medium">Exactly One H1 Tag</span>
-                    {isSingleH1() ? (
-                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                    ) : (
-                      <span className="text-bordeaux font-medium">— No</span>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                    <span className="text-ink-2 font-medium">No Skipped Heading Levels</span>
-                    {noSkippedHeadings() ? (
-                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                    ) : (
-                      <span className="text-bordeaux font-medium">— No</span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                    <span className="text-ink-2 font-medium">Title Length Optimal (40-60)</span>
-                    {title.length >= 40 && title.length <= 60 ? (
-                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                    ) : (
-                      <span className="text-bordeaux font-medium">{title.length} chars</span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                    <span className="text-ink-2 font-medium">Excerpt Length Optimal (120-160)</span>
-                    {excerpt.length >= 120 && excerpt.length <= 160 ? (
-                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                    ) : (
-                      <span className="text-bordeaux font-medium">{excerpt.length} chars</span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                    <span className="text-ink-2 font-medium">Content Length (&gt;800 words)</span>
-                    {getWordCount() > 800 ? (
-                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                    ) : (
-                      <span className="text-bordeaux font-medium">{getWordCount()} words</span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-ink-2 font-medium">Internal Links Present</span>
-                    {internalLinksPresent() ? (
-                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                    ) : (
-                      <span className="text-bordeaux font-medium">— No</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* GEO & Manual SEO Toggles */}
-                <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs mt-2">
-                  <div className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold mb-1">GEO & Manual SEO Toggles</div>
-                  
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" checked={entityDensity} onChange={e => setEntityDensity(e.target.checked)} className="accent-midnight w-4 h-4" />
-                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Entity Density Optimal</span>
-                  </label>
-                  
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" checked={citationReadiness} onChange={e => setCitationReadiness(e.target.checked)} className="accent-midnight w-4 h-4" />
-                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Citation Readiness Check</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" checked={directAnswerFormatting} onChange={e => setDirectAnswerFormatting(e.target.checked)} className="accent-midnight w-4 h-4" />
-                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Direct Answer Formatting</span>
-                  </label>
-
-                  <div className="border-t border-ink/5 my-1" />
-
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" checked={geoPassed} onChange={e => setGeoPassed(e.target.checked)} className="accent-midnight w-4 h-4" />
-                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">GEO (Generative Optimization) Passed</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input type="checkbox" checked={altTextOptimized} onChange={e => setAltTextOptimized(e.target.checked)} className="accent-midnight w-4 h-4" />
-                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Featured Image Alt-Text Optimized</span>
-                  </label>
-                </div>
-
-                {/* Copy Stats Block */}
-                <div className="border-t border-ink/10 pt-4 flex flex-col gap-3">
-                  <span className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5" /> Copy Statistics
-                  </span>
-                  
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-paper/40 p-2.5 border border-ink/5">
-                      <div className="text-sm font-mono font-bold text-ink">{getWordCount()}</div>
-                      <div className="text-[9px] text-ink-3 uppercase mt-0.5">Words</div>
-                    </div>
-                    <div className="bg-paper/40 p-2.5 border border-ink/5">
-                      <div className="text-sm font-mono font-bold text-ink">{getCharCount()}</div>
-                      <div className="text-[9px] text-ink-3 uppercase mt-0.5">Chars</div>
-                    </div>
-                    <div className="bg-paper/40 p-2.5 border border-ink/5">
-                      <div className="text-sm font-mono font-bold text-ink flex items-center justify-center gap-1">
-                        <Clock className="w-3 h-3 text-ink-3" />
-                        {getReadingTime()}m
-                      </div>
-                      <div className="text-[9px] text-ink-3 uppercase mt-0.5">Reading</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Link Suggestions Analyzer */}
-                <div className="border-t border-ink/10 pt-4 flex flex-col gap-3">
-                  <span className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold flex items-center gap-1.5">
-                    <BookOpenCheck className="w-3.5 h-3.5" /> Internal Link Suggester
-                  </span>
-
-                  <div className="flex flex-col gap-2">
-                    {getSuggestedLinks().length > 0 ? (
-                      getSuggestedLinks().map((article) => (
-                        <div 
-                          key={article.slug}
-                          className="bg-paper/30 hover:bg-paper/60 p-3 border border-ink/5 flex flex-col gap-1.5 transition-colors group"
-                        >
-                          <div className="flex justify-between items-start gap-1">
-                            <span className="text-[9px] uppercase tracking-wider text-ink-3 font-medium">
-                              {article.category}
-                            </span>
-                            <span className="text-[8px] px-1.5 py-0.5 bg-ink/5 text-ink-2 rounded-none">
-                              {article.type}
-                            </span>
-                          </div>
-                          <h5 className="font-serif text-xs font-semibold text-ink leading-snug group-hover:text-bordeaux dark:group-hover:text-gold-soft transition-colors">
-                            {article.title}
-                          </h5>
-                          <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-ink/5">
-                            <span className="text-[9px] font-mono text-ink-3 truncate max-w-[120px]">
-                              {getArticleUrl(article)}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleInsertLink(article)}
-                              className="text-[9px] uppercase tracking-wider font-bold text-bordeaux dark:text-gold-soft hover:underline flex items-center gap-0.5 cursor-pointer"
-                            >
-                              <Link2 className="w-2.5 h-2.5" /> Insert Link
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-xs text-ink-3 italic text-center p-3">
-                        No linking candidates found.
-                      </div>
-                    )}
-                  </div>
-                </div>
-
               </div>
 
             </div>
-          ) : (
-            /* TAB 2: METADATA DOSSIER (Original Full Details Layout) */
-            <div className="bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none flex flex-col gap-6">
+          )}
+
+          {editorTab === 'design' && (
+            <div className="w-full lg:w-[800px] mx-auto bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none flex flex-col gap-6">
               
-              <div className="p-4 bg-paper border border-ink/5 text-xs text-ink-2">
-                You are editing a <strong>{type === 'program' ? 'Preferred Partner Guide' : type === 'news' ? 'Hotel News Opening' : 'Hotel Inspection Review'}</strong>.
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* URL Slug */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold flex justify-between items-center">
-                    <span>URL Slug (Unique identifier)</span>
-                    <button 
-                      type="button" 
-                      onClick={autoGenerateSlug}
-                      className="text-[9px] uppercase tracking-wider text-bordeaux dark:text-gold-soft hover:underline min-h-[32px] px-2 flex items-center"
-                    >
-                      Auto-Generate
-                    </button>
-                  </label>
-                  <input 
-                    type="text"
-                    placeholder="e.g. virtuoso"
-                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                    value={slug}
-                    onChange={e => setSlug(e.target.value)}
-                    disabled={!!initialSlug}
-                    required
-                  />
-                </div>
-
-                {/* Category */}
+                
+                {/* Article Converter */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                    Journal Category
-                  </label>
-                  <input 
-                    type="text"
-                    placeholder="e.g. Hotel Review, Hotel News, Preferred Partner"
-                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* Date */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                    Publish Date
-                  </label>
-                  <input 
-                    type="date"
-                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                    value={date}
-                    onChange={e => setDate(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* Publishing Lifecycle Status */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                    Publishing Status
+                    Article Type
                   </label>
                   <select 
                     className="w-full text-sm bg-card border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                    value={status}
-                    onChange={e => {
-                      const newStatus = e.target.value as 'published' | 'draft' | 'archived';
-                      setStatus(newStatus);
-                      setDraft(newStatus !== 'published');
-                    }}
+                    value={currentType}
+                    onChange={e => setCurrentType(e.target.value as 'review' | 'program' | 'news')}
                   >
-                    <option value="draft">Draft (Private / Dashboard only)</option>
-                    <option value="published">Published (Public on Live Site)</option>
-                    <option value="archived">Archived (Private / Archive list)</option>
+                    <option value="review">Hotel Review</option>
+                    <option value="program">Preferred Partner Guide</option>
+                    <option value="news">Hotel News Opening</option>
                   </select>
                 </div>
 
-                {/* Conditionally render fields based on Content Type */}
-                {type === 'review' && (
-                  <>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Hotel Property Name
-                      </label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. Belmond Hotel Caruso"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={hotelName}
-                        onChange={e => setHotelName(e.target.value)}
-                        required
-                      />
-                    </div>
+                {/* Gallery Style */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                    Gallery Block Style
+                  </label>
+                  <select 
+                    className="w-full text-sm bg-card border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                    value={galleryStyle}
+                    onChange={e => setGalleryStyle(e.target.value)}
+                  >
+                    <option value="grid">Grid View</option>
+                    <option value="carousel">Carousel View</option>
+                  </select>
+                </div>
 
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Hotel Brand Network
-                      </label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. Belmond, Rosewood, Aman"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={brand}
-                        onChange={e => setBrand(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Location / Region
-                      </label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. Ravello, Italy"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={location}
-                        onChange={e => setLocation(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Inspection Rating Score (1.0 to 10.0)
-                      </label>
-                      <input 
-                        type="number"
-                        step="0.1"
-                        min="1.0"
-                        max="10.0"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={rating}
-                        onChange={e => setRating(Number(e.target.value))}
-                        required
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Room Type Tested
-                      </label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. Junior Suite Superior"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={roomType}
-                        onChange={e => setRoomType(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        YouTube Video ID (Optional preview embed)
-                      </label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. dQw4w9WgXcQ"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={youtubeId}
-                        onChange={e => setYoutubeId(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2 justify-center pt-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold flex items-center gap-2 cursor-pointer min-h-[44px]">
-                        <input 
-                          type="checkbox" 
-                          className="w-5 h-5 rounded-none border-ink text-ink bg-transparent focus:ring-0 cursor-pointer"
-                          checked={showQxPerks}
-                          onChange={e => setShowQxPerks(e.target.checked)}
-                        />
-                        <span>Inject QX Perks Booking Banner</span>
-                      </label>
-                    </div>
-                  </>
-                )}
-
-                {type === 'program' && (
-                  <>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Program Name
-                      </label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. Rosewood Elite"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={programName}
-                        onChange={e => setProgramName(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Loyalty Network Core
-                      </label>
-                      <select 
-                        className="w-full text-sm bg-card border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={loyaltyNetwork}
-                        onChange={e => setLoyaltyNetwork(e.target.value)}
-                      >
-                        <option value="Hilton">Hilton</option>
-                        <option value="Marriott">Marriott</option>
-                        <option value="Hyatt">Hyatt</option>
-                        <option value="Accor">Accor</option>
-                        <option value="IHG">IHG</option>
-                        <option value="Independent">Independent</option>
-                      </select>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Participating Brands (Comma separated list)
-                      </label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. Waldorf Astoria, LXR, Conrad"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={brands}
-                        onChange={e => setBrands(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Official Website Link
-                      </label>
-                      <input 
-                        type="url"
-                        placeholder="https://..."
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={officialLink}
-                        onChange={e => setOfficialLink(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Partner Booking CTA Link
-                      </label>
-                      <input 
-                        type="url"
-                        placeholder="https://..."
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={partnerLink}
-                        onChange={e => setPartnerLink(e.target.value)}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {type === 'news' && (
-                  <>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Property Name
-                      </label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. The Emory"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={propertyName}
-                        onChange={e => setPropertyName(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Brand
-                      </label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. Maybourne Hotel Group"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={brand}
-                        onChange={e => setBrand(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Location
-                      </label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. Belgravia, London"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={location}
-                        onChange={e => setLocation(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Projected Opening Time
-                      </label>
-                      <input 
-                        type="text"
-                        placeholder="e.g. Opened Spring 2024"
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={projectedOpening}
-                        onChange={e => setProjectedOpening(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                        Original Citation Link
-                      </label>
-                      <input 
-                        type="url"
-                        placeholder="https://..."
-                        className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                        value={sourceUrl}
-                        onChange={e => setSourceUrl(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2 justify-center pt-2">
-                      <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold flex items-center gap-2 cursor-pointer min-h-[44px]">
-                        <input 
-                          type="checkbox" 
-                          className="w-5 h-5 rounded-none border-ink text-ink bg-transparent focus:ring-0 cursor-pointer"
-                          checked={earlyNewsletterCta}
-                          onChange={e => setEarlyNewsletterCta(e.target.checked)}
-                        />
-                        <span>Inject Early Newsletter CTA</span>
-                      </label>
-                    </div>
-                  </>
-                )}
+                {/* QX Travel Partner Link */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                    QX Travel Partner Link
+                  </label>
+                  <input 
+                    type="url"
+                    placeholder="https://..."
+                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                    value={partnerLink}
+                    onChange={e => setPartnerLink(e.target.value)}
+                  />
+                </div>
 
                 {/* Cover/OG Image URL */}
-                <div className="md:col-span-2 flex flex-col gap-2">
+                <div className="md:col-span-2 flex flex-col gap-2 border-t border-ink/10 pt-6 mt-2">
                   <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                    Cover / OG Image URL (High-res Unsplash placeholder)
+                    Featured Hero Image URL
                   </label>
                   <input 
                     type="text"
@@ -1587,7 +962,129 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                     value={ogImage}
                     onChange={e => setOgImage(e.target.value)}
                   />
+                  {ogImage && (
+                    <div className="relative w-full aspect-[16/9] overflow-hidden border border-ink/10 bg-paper/50 rounded-none mt-2">
+                      <img src={ogImage} alt="Hero preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
                 </div>
+
+              </div>
+            </div>
+          )}
+
+          {editorTab === 'strategy' && (
+            <div className="w-full lg:w-[800px] mx-auto bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none flex flex-col gap-6">
+              
+              <div className="border-b border-ink/10 pb-4">
+                <h4 className="font-serif text-lg font-semibold flex items-center gap-2">
+                  <Sparkles className="w-4.5 h-4.5 text-bordeaux dark:text-gold-soft" />
+                  Strategy & SEO Hub
+                </h4>
+                <p className="text-[10px] text-ink-3 uppercase tracking-wider mt-1">Real-time content scoring</p>
+              </div>
+
+              {/* Focus Keyword Section */}
+              <div className="flex flex-col gap-3">
+                <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">Target Keyword</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Splendido Hotel" 
+                  value={targetKeyword}
+                  onChange={e => setTargetKeyword(e.target.value)}
+                  className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
+                />
+              </div>
+
+              {/* On-Page SEO Checklist */}
+              <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs">
+                <div className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold mb-1">On-Page Automated Checks</div>
+                
+                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                  <span className="text-ink-2 font-medium">Exactly One H1 Tag</span>
+                  {isSingleH1() ? (
+                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                  ) : (
+                    <span className="text-bordeaux font-medium">— No</span>
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                  <span className="text-ink-2 font-medium">No Skipped Heading Levels</span>
+                  {noSkippedHeadings() ? (
+                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                  ) : (
+                    <span className="text-bordeaux font-medium">— No</span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                  <span className="text-ink-2 font-medium">Title Length Optimal (40-60)</span>
+                  {title.length >= 40 && title.length <= 60 ? (
+                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                  ) : (
+                    <span className="text-bordeaux font-medium">{title.length} chars</span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                  <span className="text-ink-2 font-medium">Excerpt Length Optimal (120-160)</span>
+                  {excerpt.length >= 120 && excerpt.length <= 160 ? (
+                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                  ) : (
+                    <span className="text-bordeaux font-medium">{excerpt.length} chars</span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                  <span className="text-ink-2 font-medium">Content Length (&gt;800 words)</span>
+                  {getWordCount() > 800 ? (
+                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                  ) : (
+                    <span className="text-bordeaux font-medium">{getWordCount()} words</span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-ink-2 font-medium">Internal Links Present</span>
+                  {internalLinksPresent() ? (
+                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                  ) : (
+                    <span className="text-bordeaux font-medium">— No</span>
+                  )}
+                </div>
+              </div>
+
+              {/* GEO & Manual SEO Toggles */}
+              <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs mt-2">
+                <div className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold mb-1">GEO & Manual SEO Toggles</div>
+                
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" checked={entityDensity} onChange={e => setEntityDensity(e.target.checked)} className="accent-midnight w-4 h-4" />
+                  <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Entity Density Optimal</span>
+                </label>
+                
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" checked={citationReadiness} onChange={e => setCitationReadiness(e.target.checked)} className="accent-midnight w-4 h-4" />
+                  <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Citation Readiness Check</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" checked={directAnswerFormatting} onChange={e => setDirectAnswerFormatting(e.target.checked)} className="accent-midnight w-4 h-4" />
+                  <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Direct Answer Formatting</span>
+                </label>
+
+                <div className="border-t border-ink/5 my-1" />
+
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" checked={geoPassed} onChange={e => setGeoPassed(e.target.checked)} className="accent-midnight w-4 h-4" />
+                  <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">GEO (Generative Optimization) Passed</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" checked={altTextOptimized} onChange={e => setAltTextOptimized(e.target.checked)} className="accent-midnight w-4 h-4" />
+                  <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Featured Image Alt-Text Optimized</span>
+                </label>
               </div>
 
               {/* Private Sources Citations Section */}
@@ -1598,225 +1095,30 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                     {sources.length} Verified Sources
                   </span>
                 </div>
-                <p className="text-xs text-ink-3 leading-relaxed">
-                  These verified information sources were crawled during generative ingestion and inform this article's research footprint. They are kept private from the public article layout.
-                </p>
+                
                 {sources.length > 0 ? (
-                  <ol className="list-decimal list-inside bg-paper p-4 border border-ink/5 flex flex-col gap-2 font-mono text-[11px] text-bordeaux dark:text-gold-soft select-all">
-                    {sources.map((src, idx) => (
-                      <li key={idx} className="truncate">
-                        <a href={src} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                          {src}
+                  <ul className="flex flex-col gap-2">
+                    {sources.map((source, idx) => (
+                      <li key={idx} className="text-xs flex items-start gap-2 bg-paper/50 p-2.5 border border-ink/5">
+                        <span className="text-ink-3 font-mono mt-0.5">[{idx + 1}]</span>
+                        <a href={source} target="_blank" rel="noreferrer" className="text-ink hover:text-bordeaux dark:hover:text-gold-soft hover:underline break-all">
+                          {source}
                         </a>
                       </li>
                     ))}
-                  </ol>
+                  </ul>
                 ) : (
-                  <div className="text-xs text-ink-3 italic p-4 bg-paper/50 border border-dashed border-ink/10 text-center">
-                    No intelligence sources compiled for this draft yet.
+                  <div className="text-xs text-ink-3 italic p-4 bg-paper/30 border border-ink/5 text-center">
+                    No intelligence sources cited for this article.
                   </div>
                 )}
               </div>
 
             </div>
           )}
-        </div>
 
+        </div>
       </main>
-
-      {/* CLOUDINARY LOADER POPUP */}
-      {cloudinaryOpen && (
-        <div className="fixed inset-0 bg-midnight/60 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-ivory dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[480px] w-full shadow-2xl rounded-none flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-ink/10 pb-2">
-              <h4 className="font-serif text-lg font-semibold text-ink">Load Cloudinary Media</h4>
-              <button 
-                type="button"
-                onClick={() => setCloudinaryOpen(false)}
-                className="text-ink/60 hover:text-ink text-xl font-bold min-h-[32px] min-w-[32px] cursor-pointer"
-              >
-                &times;
-              </button>
-            </div>
-            
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Cloudinary Image URL</label>
-                <input 
-                  type="text" 
-                  placeholder="https://res.cloudinary.com/..." 
-                  value={cloudinaryUrl}
-                  onChange={e => setCloudinaryUrl(e.target.value)}
-                  className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Image Caption</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. Grand Canal view from Aman Venice balcony" 
-                  value={cloudinaryCaption}
-                  onChange={e => setCloudinaryCaption(e.target.value)}
-                  className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-2">
-              <button 
-                type="button" 
-                onClick={() => setCloudinaryOpen(false)}
-                className="px-4 py-2 border border-ink/20 text-xs uppercase tracking-wider hover:bg-ink/5 cursor-pointer rounded-none min-h-[44px]"
-              >
-                Cancel
-              </button>
-              <button 
-                type="button" 
-                onClick={() => {
-                  if (cloudinaryUrl) {
-                    const imgTag = `\n<figure class="my-8">\n  <img src="${cloudinaryUrl}" alt="${cloudinaryCaption || 'Luxury travel image'}" class="w-full h-auto object-cover" />\n  ${cloudinaryCaption ? `<figcaption class="lbl-caption mt-2">${cloudinaryCaption} — Editor</figcaption>` : ''}\n</figure>\n`;
-                    insertHtmlAtCursor(imgTag);
-                    setCloudinaryUrl('');
-                    setCloudinaryCaption('');
-                    setCloudinaryOpen(false);
-                  }
-                }}
-                className="px-4 py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight text-xs uppercase tracking-wider font-bold cursor-pointer rounded-none min-h-[44px]"
-              >
-                Insert Image
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* VIDEO LOADER POPUP */}
-      {videoOpen && (
-        <div className="fixed inset-0 bg-midnight/60 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-ivory dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[480px] w-full shadow-2xl rounded-none flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-ink/10 pb-2">
-              <h4 className="font-serif text-lg font-semibold text-ink">Load Video Media</h4>
-              <button 
-                type="button"
-                onClick={() => setVideoOpen(false)}
-                className="text-ink/60 hover:text-ink text-xl font-bold min-h-[32px] min-w-[32px] cursor-pointer"
-              >
-                &times;
-              </button>
-            </div>
-            
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Vimeo, YouTube, or Custom Video Link</label>
-              <input 
-                type="text" 
-                placeholder="e.g. https://vimeo.com/839485" 
-                value={videoUrl}
-                onChange={e => setVideoUrl(e.target.value)}
-                className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 mt-2">
-              <button 
-                type="button" 
-                onClick={() => setVideoOpen(false)}
-                className="px-4 py-2 border border-ink/20 text-xs uppercase tracking-wider hover:bg-ink/5 cursor-pointer rounded-none min-h-[44px]"
-              >
-                Cancel
-              </button>
-              <button 
-                type="button" 
-                onClick={() => {
-                  if (videoUrl) {
-                    let embedUrl = videoUrl;
-                    const ytMatch = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
-                    const vimeoMatch = videoUrl.match(/(?:vimeo\.com\/(?:[a-z0-9-_]+\/)*|player\.vimeo\.com\/video\/)([0-9]+)/i);
-                    
-                    let markup = '';
-                    if (ytMatch) {
-                      embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
-                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <iframe src="${embedUrl}" class="absolute inset-0 w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n</div>\n`;
-                    } else if (vimeoMatch) {
-                      embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <iframe src="${embedUrl}" class="absolute inset-0 w-full h-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>\n</div>\n`;
-                    } else {
-                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <video src="${videoUrl}" controls class="absolute inset-0 w-full h-full object-cover"></video>\n</div>\n`;
-                    }
-                    
-                    insertHtmlAtCursor(markup);
-                    setVideoUrl('');
-                    setVideoOpen(false);
-                  }
-                }}
-                className="px-4 py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight text-xs uppercase tracking-wider font-bold cursor-pointer rounded-none min-h-[44px]"
-              >
-                Insert Video
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* LINK LOADER POPUP */}
-      {isLinkModalOpen && (
-        <div className="fixed inset-0 bg-midnight/60 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-ivory dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[480px] w-full shadow-2xl rounded-none flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-ink/10 pb-2">
-              <h4 className="font-serif text-lg font-semibold text-ink">Add Custom Hyperlink</h4>
-              <button 
-                type="button"
-                onClick={() => setIsLinkModalOpen(false)}
-                className="text-ink/60 hover:text-ink text-xl font-bold min-h-[32px] min-w-[32px] cursor-pointer"
-              >
-                &times;
-              </button>
-            </div>
-            
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Destination URL</label>
-              <input 
-                type="text" 
-                placeholder="e.g. https://www.hyatt.com or /review/aman-venice" 
-                value={hyperlinkUrl}
-                onChange={e => setHyperlinkUrl(e.target.value)}
-                className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
-                autoFocus
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (hyperlinkUrl) {
-                      applyHyperlink(hyperlinkUrl);
-                    }
-                  }
-                }}
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 mt-2">
-              <button 
-                type="button" 
-                onClick={() => setIsLinkModalOpen(false)}
-                className="px-4 py-2 border border-ink/20 text-xs uppercase tracking-wider hover:bg-ink/5 cursor-pointer rounded-none min-h-[44px]"
-              >
-                Cancel
-              </button>
-              <button 
-                type="button" 
-                onClick={() => {
-                  if (hyperlinkUrl) {
-                    applyHyperlink(hyperlinkUrl);
-                  }
-                }}
-                disabled={!hyperlinkUrl}
-                className="px-4 py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight text-xs uppercase tracking-wider font-bold cursor-pointer rounded-none min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Insert Link
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
