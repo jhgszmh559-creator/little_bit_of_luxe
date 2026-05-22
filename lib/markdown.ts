@@ -121,7 +121,13 @@ export function parseInlineMarkdown(text: string): string {
   html = html.replace(/\*([^*]+)\*/g, '<em class="font-serif italic font-semibold">$1</em>');
   html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
 
-  // 3. Inline Links: [label](url) -> custom class link
+  // 3. Inline Images: ![alt](url) -> <img src="url" alt="alt" />
+  html = html.replace(
+    /!\[([^\]]*)\]\(([^)]+)\)/g,
+    '<img src="$2" alt="$1" />'
+  );
+
+  // 4. Inline Links: [label](url) -> custom class link
   html = html.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
     '<a href="$2" class="text-midnight hover:text-bordeaux underline underline-offset-4 decoration-1 transition-colors" target="_blank" rel="noopener noreferrer">$1</a>'

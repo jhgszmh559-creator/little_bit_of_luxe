@@ -1,0 +1,118 @@
+import { Extension, Node as TiptapNode, mergeAttributes } from '@tiptap/core';
+
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    fontSize: {
+      setFontSize: (size: string) => ReturnType;
+      unsetFontSize: () => ReturnType;
+    }
+  }
+}
+
+export const FontSize = Extension.create({
+  name: 'fontSize',
+  addOptions() { return { types: ['textStyle'] } },
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: element => element.style.fontSize?.replace(/['"]+/g, '') || null,
+            renderHTML: attributes => {
+              if (!attributes.fontSize) return {};
+              return { style: `font-size: ${attributes.fontSize}` };
+            },
+          },
+        },
+      },
+    ];
+  },
+  addCommands() {
+    return {
+      setFontSize: fontSize => ({ chain }) => {
+        return chain().setMark('textStyle', { fontSize }).run();
+      },
+      unsetFontSize: () => ({ chain }) => {
+        return chain().setMark('textStyle', { fontSize: null }).run();
+      },
+    };
+  },
+});
+
+export const GlobalAttributes = Extension.create({
+  name: 'globalAttributes',
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['paragraph', 'heading', 'textStyle', 'image', 'divNode', 'figureNode', 'figcaptionNode'],
+        attributes: {
+          class: {
+            default: null,
+            parseHTML: element => element.getAttribute('class') || element.getAttribute('className'),
+            renderHTML: attributes => {
+              if (!attributes.class) return {};
+              return { class: attributes.class };
+            },
+          },
+          style: {
+            default: null,
+            parseHTML: element => element.getAttribute('style'),
+            renderHTML: attributes => {
+              if (!attributes.style) return {};
+              return { style: attributes.style };
+            },
+          },
+          id: {
+            default: null,
+            parseHTML: element => element.getAttribute('id'),
+            renderHTML: attributes => {
+              if (!attributes.id) return {};
+              return { id: attributes.id };
+            },
+          }
+        }
+      }
+    ]
+  }
+});
+
+export const DivNode = TiptapNode.create({
+  name: 'divNode',
+  group: 'block',
+  content: 'block+',
+  defining: true,
+  parseHTML() {
+    return [{ tag: 'div' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['div', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+export const FigureNode = TiptapNode.create({
+  name: 'figureNode',
+  group: 'block',
+  content: 'block+',
+  defining: true,
+  parseHTML() {
+    return [{ tag: 'figure' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['figure', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+export const FigcaptionNode = TiptapNode.create({
+  name: 'figcaptionNode',
+  group: 'block',
+  content: 'inline*',
+  defining: true,
+  parseHTML() {
+    return [{ tag: 'figcaption' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['figcaption', mergeAttributes(HTMLAttributes), 0];
+  },
+});
