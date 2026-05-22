@@ -1,0 +1,51 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Support colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .scale { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+  .ink { padding: 22px 18px; min-height: 150px; background: var(--lbl-paper); display:flex; flex-direction:column; justify-content:space-between; border-right: 1px solid var(--lbl-rule-soft); }
+  .ink:last-child { border-right: 0; }
+  .dot { width: 36px; height: 36px; background: currentColor; }
+  .name { font-family: var(--lbl-serif); font-size: 20px; line-height: 1; color: var(--lbl-ink); }
+  .hex { font-family: var(--lbl-sans); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; color: var(--lbl-ink-3); }
+  .use { font-family: var(--lbl-sans); font-size: 11px; color: var(--lbl-ink-3); line-height: 1.35; }
+</style></head>
+<body>
+<div class="card" style="padding:0; width:700px;">
+  <div class="scale">
+    <div class="ink" style="color:#B08442;">
+      <div class="dot"></div>
+      <div>
+        <div class="use">Star ratings, awards</div>
+        <div class="name" style="margin-top:6px;">Gold</div>
+        <div class="hex">#B08442</div>
+      </div>
+    </div>
+    <div class="ink" style="color:#6B1F2A;">
+      <div class="dot"></div>
+      <div>
+        <div class="use">Featured tags, link hover</div>
+        <div class="name" style="margin-top:6px;">Bordeaux</div>
+        <div class="hex">#6B1F2A</div>
+      </div>
+    </div>
+    <div class="ink" style="color:#6F7A5C;">
+      <div class="dot"></div>
+      <div>
+        <div class="use">Destinations, nature</div>
+        <div class="name" style="margin-top:6px;">Sage</div>
+        <div class="hex">#6F7A5C</div>
+      </div>
+    </div>
+    <div class="ink" style="color:#B96A4A;">
+      <div class="dot"></div>
+      <div>
+        <div class="use">Food &amp; dining tags</div>
+        <div class="name" style="margin-top:6px;">Terracotta</div>
+        <div class="hex">#B96A4A</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

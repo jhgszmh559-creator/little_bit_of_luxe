@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Color pairings</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .pairs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+  .pair { padding: 22px 18px; min-height: 170px; display: flex; flex-direction: column; justify-content: space-between; }
+  .pair h { font-family: var(--lbl-serif); font-size: 26px; line-height: 1.05; display:block; }
+  .pair h em { font-style: italic; font-weight: 600; }
+  .pair .b { font-family: var(--lbl-sans); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 600; }
+</style></head>
+<body>
+<div class="card" style="padding:0;">
+  <div class="pairs">
+    <div class="pair" style="background:#FAF8F2; color:#0D152D;">
+      <span class="b" style="opacity:0.6;">Paper · Ink</span>
+      <h>Editorial <em>default</em></h>
+      <span class="b" style="opacity:0.5;">Page bg</span>
+    </div>
+    <div class="pair" style="background:#0D152D; color:#F4F1D3;">
+      <span class="b" style="opacity:0.6;">Midnight · Sand</span>
+      <h>The <em>signature</em></h>
+      <span class="b" style="opacity:0.5;">Hero · verdict · footer</span>
+    </div>
+    <div class="pair" style="background:#F4F1D3; color:#0D152D;">
+      <span class="b" style="opacity:0.55;">Sand · Ink</span>
+      <h>Callouts &amp; <em>cards</em></h>
+      <span class="b" style="opacity:0.5;">At-a-glance · pull</span>
+    </div>
+  </div>
+</div>
+</body></html>

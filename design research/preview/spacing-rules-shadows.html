@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Rules &amp; shadows</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .stack { display:flex; flex-direction:column; gap:18px; }
+  .ex { display:flex; align-items:center; gap:18px; }
+  .ex .lbl { font-family: var(--lbl-sans); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; color: var(--lbl-ink-3); width: 160px; flex-shrink:0; }
+  .line { flex:1; }
+  .img-lift { width:160px; height:90px; background:#0D152D; box-shadow: 0 24px 48px -24px rgba(13,21,45,0.35); }
+</style></head>
+<body>
+<div class="card">
+  <div class="tok-label" style="margin-bottom:18px;">Rules &amp; shadows</div>
+  <div class="stack">
+    <div class="ex">
+      <div class="lbl">Rule · Full</div>
+      <hr class="line hr"/>
+      <div class="lbl" style="text-align:right; width:auto;">1px midnight</div>
+    </div>
+    <div class="ex">
+      <div class="lbl">Rule · Soft</div>
+      <hr class="line hr hr--soft"/>
+      <div class="lbl" style="text-align:right; width:auto;">midnight / 18%</div>
+    </div>
+    <div class="ex">
+      <div class="lbl">Rule · Hairline</div>
+      <hr class="line hr" style="border-color: rgba(13,21,45,0.10);"/>
+      <div class="lbl" style="text-align:right; width:auto;">midnight / 10%</div>
+    </div>
+    <div class="ex" style="margin-top:6px;">
+      <div class="lbl">Image lift</div>
+      <div class="img-lift"></div>
+      <div class="lbl" style="text-align:right; width:auto;">Only shadow allowed</div>
+    </div>
+  </div>
+</div>
+</body></html>

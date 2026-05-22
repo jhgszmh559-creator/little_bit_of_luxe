@@ -1,0 +1,36 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Article card</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .art .img { width:100%; aspect-ratio: 4/3; background: linear-gradient(135deg,#2a3550 0%, #6f7a5c 100%); position:relative; overflow:hidden; }
+  .art .img::after { content:''; position:absolute; inset:0; background: linear-gradient(180deg, transparent 60%, rgba(13,21,45,0.45)); }
+  .art .img--2 { background: linear-gradient(135deg,#B96A4A 0%, #B08442 100%); }
+  .art .eyebrow { font-family: var(--lbl-sans); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 600; color: var(--lbl-ink-3); margin-top: 14px; }
+  .art .head { font-family: var(--lbl-serif); font-size: 22px; line-height: 1.2; margin-top: 8px; letter-spacing: -0.01em; }
+  .art .head em { font-style: italic; font-weight: 600; }
+  .art .meta { font-family: var(--lbl-sans); font-size: 11px; color: var(--lbl-ink-3); letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; margin-top: 10px; }
+  .art .byline { font-family: var(--lbl-serif); font-style: italic; font-size: 14px; color: var(--lbl-ink-2); margin-top: 4px; }
+</style></head>
+<body>
+<div class="card">
+  <div class="tok-label" style="margin-bottom:14px;">Article card · image + eyebrow + headline + meta</div>
+  <div class="grid">
+    <div class="art">
+      <div class="img"></div>
+      <div class="eyebrow">Hotel Review · Italy</div>
+      <div class="head">A weekend at the <em>Splendido</em> that lived up to its name.</div>
+      <div class="byline">Eliza Marchetti</div>
+      <div class="meta">7 min read</div>
+    </div>
+    <div class="art">
+      <div class="img img--2"></div>
+      <div class="eyebrow" style="color:#6B1F2A;">Featured · Dispatches</div>
+      <div class="head">The hotels we'd <em>actually return to</em> this winter.</div>
+      <div class="byline">The Editors</div>
+      <div class="meta">12 min read</div>
+    </div>
+  </div>
+</div>
+</body></html>

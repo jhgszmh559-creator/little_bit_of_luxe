@@ -1,0 +1,42 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Tags &amp; categories</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items:center; }
+  .tag {
+    font-family: var(--lbl-sans); font-weight: 600; font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    padding: 8px 14px; border: 1px solid currentColor; color: var(--lbl-midnight); background: transparent;
+    border-radius: 3px;
+  }
+  .tag--filled { background: var(--lbl-midnight); color: var(--lbl-sand); border-color: var(--lbl-midnight); }
+  .tag--bordeaux { color: var(--lbl-bordeaux); }
+  .tag--sage { color: var(--lbl-sage); }
+  .tag--terracotta { color: var(--lbl-terracotta); }
+  .tag--pill { border-radius: 999px; padding: 6px 14px; background: rgba(245,242,205,0.92); color: var(--lbl-midnight); border-color: transparent; backdrop-filter: blur(8px); }
+  .group { margin-bottom: 14px; }
+  .group:last-child { margin-bottom: 0; }
+</style></head>
+<body>
+<div class="card">
+  <div class="tok-label" style="margin-bottom:14px;">Tags &amp; categories</div>
+  <div class="group">
+    <div class="tok-label" style="margin-bottom:8px;">Editorial tags · sharp · uppercase</div>
+    <div class="row">
+      <span class="tag">Hotel Review</span>
+      <span class="tag tag--filled">The Edit</span>
+      <span class="tag tag--bordeaux">Featured</span>
+      <span class="tag tag--sage">Destination</span>
+      <span class="tag tag--terracotta">Dining</span>
+    </div>
+  </div>
+  <div class="group">
+    <div class="tok-label" style="margin-bottom:8px;">Image-overlay pill · the exception</div>
+    <div class="row">
+      <span class="tag tag--pill">Portofino, Italy</span>
+      <span class="tag tag--pill">★ 9.4</span>
+    </div>
+  </div>
+</div>
+</body></html>

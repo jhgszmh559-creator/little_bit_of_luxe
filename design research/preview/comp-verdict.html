@@ -1,0 +1,47 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>At-a-Glance verdict</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .verdict {
+    background: var(--lbl-midnight);
+    color: var(--lbl-sand);
+    padding: 24px 28px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: end;
+  }
+  .verdict__eyebrow {
+    font-family: var(--lbl-sans); font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; font-weight: 600;
+    color: rgba(245,242,205,0.7);
+    padding-bottom: 12px; border-bottom: 1px solid rgba(245,242,205,0.35); margin-bottom: 14px;
+  }
+  .verdict__head { font-family: var(--lbl-serif); font-size: 30px; line-height: 1.05; letter-spacing: -0.01em; }
+  .verdict__head em { font-style: italic; font-weight: 600; }
+  .verdict__rows { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; margin-top: 14px; font-family: var(--lbl-sans); font-size: 13px; color: rgba(245,242,205,0.85); }
+  .verdict__rows .k { color: rgba(245,242,205,0.55); letter-spacing: 0.12em; text-transform: uppercase; font-size: 10px; font-weight: 600; }
+  .score { text-align: right; }
+  .score__num { font-family: var(--lbl-serif); font-size: 64px; font-weight: 500; line-height: 1; }
+  .score__num em { font-style: italic; font-weight: 600; }
+  .score__den { font-family: var(--lbl-sans); font-size: 11px; letter-spacing: 0.22em; color: rgba(245,242,205,0.6); text-transform: uppercase; margin-top: 4px; }
+</style></head>
+<body>
+<div class="card" style="padding:0;">
+  <div class="verdict">
+    <div>
+      <div class="verdict__eyebrow">The Verdict</div>
+      <div class="verdict__head">Quiet, considered, and <em>worth</em> the boat ride.</div>
+      <div class="verdict__rows">
+        <div class="k">From</div><div>€620 / night, B&amp;B</div>
+        <div class="k">Best for</div><div>Slow weeks, two travellers</div>
+        <div class="k">Skip if</div><div>You need a lift</div>
+      </div>
+    </div>
+    <div class="score">
+      <div class="score__num">9.<em>2</em></div>
+      <div class="score__den">/ 10</div>
+    </div>
+  </div>
+</div>
+</body></html>

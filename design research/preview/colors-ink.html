@@ -1,0 +1,51 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Ink scale</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .scale { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+  .ink { padding: 22px 18px; min-height: 130px; background: var(--lbl-paper); display:flex; flex-direction:column; justify-content:space-between; border-right: 1px solid var(--lbl-rule-soft); }
+  .ink:last-child { border-right: 0; }
+  .dot { width: 36px; height: 36px; background: currentColor; }
+  .name { font-family: var(--lbl-serif); font-size: 20px; line-height: 1; color: var(--lbl-ink); }
+  .hex { font-family: var(--lbl-sans); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; color: var(--lbl-ink-3); }
+  .sample { font-family: var(--lbl-sans); font-size: 13px; }
+</style></head>
+<body>
+<div class="card" style="padding:0; width:700px;">
+  <div class="scale">
+    <div class="ink" style="color:#0D152D;">
+      <div class="dot"></div>
+      <div>
+        <div class="sample" style="color:#0D152D;">Primary text</div>
+        <div class="name">Ink</div>
+        <div class="hex">#0D152D</div>
+      </div>
+    </div>
+    <div class="ink" style="color:#2A3550;">
+      <div class="dot"></div>
+      <div>
+        <div class="sample" style="color:#2A3550;">Secondary</div>
+        <div class="name">Ink 2</div>
+        <div class="hex">#2A3550</div>
+      </div>
+    </div>
+    <div class="ink" style="color:#5C6480;">
+      <div class="dot"></div>
+      <div>
+        <div class="sample" style="color:#5C6480;">Meta / caption</div>
+        <div class="name">Ink 3</div>
+        <div class="hex">#5C6480</div>
+      </div>
+    </div>
+    <div class="ink" style="color:#9098AE;">
+      <div class="dot"></div>
+      <div>
+        <div class="sample" style="color:#9098AE;">Disabled</div>
+        <div class="name">Ink 4</div>
+        <div class="hex">#9098AE</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

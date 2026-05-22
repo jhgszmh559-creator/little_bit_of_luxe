@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Paper backgrounds</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .swatches { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+  .sw { padding: 20px; min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid var(--lbl-rule-soft); }
+  .sw:last-child { border-right: 0; }
+  .sw__name { font-family: var(--lbl-serif); font-size: 22px; line-height: 1; }
+  .sw__hex { font-family: var(--lbl-sans); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 600; color: var(--lbl-ink-3); }
+</style></head>
+<body>
+<div class="card" style="padding:0; width:700px;">
+  <div class="swatches">
+    <div class="sw" style="background:#FAF8F2;">
+      <div>
+        <div class="sw__hex">Page · default</div>
+      </div>
+      <div>
+        <div class="sw__name">Paper</div>
+        <div class="sw__hex" style="margin-top:6px;">#FAF8F2</div>
+      </div>
+    </div>
+    <div class="sw" style="background:#F0ECE0;">
+      <div>
+        <div class="sw__hex">Sections · alt rows</div>
+      </div>
+      <div>
+        <div class="sw__name">Paper 2</div>
+        <div class="sw__hex" style="margin-top:6px;">#F0ECE0</div>
+      </div>
+    </div>
+    <div class="sw" style="background:#FFFFFF;">
+      <div>
+        <div class="sw__hex">Cards only</div>
+      </div>
+      <div>
+        <div class="sw__name">Ivory</div>
+        <div class="sw__hex" style="margin-top:6px;">#FFFFFF</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

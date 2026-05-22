@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Brand colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .swatches { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .sw { padding: 28px 24px; min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; }
+  .sw__name { font-family: var(--lbl-serif); font-size: 28px; line-height: 1; }
+  .sw__hex { font-family: var(--lbl-sans); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 600; }
+</style></head>
+<body>
+<div class="card" style="padding:0; width:700px;">
+  <div class="swatches">
+    <div class="sw" style="background:#0D152D; color:#F4F1D3;">
+      <div>
+        <div class="sw__hex" style="color:rgba(245,242,205,0.6); margin-bottom:8px;">— PRIMARY INK</div>
+        <div class="sw__name">Midnight</div>
+      </div>
+      <div class="sw__hex">#0D152D</div>
+    </div>
+    <div class="sw" style="background:#F4F1D3; color:#0D152D;">
+      <div>
+        <div class="sw__hex" style="color:rgba(13,21,45,0.55); margin-bottom:8px;">— PRIMARY ACCENT</div>
+        <div class="sw__name"><em style="font-style:italic; font-weight:600;">Sand</em></div>
+      </div>
+      <div class="sw__hex">#F4F1D3</div>
+    </div>
+  </div>
+</div>
+</body></html>

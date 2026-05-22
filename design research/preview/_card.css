@@ -1,0 +1,27 @@
+/* Shared frame for preview cards — load colors_and_type.css first */
+html, body { margin: 0; padding: 0; background: var(--lbl-paper); color: var(--lbl-ink); font-family: var(--lbl-sans); }
+.card {
+  width: 700px;
+  padding: 24px 28px;
+  box-sizing: border-box;
+  background: var(--lbl-paper);
+  color: var(--lbl-ink);
+}
+.card--paper-2 { background: var(--lbl-paper-2); }
+.card--midnight { background: var(--lbl-midnight); color: var(--lbl-sand); }
+.card--ivory { background: #fff; }
+.row { display: flex; gap: 12px; align-items: center; }
+.row--between { justify-content: space-between; }
+.col { display: flex; flex-direction: column; gap: 8px; }
+.tok-label {
+  font-family: var(--lbl-sans);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lbl-ink-3);
+  font-weight: 600;
+}
+.card--midnight .tok-label { color: rgba(245,242,205,0.55); }
+.hr { border: 0; border-top: 1px solid var(--lbl-midnight); margin: 0; }
+.hr--soft { border-color: var(--lbl-rule-soft); }
+.hr--invert { border-color: rgba(245,242,205,0.35); }

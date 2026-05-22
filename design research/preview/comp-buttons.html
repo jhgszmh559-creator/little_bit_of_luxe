@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .stack { display:flex; flex-direction:column; gap:22px; }
+  .row { display:flex; gap:14px; align-items:center; }
+  .btn {
+    font-family: var(--lbl-sans); font-weight: 600; font-size: 12px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 14px 22px; border: 1px solid var(--lbl-midnight);
+    cursor: pointer; transition: all 180ms cubic-bezier(.2,.6,.2,1);
+    border-radius: 3px;
+  }
+  .btn--primary { background: var(--lbl-midnight); color: var(--lbl-sand); }
+  .btn--ghost   { background: transparent; color: var(--lbl-midnight); }
+  .btn--sand    { background: var(--lbl-sand); color: var(--lbl-midnight); border-color: var(--lbl-midnight); }
+  .btn--link    {
+    background: transparent; border:0; padding: 4px 0;
+    color: var(--lbl-midnight); border-bottom: 1px solid var(--lbl-midnight);
+    letter-spacing: 0.12em;
+    border-radius: 0;
+  }
+  .lbl { font-family: var(--lbl-sans); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; color: var(--lbl-ink-3); width: 90px; }
+</style></head>
+<body>
+<div class="card">
+  <div class="tok-label" style="margin-bottom:18px;">Buttons</div>
+  <div class="stack">
+    <div class="row"><div class="lbl">Primary</div><button class="btn btn--primary">Read the review</button><button class="btn btn--primary">Subscribe</button></div>
+    <div class="row"><div class="lbl">Ghost</div><button class="btn btn--ghost">View all hotels</button><button class="btn btn--ghost">Save for later</button></div>
+    <div class="row"><div class="lbl">Sand</div><button class="btn btn--sand">Newsletter</button><button class="btn btn--link">Read more →</button></div>
+  </div>
+</div>
+</body></html>

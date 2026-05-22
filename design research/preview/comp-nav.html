@@ -1,0 +1,68 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Nav</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    border-top: 1px solid var(--lbl-midnight);
+    border-bottom: 1px solid var(--lbl-midnight);
+    gap: 64px;                /* breathing room after the logo */
+  }
+  .logo {
+    font-family: var(--lbl-serif);
+    font-size: 24px;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .logo em { font-style: italic; font-weight: 700; }
+  .right {
+    display: flex;
+    align-items: center;
+    gap: 36px;               /* between link list and icon group */
+  }
+  .links {
+    display: flex;
+    gap: 28px;               /* between individual nav links */
+    font-family: var(--lbl-sans);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+  .links a {
+    color: var(--lbl-ink);
+    text-decoration: none;
+    transition: color 180ms;
+    white-space: nowrap;
+  }
+  .links a:hover { color: var(--lbl-bordeaux); }
+  .icons {
+    display: flex;
+    gap: 22px;               /* between icon buttons */
+    align-items: center;
+  }
+</style></head>
+<body>
+<div class="card" style="padding:0;">
+  <div class="nav">
+    <div class="logo">LITTLE BIT OF <em>LUXE</em></div>
+    <div class="right">
+      <div class="links">
+        <a href="#">Reviews</a>
+        <a href="#">Dispatches</a>
+        <a href="#">The Edit</a>
+        <a href="#">Guides</a>
+      </div>
+      <div class="icons">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D152D" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D152D" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,265 @@
+/* =========================================================
+   LITTLE BIT OF LUXE — Colors & Type
+   ---------------------------------------------------------
+   Editorial luxury travel blog. High-contrast serif display,
+   clean geometric sans for body. Deep navy on warm cream.
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Manrope:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* ---------- BRAND CORE ---------- */
+  --lbl-midnight:    #0D152D;   /* primary brand — deep navy, ink */
+  --lbl-sand:        #F4F1D3;   /* primary accent — pale cream/sand (subtly desaturated) */
+
+  /* ---------- BACKGROUNDS ---------- */
+  --lbl-paper:       #FAF8F2;   /* warm off-white page bg */
+  --lbl-paper-2:     #F0ECE0;   /* slightly deeper paper for sections */
+  --lbl-ivory:       #FFFFFF;   /* pure white — used sparingly */
+
+  /* ---------- INK / FOREGROUND ---------- */
+  --lbl-ink:         #0D152D;   /* primary text */
+  --lbl-ink-2:       #2A3550;   /* secondary text */
+  --lbl-ink-3:       #5C6480;   /* tertiary / meta */
+  --lbl-ink-4:       #9098AE;   /* disabled / hairline-strong */
+
+  /* ---------- LINES & HAIRLINES ---------- */
+  --lbl-rule:        #0D152D;   /* full-strength rule (editorial) */
+  --lbl-rule-soft:   rgba(13, 21, 45, 0.18);
+  --lbl-rule-hair:   rgba(13, 21, 45, 0.10);
+
+  /* ---------- ACCENT / RATING / SUPPORT ---------- */
+  --lbl-gold:        #B08442;   /* aged-gold for star ratings, awards */
+  --lbl-gold-soft:   #D9B97A;
+  --lbl-bordeaux:    #6B1F2A;   /* deep wine — featured tags */
+  --lbl-sage:        #6F7A5C;   /* muted sage — destinations / nature */
+  --lbl-terracotta:  #B96A4A;   /* warm terracotta — dining tags */
+
+  /* ---------- SEMANTIC ---------- */
+  --lbl-fg-1:        var(--lbl-ink);
+  --lbl-fg-2:        var(--lbl-ink-2);
+  --lbl-fg-3:        var(--lbl-ink-3);
+  --lbl-fg-on-dark:  var(--lbl-sand);
+  --lbl-bg-page:     var(--lbl-paper);
+  --lbl-bg-card:     var(--lbl-ivory);
+  --lbl-bg-inverse:  var(--lbl-midnight);
+  --lbl-bg-accent:   var(--lbl-sand);
+  --lbl-link:        var(--lbl-midnight);
+  --lbl-link-hover:  var(--lbl-bordeaux);
+
+  /* ---------- TYPE FAMILIES ---------- */
+  --lbl-serif:       'Cormorant Garamond', 'Times New Roman', Georgia, serif;
+  --lbl-sans:        'Manrope', 'Helvetica Neue', Arial, sans-serif;
+  /* NOTE: Cormorant Garamond substitutes PP Pangaia; Manrope substitutes CircularXX TT */
+
+  /* ---------- TYPE SCALE ---------- */
+  --lbl-fs-display:  clamp(56px, 9vw, 132px);   /* Hero masthead */
+  --lbl-fs-h1:       clamp(40px, 5.5vw, 72px);
+  --lbl-fs-h2:       clamp(32px, 3.6vw, 48px);
+  --lbl-fs-h3:       28px;
+  --lbl-fs-h4:       22px;
+  --lbl-fs-lede:     22px;                       /* article lede */
+  --lbl-fs-body:     17px;
+  --lbl-fs-small:    14px;
+  --lbl-fs-eyebrow:  12px;                       /* eyebrow / kicker */
+  --lbl-fs-caption:  13px;
+
+  /* ---------- LINE HEIGHT ---------- */
+  --lbl-lh-display:  0.95;
+  --lbl-lh-tight:    1.05;
+  --lbl-lh-snug:     1.2;
+  --lbl-lh-body:     1.6;
+  --lbl-lh-relaxed:  1.75;
+
+  /* ---------- LETTER SPACING ---------- */
+  --lbl-tracking-eyebrow:  0.22em;   /* heavily tracked uppercase labels */
+  --lbl-tracking-button:   0.18em;
+  --lbl-tracking-caps:     0.08em;
+  --lbl-tracking-tight:    -0.02em;
+
+  /* ---------- SPACING (4pt grid) ---------- */
+  --lbl-sp-1:  4px;
+  --lbl-sp-2:  8px;
+  --lbl-sp-3:  12px;
+  --lbl-sp-4:  16px;
+  --lbl-sp-5:  24px;
+  --lbl-sp-6:  32px;
+  --lbl-sp-7:  48px;
+  --lbl-sp-8:  64px;
+  --lbl-sp-9:  96px;
+  --lbl-sp-10: 128px;
+
+  /* ---------- CORNERS — Sharp Editorial ---------- */
+  --lbl-radius-0:  0px;     /* default — sharp on cards & sections */
+  --lbl-radius-1:  2px;     /* near-sharp inputs */
+  --lbl-radius-btn: 3px;    /* buttons — softly bevelled */
+  --lbl-radius-pill: 999px; /* RARE — only pill tags on imagery */
+
+  /* ---------- SHADOWS (used sparingly) ---------- */
+  --lbl-shadow-none:  none;
+  --lbl-shadow-card:  0 1px 0 var(--lbl-rule-hair);
+  --lbl-shadow-lift:  0 12px 32px -16px rgba(13, 21, 45, 0.18);
+  --lbl-shadow-image: 0 24px 48px -24px rgba(13, 21, 45, 0.35);
+
+  /* ---------- LAYOUT ---------- */
+  --lbl-container:    1280px;
+  --lbl-container-narrow: 720px;   /* article body width */
+  --lbl-gutter:       clamp(20px, 4vw, 56px);
+
+  /* ---------- MOTION ---------- */
+  --lbl-ease:         cubic-bezier(0.2, 0.6, 0.2, 1);
+  --lbl-dur-fast:     180ms;
+  --lbl-dur-base:     280ms;
+  --lbl-dur-slow:     520ms;
+}
+
+/* =========================================================
+   ELEMENT DEFAULTS
+   ========================================================= */
+
+html, body {
+  background: var(--lbl-bg-page);
+  color: var(--lbl-fg-1);
+  font-family: var(--lbl-sans);
+  font-size: var(--lbl-fs-body);
+  line-height: var(--lbl-lh-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display & Headings — serif, tight, with italic accents */
+.lbl-display {
+  font-family: var(--lbl-serif);
+  font-weight: 400;
+  font-size: var(--lbl-fs-display);
+  line-height: var(--lbl-lh-display);
+  letter-spacing: var(--lbl-tracking-tight);
+  color: var(--lbl-ink);
+}
+.lbl-display em,
+.lbl-h1 em,
+.lbl-h2 em,
+.lbl-h3 em {
+  font-style: italic;
+  font-weight: 600;
+}
+
+h1, .lbl-h1 {
+  font-family: var(--lbl-serif);
+  font-weight: 400;
+  font-size: var(--lbl-fs-h1);
+  line-height: var(--lbl-lh-tight);
+  letter-spacing: var(--lbl-tracking-tight);
+  color: var(--lbl-ink);
+  text-wrap: balance;
+}
+h2, .lbl-h2 {
+  font-family: var(--lbl-serif);
+  font-weight: 400;
+  font-size: var(--lbl-fs-h2);
+  line-height: var(--lbl-lh-snug);
+  letter-spacing: var(--lbl-tracking-tight);
+  color: var(--lbl-ink);
+  text-wrap: balance;
+}
+h3, .lbl-h3 {
+  font-family: var(--lbl-serif);
+  font-weight: 500;
+  font-size: var(--lbl-fs-h3);
+  line-height: var(--lbl-lh-snug);
+  color: var(--lbl-ink);
+}
+h4, .lbl-h4 {
+  font-family: var(--lbl-sans);
+  font-weight: 600;
+  font-size: var(--lbl-fs-h4);
+  line-height: var(--lbl-lh-snug);
+  color: var(--lbl-ink);
+}
+
+/* Body */
+p, .lbl-body {
+  font-family: var(--lbl-sans);
+  font-size: var(--lbl-fs-body);
+  line-height: var(--lbl-lh-relaxed);
+  color: var(--lbl-fg-2);
+  text-wrap: pretty;
+}
+
+.lbl-lede {
+  font-family: var(--lbl-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--lbl-fs-lede);
+  line-height: var(--lbl-lh-body);
+  color: var(--lbl-fg-1);
+}
+
+/* Editorial article body uses serif for long-form reading */
+.lbl-prose {
+  font-family: var(--lbl-serif);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: var(--lbl-lh-relaxed);
+  color: var(--lbl-fg-1);
+}
+.lbl-prose p + p { margin-top: 1.25em; }
+.lbl-prose a { color: var(--lbl-link); text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.lbl-prose a:hover { color: var(--lbl-link-hover); }
+
+/* Eyebrows, kickers, meta labels */
+.lbl-eyebrow {
+  font-family: var(--lbl-sans);
+  font-weight: 600;
+  font-size: var(--lbl-fs-eyebrow);
+  letter-spacing: var(--lbl-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--lbl-fg-3);
+}
+.lbl-eyebrow--accent { color: var(--lbl-bordeaux); }
+
+.lbl-meta {
+  font-family: var(--lbl-sans);
+  font-weight: 500;
+  font-size: var(--lbl-fs-small);
+  color: var(--lbl-fg-3);
+  letter-spacing: var(--lbl-tracking-caps);
+  text-transform: uppercase;
+}
+
+.lbl-caption {
+  font-family: var(--lbl-sans);
+  font-style: italic;
+  font-size: var(--lbl-fs-caption);
+  color: var(--lbl-fg-3);
+  line-height: 1.4;
+}
+
+.lbl-byline {
+  font-family: var(--lbl-serif);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--lbl-fg-2);
+}
+
+/* Rules */
+.lbl-rule { border: 0; border-top: 1px solid var(--lbl-rule); height: 0; }
+.lbl-rule--soft { border-color: var(--lbl-rule-soft); }
+.lbl-rule--hair { border-color: var(--lbl-rule-hair); }
+
+/* Pull-quote */
+.lbl-pullquote {
+  font-family: var(--lbl-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.25;
+  color: var(--lbl-ink);
+  border-top: 1px solid var(--lbl-rule);
+  border-bottom: 1px solid var(--lbl-rule);
+  padding: var(--lbl-sp-6) 0;
+  text-wrap: balance;
+}
+
+/* Selection */
+::selection { background: var(--lbl-sand); color: var(--lbl-ink); }

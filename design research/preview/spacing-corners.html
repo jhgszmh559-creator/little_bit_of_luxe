@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Corners</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<link rel="stylesheet" href="_card.css">
+<style>
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: end; }
+  .swatch { background: var(--lbl-midnight); width: 100%; height: 110px; }
+  .lbl { font-family: var(--lbl-serif); font-size: 20px; margin-top: 12px; }
+  .tok { font-family: var(--lbl-sans); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; color: var(--lbl-ink-3); }
+</style></head>
+<body>
+<div class="card">
+  <div class="tok-label" style="margin-bottom:18px;">Corners · sharp by default</div>
+  <div class="grid">
+    <div>
+      <div class="swatch" style="border-radius:0;"></div>
+      <div class="lbl">0 · Sharp</div>
+      <div class="tok">Default — cards, sections, buttons</div>
+    </div>
+    <div>
+      <div class="swatch" style="border-radius:2px;"></div>
+      <div class="lbl">2px · Near-sharp</div>
+      <div class="tok">Inputs only</div>
+    </div>
+    <div>
+      <div class="swatch" style="border-radius:999px; height:48px; margin-bottom:62px;"></div>
+      <div class="lbl">Pill · 999</div>
+      <div class="tok">Only on tags over imagery</div>
+    </div>
+  </div>
+</div>
+</body></html>

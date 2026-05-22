@@ -1,0 +1,73 @@
+backend:
+  name: git-gateway
+  branch: main
+local_backend: true
+
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  - name: "programs"
+    label: "Program Guides"
+    folder: "content/programs"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Excerpt", name: "excerpt", widget: "text" }
+      - { label: "Program Name", name: "program_name", widget: "string" }
+      - { label: "Loyalty Network", name: "loyalty_network", widget: "string" }
+      - { label: "Brands", name: "brands", widget: "text" }
+      - { label: "Official Link", name: "official_link", widget: "string" }
+      - { label: "Partner Link", name: "partner_link", widget: "string" }
+      - { label: "Date", name: "date", widget: "date" }
+      - { label: "Category", name: "category", widget: "string", default: "Preferred Partner" }
+      - { label: "Draft", name: "draft", widget: "boolean", default: false }
+      - { label: "Featured Image", name: "image", widget: "image" }
+      - { label: "Body", name: "body", widget: "markdown" }
+      - { label: "Verdict Score Card", name: "verdict", widget: "object", fields: [
+          { label: "Best For", name: "best_for", widget: "string", required: false },
+          { label: "Highlight", name: "highlight", widget: "string", required: false },
+          { label: "Score", name: "score", widget: "string", required: false }
+        ], required: false }
+
+  - name: "news"
+    label: "Hotel News & Openings"
+    folder: "content/news"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Excerpt", name: "excerpt", widget: "text" }
+      - { label: "Brand", name: "brand", widget: "string" }
+      - { label: "Property Name", name: "property_name", widget: "string" }
+      - { label: "Location", name: "location", widget: "string" }
+      - { label: "Projected Opening", name: "projected_opening", widget: "string" }
+      - { label: "Early Newsletter CTA", name: "early_newsletter_cta", widget: "boolean", default: true }
+      - { label: "Source URL", name: "source_url", widget: "string", required: false }
+      - { label: "Date", name: "date", widget: "date" }
+      - { label: "Category", name: "category", widget: "string", default: "Hotel News" }
+      - { label: "Featured Image", name: "image", widget: "image" }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  - name: "reviews"
+    label: "Hotel Reviews"
+    folder: "content/reviews"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Excerpt", name: "excerpt", widget: "text" }
+      - { label: "Hotel Name", name: "hotel_name", widget: "string" }
+      - { label: "Brand", name: "brand", widget: "string" }
+      - { label: "Location", name: "location", widget: "string" }
+      - { label: "Rating (e.g. 9.5)", name: "rating", widget: "number", value_type: "float" }
+      - { label: "Room Type", name: "room_type", widget: "string" }
+      - { label: "YouTube Video ID (optional)", name: "youtube_id", widget: "string", required: false }
+      - { label: "Show QX Perks", name: "show_qx_perks", widget: "boolean", default: true }
+      - { label: "Meta Title", name: "meta_title", widget: "string", required: false }
+      - { label: "Meta Description", name: "meta_description", widget: "text", required: false }
+      - { label: "OG/Featured Image", name: "image", widget: "image" }
+      - { label: "Date", name: "date", widget: "date" }
+      - { label: "Category", name: "category", widget: "string", default: "Hotel Review" }
+      - { label: "Body", name: "body", widget: "markdown" }
