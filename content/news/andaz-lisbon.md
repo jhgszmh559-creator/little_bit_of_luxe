@@ -26,13 +26,15 @@ The quiet rebirth of a historic **Lisbon** icon
 
 *Where the Atlantic breeze meets the ancient stone of Baixa, a new sanctuary of understated Portuguese modernism unfolds.*
 
+## Location
+
 To arrive in Lisbon is to submit to its light — a brilliant, amber-hued clarity that bounces off whitewashed facades and the shimmering expanse of the Tagus River. At Andaz Lisbon, this luminous atmosphere is not merely observed; it is curated. Situated in a meticulously restored historic enclave, the property marks a sophisticated evolution for Hyatt’s luxury lifestyle brand, bridging the gap between the city’s storied maritime heritage and a highly refined, contemporary design language. The transition from the cobblestone streets of the Baixa district into the hotel’s soaring lobby is an exercise in sensory decompression. Here, the clamor of tram bells and Fado melodies fades into a serene, acoustic stillness, punctuated only by the soft rustle of linen and the subtle scent of native pine and citrus.
 
-Design
+## Design
 
 The architectural narrative, conceived in collaboration with local master craftsmen, celebrates the raw, tactile materials of the Iberian Peninsula. Floors of honed Estremoz marble stretch beneath high, vaulted ceilings, while walls are clad in a patchwork of textured plaster and warm, wire-brushed oak. The traditional Portuguese *azulejo* tile is reimagined here not as a relic of the past, but as a minimalist sculptural element — hand-glazed in deep forest greens and soft terracotta tones that catch the shifting afternoon sun. Every corner reveals a quiet reverence for the handmade, from the bespoke woven tapestries hanging in the corridors to the custom-designed brass fixtures that will acquire a rich, dark patina over years of touch.
 
-hotel — Editor
+![678902de0ec9470abf7723f4_vanden hero](/images/tiptap-ui-placeholder-image.jpg)
 
 In the residential-style suites, this commitment to local materiality translates into an atmosphere of profound comfort. The layout is fluid and intuitive, eschewing rigid corridors in favor of open, light-filled spaces that encourage a slower pace of living. Floor-to-ceiling windows frame cinematic vistas of red-tiled rooftops stretching toward the river, while deep-set daybeds offer the perfect vantage point for watching the golden hour paint the city in shades of ochre and rose. The bathrooms are private sanctuaries of their own, carved from monolithic blocks of local limestone and featuring deep soaking tubs, rain showers, and custom bath amenities infused with the essence of wild rosemary and sea salt. It is a space designed for contemplation, where the boundary between the historic city outside and the private sanctuary within begins to dissolve.
 
