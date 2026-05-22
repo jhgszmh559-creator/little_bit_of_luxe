@@ -2,6 +2,8 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { getReviewBySlug, getReviews } from '@/lib/content';
 import { parseMarkdown, parseInlineMarkdown } from '@/lib/markdown';
+import { formatPremiumDate } from '@/lib/dateUtils';
+import SaveButton from '@/components/SaveButton';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import VideoTheatre from '@/components/VideoTheatre';
@@ -114,10 +116,21 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
             <div className="article-hero__byline">
               <strong>By</strong> Our Editors
             </div>
-            <div className="article-hero__metabits">
+            <div className="article-hero__metabits flex items-center gap-3">
               <span>5 MIN READ</span>
               <span>·</span>
-              <span>{review.date}</span>
+              <span>{formatPremiumDate(review.date)}</span>
+              <span>·</span>
+              <SaveButton 
+                article={{
+                  slug: review.slug,
+                  title: review.title.replace(/[*_`]/g, ''),
+                  type: 'review',
+                  date: review.date,
+                  image: coverImage,
+                  location: review.location
+                }} 
+              />
             </div>
           </div>
         </div>
@@ -270,7 +283,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
                     dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(related.title) }}
                   />
                   <div className="card-article__byline">By Our Editors</div>
-                  <div className="card-article__meta">{related.date}</div>
+                  <div className="card-article__meta">{formatPremiumDate(related.date)}</div>
                 </Link>
               ))}
             </div>

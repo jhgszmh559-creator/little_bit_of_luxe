@@ -130,6 +130,27 @@ export default function Footer() {
             </li>
           </ul>
         </div>
+        {/* Column 4: Socials */}
+        <div className="footer__col">
+          <h5>Socials</h5>
+          <ul>
+            <li>
+              <a href="https://instagram.com/littlebitofluxe_travel" target="_blank" rel="noopener noreferrer">
+                Instagram
+              </a>
+            </li>
+            <li>
+              <a href="https://youtube.com/@littlebitofluxe" target="_blank" rel="noopener noreferrer">
+                YouTube
+              </a>
+            </li>
+            <li>
+              <a href="https://tiktok.com/@littlebitofluxe_travel" target="_blank" rel="noopener noreferrer">
+                TikTok
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
 
       {/* Footer Bottom */}

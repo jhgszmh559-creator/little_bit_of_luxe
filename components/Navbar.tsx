@@ -125,10 +125,10 @@ export default function Navbar({ onSearchClick }: NavbarProps) {
             </button>
           )}
 
-          {/* Bookmark Placeholder */}
-          <button className="icon-btn hidden sm:inline-block" aria-label="Saved">
+          {/* Bookmark Link */}
+          <Link href="/saved" className="icon-btn hidden sm:inline-block" aria-label="Saved Articles">
             <Bookmark className="w-5 h-5 stroke-[1.5]" />
-          </button>
+          </Link>
 
           {/* Subscribe Button */}
           <button

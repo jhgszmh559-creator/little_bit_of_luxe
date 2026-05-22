@@ -2,6 +2,8 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { getProgramBySlug, getPrograms } from '@/lib/content';
 import { parseMarkdown, parseInlineMarkdown } from '@/lib/markdown';
+import { formatPremiumDate } from '@/lib/dateUtils';
+import SaveButton from '@/components/SaveButton';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import QxScrollBlock from '@/components/QxScrollBlock';
@@ -102,10 +104,21 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             <div className="article-hero__byline">
               <strong>By</strong> Our Editors
             </div>
-            <div className="article-hero__metabits">
+            <div className="article-hero__metabits flex items-center gap-3">
               <span>5 MIN READ</span>
               <span>·</span>
-              <span>{program.date}</span>
+              <span>{formatPremiumDate(program.date)}</span>
+              <span>·</span>
+              <SaveButton 
+                article={{
+                  slug: program.slug,
+                  title: program.title.replace(/[*_`]/g, ''),
+                  type: 'program',
+                  date: program.date,
+                  image: program.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80",
+                  location: program.loyaltyNetwork
+                }} 
+              />
             </div>
           </div>
         </div>
@@ -195,7 +208,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                     dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(related.title) }}
                   />
                   <div className="card-article__byline">By Our Editors</div>
-                  <div className="card-article__meta">{related.date}</div>
+                  <div className="card-article__meta">{formatPremiumDate(related.date)}</div>
                 </Link>
               ))}
             </div>

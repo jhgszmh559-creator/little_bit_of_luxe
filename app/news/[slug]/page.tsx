@@ -2,6 +2,8 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { getNewsBySlug, getNews } from '@/lib/content';
 import { parseMarkdown, parseInlineMarkdown } from '@/lib/markdown';
+import { formatPremiumDate } from '@/lib/dateUtils';
+import SaveButton from '@/components/SaveButton';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BeehiivForm from '@/components/BeehiivForm';
@@ -118,10 +120,21 @@ export default async function NewsPage({ params }: NewsPageProps) {
             <div className="article-hero__byline">
               <strong>By</strong> Our Editors
             </div>
-            <div className="article-hero__metabits">
+            <div className="article-hero__metabits flex items-center gap-3">
               <span>3 MIN READ</span>
               <span>·</span>
-              <span>{news.date}</span>
+              <span>{formatPremiumDate(news.date)}</span>
+              <span>·</span>
+              <SaveButton 
+                article={{
+                  slug: news.slug,
+                  title: news.title.replace(/[*_`]/g, ''),
+                  type: 'news',
+                  date: news.date,
+                  image: news.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80",
+                  location: news.location
+                }} 
+              />
             </div>
           </div>
         </div>
@@ -190,7 +203,7 @@ export default async function NewsPage({ params }: NewsPageProps) {
                     dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(related.title) }}
                   />
                   <div className="card-article__byline">By Our Editors</div>
-                  <div className="card-article__meta">{related.date}</div>
+                  <div className="card-article__meta">{formatPremiumDate(related.date)}</div>
                 </Link>
               ))}
             </div>

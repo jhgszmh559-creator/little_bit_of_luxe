@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { parseInlineMarkdown } from '@/lib/markdown';
+import { formatPremiumDate } from '@/lib/dateUtils';
 
 import BeehiivForm from './BeehiivForm';
 
@@ -173,7 +174,7 @@ export default function HomepageContent({ programs, reviews, news = [], featured
                       color: 'var(--lbl-ink-3)',
                     }}
                   >
-                    {featured.readTime} · {featured.date}
+                    {featured.readTime} · {formatPremiumDate(featured.date)}
                   </span>
                   {featured.rating != null && (
                     <span className="rating-stars" style={{ marginLeft: 'auto' }}>
@@ -237,7 +238,7 @@ export default function HomepageContent({ programs, reviews, news = [], featured
                     dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(a.title) }}
                   />
                   <div className="card-article__byline">By {a.author}</div>
-                  <div className="card-article__meta">{a.date}</div>
+                  <div className="card-article__meta">{formatPremiumDate(a.date)}</div>
                 </Link>
               ))}
             </div>
@@ -275,7 +276,7 @@ export default function HomepageContent({ programs, reviews, news = [], featured
                       dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(a.title) }}
                     />
                     <div className="card-article__byline">By {a.author}</div>
-                    <div className="card-article__meta">{a.date}</div>
+                    <div className="card-article__meta">{formatPremiumDate(a.date)}</div>
                   </Link>
                 ))}
               </div>
@@ -313,7 +314,7 @@ export default function HomepageContent({ programs, reviews, news = [], featured
                     dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(a.title) }}
                   />
                   <div className="card-article__byline">By {a.author}</div>
-                  <div className="card-article__meta">{a.date}</div>
+                  <div className="card-article__meta">{formatPremiumDate(a.date)}</div>
                 </Link>
               ))}
             </div>

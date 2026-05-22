@@ -643,7 +643,7 @@ h1 em, h2 em, h3 em, .lbl-display em {
 
 /* ===== FOOTER ===== */
 .footer { background: var(--lbl-midnight); color: var(--lbl-sand); margin-top: 0px !important; padding: 80px 0 32px; }
-.footer__inner { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 48px; }
+.footer__inner { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap: 48px; }
 .footer__brand img { height: 48px; width: auto; margin-bottom: 16px; }
 .footer__tag {
   font-family: var(--lbl-serif);
