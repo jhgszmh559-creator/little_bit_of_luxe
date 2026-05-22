@@ -1,6 +1,18 @@
 ---
 title: "*The quiet rebirth of a historic **Lisbon** icon*"
 excerpt: "Where the Atlantic breeze meets the ancient stone of Baixa, a new sanctuary of understated Portuguese modernism unfolds."
+date: "2026-05-22"
+category: "Hotel Review"
+draft: false
+status: "published"
+sources:
+  - "https://thepointsguy.com/news/andaz-lisbon-now-open/"
+  - "https://upgradedpoints.com/news/andaz-lisbon-opening/"
+  - "https://www.cvent.com/venues/-/hotel/andaz-lisbon-opening-q4-2025-/venue-72acf532-5048-42ca-a3f9-330fff8c67b3"
+  - "https://www.flyertalk.com/forum/hyatt-world-hyatt/2027121-andaz-lisbon-review-master-thread.html"
+  - "https://newsroom.hyatt.com/news-releases?item=124710"
+  - "https://andaz-lisbon.com"
+  - "https://www.hyatt.com/andaz/en-US/lisaz-andaz-lisbon"
 hotelName: "Andaz Lisbon"
 brand: "Andaz"
 location: "Lisbon, Portugal"
@@ -8,12 +20,9 @@ rating: 9.2
 roomType: "Andaz Suite"
 youtubeId: ""
 showQxPerks: true
-date: "2026-05-22"
-category: "Hotel Review"
-draft: true
-status: "draft"
-sources: ["https://thepointsguy.com/news/andaz-lisbon-now-open/","https://upgradedpoints.com/news/andaz-lisbon-opening/","https://www.cvent.com/venues/-/hotel/andaz-lisbon-opening-q4-2025-/venue-72acf532-5048-42ca-a3f9-330fff8c67b3","https://www.flyertalk.com/forum/hyatt-world-hyatt/2027121-andaz-lisbon-review-master-thread.html","https://newsroom.hyatt.com/news-releases?item=124710","https://andaz-lisbon.com","https://www.hyatt.com/andaz/en-US/lisaz-andaz-lisbon"]
-ogImage: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+metaTitle: ""
+metaDescription: ""
+ogImage: "https://assets.hyatt.com/content/dam/hyatt/hyattdam/images/2024/10/07/0430/LISAZ-P0007-Lift-Landing.jpg/LISAZ-P0007-Lift-Landing.16x9.jpg?imwidth=2560"
 ---
 
 # *The quiet rebirth of a historic **Lisbon** icon*
