@@ -191,7 +191,7 @@ Please return the response as a single valid JSON object following the format co
       frontmatter.brands = metadata?.brands || '';
       frontmatter.officialLink = metadata?.official_link || '';
       frontmatter.partnerLink = metadata?.partner_link || '';
-      frontmatter.image = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80';
+      frontmatter.image = '';
       if (metadata?.verdict) {
         frontmatter.verdict = {
           best_for: metadata.verdict.best_for || '',
@@ -206,7 +206,7 @@ Please return the response as a single valid JSON object following the format co
       frontmatter.projected_opening = metadata?.projected_opening || '';
       frontmatter.early_newsletter_cta = metadata?.early_newsletter_cta !== false;
       frontmatter.source_url = metadata?.source_url || '';
-      frontmatter.image = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80';
+      frontmatter.image = '';
     } else {
       frontmatter.hotelName = metadata?.hotel_name || name;
       frontmatter.brand = metadata?.brand || '';
@@ -217,7 +217,7 @@ Please return the response as a single valid JSON object following the format co
       frontmatter.showQxPerks = metadata?.show_qx_perks !== false;
       frontmatter.metaTitle = metadata?.meta_title || '';
       frontmatter.metaDescription = metadata?.meta_description || '';
-      frontmatter.ogImage = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
+      frontmatter.ogImage = '';
     }
 
     // Serialize frontmatter

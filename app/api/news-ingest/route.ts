@@ -12,8 +12,13 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
+    if (process.env.ADMIN_SECRET === undefined) {
+      console.warn('Warning: process.env.ADMIN_SECRET is undefined on preview branch.');
+    }
     const secret = request.headers.get('x-admin-secret') || request.headers.get('X-Admin-Secret');
     const adminSecret = process.env.ADMIN_SECRET || 'luxe2026';
     if (!secret || secret !== adminSecret) {

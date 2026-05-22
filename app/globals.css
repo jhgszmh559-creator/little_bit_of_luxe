@@ -93,7 +93,7 @@
   --lbl-fs-h3:       28px;
   --lbl-fs-h4:       22px;
   --lbl-fs-lede:     22px;
-  --lbl-fs-body:     17px;
+  --lbl-fs-body:     16px;
   --lbl-fs-small:    14px;
   --lbl-fs-eyebrow:  12px;
   --lbl-fs-caption:  13px;
@@ -214,12 +214,13 @@ html, body {
 .lbl-prose {
   font-family: var(--lbl-sans);
   font-weight: 400;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.65;
   color: var(--lbl-ink);
 }
 
 .lbl-prose p {
+  font-size: inherit;
   margin-bottom: var(--lbl-sp-5);
 }
 
@@ -790,8 +791,8 @@ h1 em, h2 em, h3 em, .lbl-display em {
 .article-hero__media img { width: 100%; height: 100%; object-fit: cover; }
 .article-hero__caption { font-family: var(--lbl-sans); font-style: italic; font-size: 13px; color: var(--lbl-ink-3); margin-top: 10px; }
 
-.prose { font-family: var(--lbl-sans); font-size: 20px; font-weight: 400; line-height: 1.65; color: var(--lbl-ink); }
-.prose p, .prose li { font-family: var(--lbl-sans); font-weight: 400; line-height: 1.65; }
+.prose { font-family: var(--lbl-sans); font-size: 18px; font-weight: 400; line-height: 1.65; color: var(--lbl-ink); }
+.prose p, .prose li { font-family: var(--lbl-sans); font-size: inherit; font-weight: 400; line-height: 1.65; }
 .prose h1, .prose h2, .prose h3, .prose h4,
 .lbl-prose h1, .lbl-prose h2, .lbl-prose h3, .lbl-prose h4 {
   font-family: var(--lbl-serif);

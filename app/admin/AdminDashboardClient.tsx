@@ -1568,7 +1568,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
                       <p className={`text-xs leading-relaxed transition-colors duration-300 ${
                         aiStep === 3 ? 'text-ink dark:text-sand/90' : aiStep >= 4 ? 'text-ink-3 dark:text-sand/50' : 'text-ink-3/60 dark:text-sand/30'
                       }`}>
-                        {aiStep >= 3 ? 'Engaging Claude-3-5-Sonnet to formulate the structured layout and inject QX Travel CTA links…' : 'Waiting…'}
+                        {aiStep >= 3 ? 'Engaging Claude 3.5 Sonnet to formulate the structured layout and inject QX Travel CTA links...' : 'Waiting...'}
                       </p>
                       {aiStep === 3 && (
                         <div className="mt-2 h-[3px] bg-ink/5 dark:bg-sand/10 rounded-full overflow-hidden">

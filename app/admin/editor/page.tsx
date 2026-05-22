@@ -16,7 +16,7 @@ interface EditorPageProps {
   }>;
 }
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function EditorPage({ searchParams }: EditorPageProps) {
   const { type = 'review', slug = '' } = await searchParams;
