@@ -3,8 +3,8 @@ title: "*The quiet rebirth of a historic **Lisbon** icon*"
 excerpt: "Where the Atlantic breeze meets the ancient stone of Baixa, a new sanctuary of understated Portuguese modernism unfolds."
 date: "2026-05-22"
 category: "Hotel Review"
-draft: false
-status: "published"
+draft: true
+status: "draft"
 sources:
   - "https://thepointsguy.com/news/andaz-lisbon-now-open/"
   - "https://upgradedpoints.com/news/andaz-lisbon-opening/"
