@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
     roomType: "[Typical Room/Suite Category]"
     youtubeId: ""
     showQxPerks: true
-    date: "${new Date().toISOString().split('T')[0]}"
+    date: "${new Date().toISOString()}"
     category: "Hotel Review"
     draft: true
     status: "draft"

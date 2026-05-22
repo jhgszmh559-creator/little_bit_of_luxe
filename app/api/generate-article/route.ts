@@ -178,7 +178,7 @@ Please return the response as a single valid JSON object following the format co
     const frontmatter: Record<string, any> = {
       title: title || name,
       excerpt: excerpt || '',
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString(),
       category: type === 'program' ? 'Preferred Partner' : type === 'news' ? 'Hotel News' : 'Hotel Review',
       draft: true,
       status: 'draft',

@@ -1,7 +1,7 @@
 ---
 title: "*The quiet rebirth of a historic **Lisbon** icon*"
 excerpt: "Where the Atlantic breeze meets the ancient stone of Baixa, a new sanctuary of understated Portuguese modernism unfolds."
-date: "2026-05-22"
+date: "2026-05-22T23:59:00Z"
 category: "Hotel Review"
 draft: false
 status: "published"

@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const frontmatter: Record<string, any> = {
       title: title || '',
       excerpt: excerpt || '',
-      date: date || new Date().toISOString().split('T')[0],
+      date: date || new Date().toISOString(),
       category: category || (type === 'program' ? 'Preferred Partner' : type === 'news' ? 'Hotel News' : 'Hotel Review'),
       draft: finalDraft,
       status: finalStatus,
