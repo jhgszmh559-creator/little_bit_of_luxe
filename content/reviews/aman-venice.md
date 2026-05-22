@@ -24,7 +24,7 @@ The palazzo itself is a work of art, featuring soaring ceilings, gilded mirrors,
 
 ### The Historic Accommodations
 
-<span style="color: rgb(107, 31, 42)">Each room and suite is unique, configured around the palazzo's original layout.</span> The Alcova Palazzo Chamber is particularly noteworthy, featuring a ceiling painted by Tiepolo, a carved fireplace, and views over the canal. The integration of modern technology and luxury amenities is handled with signature Aman subtlety, ensuring nothing detracts from the historic character of the room.
+<span style="color: rgb(185, 106, 74)">Each room and suite is unique, configured around the palazzo's original layout. </span>The Alcova Palazzo Chamber is particularly noteworthy, featuring a ceiling painted by Tiepolo, a carved fireplace, and views over the canal. The integration of modern technology and luxury amenities is handled with signature Aman subtlety, ensuring nothing detracts from the historic character of the room.
 
 The gardens, a rarity in Venice, offer a tranquil green sanctuary on the Grand Canal, providing the perfect setting for an unhurried breakfast or a sunset cocktail. The service is intuitive and warm, operating with the effortless grace that is the hallmark of the Aman brand.
 
