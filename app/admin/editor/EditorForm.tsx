@@ -95,18 +95,29 @@ function nodeToMarkdown(node: Node): string {
         return `<u>${childrenMarkdown}</u>`;
       case 'a':
         const href = element.getAttribute('href') || '';
+        const aClass = element.getAttribute('class');
+        const target = element.getAttribute('target');
+        const rel = element.getAttribute('rel');
+        if (aClass || target || rel) {
+          let attrs = `href="${href}"`;
+          if (aClass) attrs += ` class="${aClass}"`;
+          if (target) attrs += ` target="${target}"`;
+          if (rel) attrs += ` rel="${rel}"`;
+          return `<a ${attrs}>${childrenMarkdown}</a>`;
+        }
         return `[${childrenMarkdown}](${href})`;
       case 'span':
         const styleColor = element.style.color;
         const styleFontFamily = element.style.fontFamily;
-        if (styleColor && styleFontFamily) {
-          return `<span style="color: ${styleColor}; font-family: ${styleFontFamily}">${childrenMarkdown}</span>`;
-        }
-        if (styleColor) {
-          return `<span style="color: ${styleColor}">${childrenMarkdown}</span>`;
-        }
-        if (styleFontFamily) {
-          return `<span style="font-family: ${styleFontFamily}">${childrenMarkdown}</span>`;
+        const styleFontSize = element.style.fontSize;
+        
+        let styleStr = '';
+        if (styleColor) styleStr += `color: ${styleColor}; `;
+        if (styleFontFamily) styleStr += `font-family: ${styleFontFamily}; `;
+        if (styleFontSize) styleStr += `font-size: ${styleFontSize}; `;
+        
+        if (styleStr) {
+          return `<span style="${styleStr.trim()}">${childrenMarkdown}</span>`;
         }
         return childrenMarkdown;
       case 'font':
@@ -204,9 +215,17 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [message, setMessage] = useState('');
   const [editorTab, setEditorTab] = useState<'content' | 'metadata'>('content');
 
+  // Lifecycle & Citations State
+  const [status, setStatus] = useState<'published' | 'draft' | 'archived'>(initialData?.status || (initialData?.draft === false ? 'published' : 'draft'));
+  const [sources, setSources] = useState<string[]>(initialData?.sources || []);
+
   // Rich Text Toolbars & Popups State
   const [isColorDropdownOpen, setIsColorDropdownOpen] = useState(false);
   const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
+  const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [hyperlinkUrl, setHyperlinkUrl] = useState('');
+  const [savedRange, setSavedRange] = useState<Range | null>(null);
   
   // Cloudinary Loader Modal State
   const [cloudinaryOpen, setCloudinaryOpen] = useState(false);
@@ -231,6 +250,9 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
       }
       if (!target.closest('.font-picker-container')) {
         setIsFontDropdownOpen(false);
+      }
+      if (!target.closest('.size-picker-container')) {
+        setIsSizeDropdownOpen(false);
       }
     };
     document.addEventListener('click', handleOutsideClick);
@@ -294,6 +316,95 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
     newRange.selectNodeContents(span);
     selection.removeAllRanges();
     selection.addRange(newRange);
+    
+    if (editorRef.current) {
+      const md = convertHtmlToMarkdown(editorRef.current.innerHTML);
+      setContent(md);
+    }
+  };
+
+  // Font size helper wrapping selection in styles
+  const applyFontSize = (fontSize: string) => {
+    if (typeof window === 'undefined') return;
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    
+    const span = document.createElement('span');
+    span.style.fontSize = fontSize;
+    if (range.collapsed) {
+      span.textContent = 'text';
+    } else {
+      span.appendChild(range.extractContents());
+    }
+    range.insertNode(span);
+    
+    const newRange = document.createRange();
+    newRange.selectNodeContents(span);
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+    
+    if (editorRef.current) {
+      const md = convertHtmlToMarkdown(editorRef.current.innerHTML);
+      setContent(md);
+    }
+  };
+
+  // Open Link Modal with selection captured
+  const openLinkModal = () => {
+    if (typeof window === 'undefined') return;
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
+      setSavedRange(selection.getRangeAt(0).cloneRange());
+    } else {
+      setSavedRange(null);
+    }
+    setIsLinkModalOpen(true);
+    setHyperlinkUrl('');
+  };
+
+  // Apply custom luxury hyperlink style class wrapping selection
+  const applyHyperlink = (url: string) => {
+    if (typeof window === 'undefined') return;
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    const selection = window.getSelection();
+    let range = savedRange;
+    if (!range && selection && selection.rangeCount > 0 && editorRef.current?.contains(selection.anchorNode)) {
+      range = selection.getRangeAt(0);
+    }
+    if (!range) {
+      setIsLinkModalOpen(false);
+      return;
+    }
+
+    // Restore selection
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    const anchor = document.createElement('a');
+    anchor.setAttribute('href', url);
+    anchor.setAttribute('target', '_blank');
+    anchor.setAttribute('rel', 'noopener noreferrer');
+    anchor.setAttribute('class', 'lbl-link');
+    
+    if (range.collapsed) {
+      anchor.textContent = url;
+    } else {
+      anchor.appendChild(range.extractContents());
+    }
+    
+    range.insertNode(anchor);
+    
+    // Clear state
+    setSavedRange(null);
+    setIsLinkModalOpen(false);
     
     if (editorRef.current) {
       const md = convertHtmlToMarkdown(editorRef.current.innerHTML);
@@ -377,7 +488,9 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
       excerpt,
       content,
       category,
-      draft,
+      draft: status !== 'published',
+      status,
+      sources,
       date,
       // Review specific
       hotelName,
@@ -762,6 +875,72 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                       )}
                     </div>
 
+                    {/* Font Size Dropdown */}
+                    <div className="relative size-picker-container font-sans">
+                      <button
+                        type="button"
+                        onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
+                        title="Font Size"
+                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent text-sm font-semibold"
+                      >
+                        A<span className="text-[10px] ml-0.5 font-normal">±</span>
+                      </button>
+                      {isSizeDropdownOpen && (
+                        <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 py-1.5 shadow-xl rounded-none w-44 flex flex-col font-sans">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              applyFontSize('14px');
+                              setIsSizeDropdownOpen(false);
+                            }}
+                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-xs"
+                          >
+                            Small (14px)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              applyFontSize('17px');
+                              setIsSizeDropdownOpen(false);
+                            }}
+                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-sm font-medium"
+                          >
+                            Base (17px)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              applyFontSize('22px');
+                              setIsSizeDropdownOpen(false);
+                            }}
+                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-base font-semibold"
+                          >
+                            Large (22px)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              applyFontSize('28px');
+                              setIsSizeDropdownOpen(false);
+                            }}
+                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-lg font-bold"
+                          >
+                            Extra Large (28px)
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Hyperlink Tool */}
+                    <button
+                      type="button"
+                      onClick={openLinkModal}
+                      title="Add Custom Hyperlink"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <Link2 className="w-4 h-4" />
+                    </button>
+
                     {/* Divider */}
                     <div className="w-px h-6 bg-ink/10 mx-1" />
 
@@ -1036,18 +1215,23 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   />
                 </div>
 
-                {/* Draft Status */}
+                {/* Publishing Lifecycle Status */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
                     Publishing Status
                   </label>
                   <select 
                     className="w-full text-sm bg-card border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                    value={draft ? 'true' : 'false'}
-                    onChange={e => setDraft(e.target.value === 'true')}
+                    value={status}
+                    onChange={e => {
+                      const newStatus = e.target.value as 'published' | 'draft' | 'archived';
+                      setStatus(newStatus);
+                      setDraft(newStatus !== 'published');
+                    }}
                   >
-                    <option value="true">Save as Draft (Private)</option>
-                    <option value="false">Publish (Public to Journal)</option>
+                    <option value="draft">Draft (Private / Dashboard only)</option>
+                    <option value="published">Published (Public on Live Site)</option>
+                    <option value="archived">Archived (Private / Archive list)</option>
                   </select>
                 </div>
 
@@ -1324,6 +1508,34 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                 </div>
               </div>
 
+              {/* Private Sources Citations Section */}
+              <div className="border-t border-ink/10 pt-6 mt-2 flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-serif text-base font-semibold text-ink">Intelligence Sources Dossier</h4>
+                  <span className="text-[9px] uppercase tracking-wider bg-sage/10 text-sage px-2 py-0.5 font-bold">
+                    {sources.length} Verified Sources
+                  </span>
+                </div>
+                <p className="text-xs text-ink-3 leading-relaxed">
+                  These verified information sources were crawled during generative ingestion and inform this article's research footprint. They are kept private from the public article layout.
+                </p>
+                {sources.length > 0 ? (
+                  <ol className="list-decimal list-inside bg-paper p-4 border border-ink/5 flex flex-col gap-2 font-mono text-[11px] text-bordeaux dark:text-gold-soft select-all">
+                    {sources.map((src, idx) => (
+                      <li key={idx} className="truncate">
+                        <a href={src} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                          {src}
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <div className="text-xs text-ink-3 italic p-4 bg-paper/50 border border-dashed border-ink/10 text-center">
+                    No intelligence sources compiled for this draft yet.
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
         </div>
@@ -1457,6 +1669,66 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                 className="px-4 py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight text-xs uppercase tracking-wider font-bold cursor-pointer rounded-none min-h-[44px]"
               >
                 Insert Video
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LINK LOADER POPUP */}
+      {isLinkModalOpen && (
+        <div className="fixed inset-0 bg-midnight/60 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-ivory dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[480px] w-full shadow-2xl rounded-none flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-ink/10 pb-2">
+              <h4 className="font-serif text-lg font-semibold text-ink">Add Custom Hyperlink</h4>
+              <button 
+                type="button"
+                onClick={() => setIsLinkModalOpen(false)}
+                className="text-ink/60 hover:text-ink text-xl font-bold min-h-[32px] min-w-[32px] cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Destination URL</label>
+              <input 
+                type="text" 
+                placeholder="e.g. https://www.hyatt.com or /review/aman-venice" 
+                value={hyperlinkUrl}
+                onChange={e => setHyperlinkUrl(e.target.value)}
+                className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
+                autoFocus
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (hyperlinkUrl) {
+                      applyHyperlink(hyperlinkUrl);
+                    }
+                  }
+                }}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-2">
+              <button 
+                type="button" 
+                onClick={() => setIsLinkModalOpen(false)}
+                className="px-4 py-2 border border-ink/20 text-xs uppercase tracking-wider hover:bg-ink/5 cursor-pointer rounded-none min-h-[44px]"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (hyperlinkUrl) {
+                    applyHyperlink(hyperlinkUrl);
+                  }
+                }}
+                disabled={!hyperlinkUrl}
+                className="px-4 py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight text-xs uppercase tracking-wider font-bold cursor-pointer rounded-none min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Insert Link
               </button>
             </div>
           </div>

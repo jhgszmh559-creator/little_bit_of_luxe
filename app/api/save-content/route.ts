@@ -35,7 +35,9 @@ export async function POST(request: NextRequest) {
       sourceUrl,
       date,
       category,
-      draft 
+      draft,
+      status,
+      sources
     } = data;
 
     if (!type || !slug) {
@@ -51,13 +53,19 @@ export async function POST(request: NextRequest) {
     }
     const relPath = `content/${subfolder}/${slug}.md`;
 
+    // Resolve initial status and draft status
+    const finalStatus = status || (draft === true ? 'draft' : 'published');
+    const finalDraft = finalStatus !== 'published';
+
     // Build the frontmatter object based on type
     const frontmatter: Record<string, any> = {
       title: title || '',
       excerpt: excerpt || '',
       date: date || new Date().toISOString().split('T')[0],
       category: category || (type === 'program' ? 'Preferred Partner' : type === 'news' ? 'Hotel News' : 'Hotel Review'),
-      draft: draft !== undefined ? !!draft : false,
+      draft: finalDraft,
+      status: finalStatus,
+      sources: sources || [],
     };
 
     if (type === 'program') {
@@ -95,6 +103,12 @@ export async function POST(request: NextRequest) {
         // Escape quotes
         const cleanVal = val.replace(/"/g, '\\"');
         yamlLines.push(`${key}: "${cleanVal}"`);
+      } else if (Array.isArray(val)) {
+        yamlLines.push(`${key}:`);
+        val.forEach((item) => {
+          const cleanItem = String(item).replace(/"/g, '\\"');
+          yamlLines.push(`  - "${cleanItem}"`);
+        });
       } else {
         yamlLines.push(`${key}: ${val}`);
       }

@@ -11,6 +11,13 @@ function getField<T>(data: any, camelKey: string, snakeKey: string, defaultValue
   return defaultValue;
 }
 
+function getStatus(data: any): 'published' | 'draft' | 'archived' {
+  if (data.status === 'published' || data.status === 'draft' || data.status === 'archived') {
+    return data.status;
+  }
+  return data.draft === true ? 'draft' : 'published';
+}
+
 export interface Program {
   slug: string;
   title: string;
@@ -23,6 +30,8 @@ export interface Program {
   date: string;
   category: string;
   draft: boolean;
+  status: 'published' | 'draft' | 'archived';
+  sources?: string[];
   image: string;
   content: string;
   verdict?: {
@@ -48,6 +57,8 @@ export interface Review {
   ogImage?: string;
   date: string;
   draft: boolean;
+  status: 'published' | 'draft' | 'archived';
+  sources?: string[];
   category: string;
   content: string;
 }
@@ -64,12 +75,14 @@ export interface News {
   sourceUrl?: string;
   date: string;
   draft: boolean;
+  status: 'published' | 'draft' | 'archived';
+  sources?: string[];
   category: string;
   image: string;
   content: string;
 }
 
-export function getPrograms(): Program[] {
+export function getPrograms(includeHidden = false): Program[] {
   const dirPath = path.join(contentDir, 'programs');
   if (!fs.existsSync(dirPath)) return [];
 
@@ -92,6 +105,8 @@ export function getPrograms(): Program[] {
         };
       }
 
+      const status = getStatus(data);
+
       return {
         slug,
         title: data.title || '',
@@ -103,18 +118,20 @@ export function getPrograms(): Program[] {
         partnerLink: getField(data, 'partnerLink', 'partner_link', ''),
         date: data.date || '',
         category: data.category || 'Preferred Partner',
-        draft: !!data.draft,
+        status,
+        draft: status !== 'published',
+        sources: data.sources || [],
         image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
         content,
         verdict,
       };
     })
-    .filter(program => !program.draft);
+    .filter(program => includeHidden || program.status === 'published');
 
   return programs.sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export function getReviews(): Review[] {
+export function getReviews(includeHidden = false): Review[] {
   const dirPath = path.join(contentDir, 'reviews');
   if (!fs.existsSync(dirPath)) return [];
 
@@ -129,6 +146,7 @@ export function getReviews(): Review[] {
 
       const hotelName = getField(data, 'hotelName', 'hotel_name', getField(data, 'propertyName', 'property_name', ''));
       const ratingVal = data.rating !== undefined ? data.rating : data.score;
+      const status = getStatus(data);
 
       return {
         slug,
@@ -145,16 +163,19 @@ export function getReviews(): Review[] {
         metaDescription: getField(data, 'metaDescription', 'meta_description', ''),
         ogImage: getField(data, 'ogImage', 'og_image', getField(data, 'image', 'image', '')),
         date: data.date || '',
-        draft: !!data.draft,
+        status,
+        draft: status !== 'published',
+        sources: data.sources || [],
         category: data.category || 'Hotel Review',
         content,
       };
-    });
+    })
+    .filter(review => includeHidden || review.status === 'published');
 
   return reviews.sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export function getNews(): News[] {
+export function getNews(includeHidden = false): News[] {
   const dirPath = path.join(contentDir, 'news');
   if (!fs.existsSync(dirPath)) return [];
 
@@ -167,6 +188,8 @@ export function getNews(): News[] {
       const fileContent = fs.readFileSync(filePath, 'utf-8');
       const { data, content } = matter(fileContent);
 
+      const status = getStatus(data);
+
       return {
         slug,
         title: data.title || '',
@@ -178,12 +201,15 @@ export function getNews(): News[] {
         earlyNewsletterCta: getField(data, 'earlyNewsletterCta', 'early_newsletter_cta', false),
         sourceUrl: getField(data, 'sourceUrl', 'source_url', ''),
         date: data.date || '',
-        draft: !!data.draft,
+        status,
+        draft: status !== 'published',
+        sources: data.sources || [],
         category: data.category || 'Hotel News',
         image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
         content,
       };
-    });
+    })
+    .filter(news => includeHidden || news.status === 'published');
 
   return newsList.sort((a, b) => b.date.localeCompare(a.date));
 }
@@ -205,6 +231,8 @@ export function getProgramBySlug(slug: string): Program | null {
     };
   }
 
+  const status = getStatus(data);
+
   return {
     slug,
     title: data.title || '',
@@ -216,7 +244,9 @@ export function getProgramBySlug(slug: string): Program | null {
     partnerLink: getField(data, 'partnerLink', 'partner_link', ''),
     date: data.date || '',
     category: data.category || 'Preferred Partner',
-    draft: !!data.draft,
+    status,
+    draft: status !== 'published',
+    sources: data.sources || [],
     image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
     content,
     verdict,
@@ -232,6 +262,7 @@ export function getReviewBySlug(slug: string): Review | null {
 
   const hotelName = getField(data, 'hotelName', 'hotel_name', getField(data, 'propertyName', 'property_name', ''));
   const ratingVal = data.rating !== undefined ? data.rating : data.score;
+  const status = getStatus(data);
 
   return {
     slug,
@@ -248,7 +279,9 @@ export function getReviewBySlug(slug: string): Review | null {
     metaDescription: getField(data, 'metaDescription', 'meta_description', ''),
     ogImage: getField(data, 'ogImage', 'og_image', getField(data, 'image', 'image', '')),
     date: data.date || '',
-    draft: !!data.draft,
+    status,
+    draft: status !== 'published',
+    sources: data.sources || [],
     category: data.category || 'Hotel Review',
     content,
   };
@@ -261,6 +294,8 @@ export function getNewsBySlug(slug: string): News | null {
   const fileContent = fs.readFileSync(filePath, 'utf-8');
   const { data, content } = matter(fileContent);
 
+  const status = getStatus(data);
+
   return {
     slug,
     title: data.title || '',
@@ -272,7 +307,9 @@ export function getNewsBySlug(slug: string): News | null {
     earlyNewsletterCta: getField(data, 'earlyNewsletterCta', 'early_newsletter_cta', false),
     sourceUrl: getField(data, 'sourceUrl', 'source_url', ''),
     date: data.date || '',
-    draft: !!data.draft,
+    status,
+    draft: status !== 'published',
+    sources: data.sources || [],
     category: data.category || 'Hotel News',
     image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
     content,

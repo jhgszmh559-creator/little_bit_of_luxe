@@ -25,7 +25,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
   const { slug } = await params;
   const program = getProgramBySlug(slug);
 
-  if (!program) {
+  if (!program || program.status !== 'published') {
     notFound();
   }
 
@@ -39,9 +39,9 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
   const htmlContent = parseMarkdown(cleanedContent);
 
   // Get related programs
-  const allPrograms = getPrograms();
+  const allPrograms = getPrograms(false);
   const relatedPrograms = allPrograms
-    .filter((p) => p.slug !== slug && !p.draft)
+    .filter((p) => p.slug !== slug && p.status === 'published')
     .slice(0, 3);
 
   return (

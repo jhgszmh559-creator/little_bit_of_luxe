@@ -6,15 +6,19 @@ import HomepageContent from '@/components/HomepageContent';
 export const revalidate = 3600;
 
 export default function Page() {
-  const programs = getPrograms();
-  const reviews = getReviews();
-  const news = getNews();
+  // Main query fetching data for the primary visual hero component explicitly uses getReviews(false)
+  const reviews = getReviews(false);
+  const featuredReview = reviews[0] || null;
+  const remainingReviews = reviews.slice(1);
+  const programs = getPrograms(false);
+  const news = getNews(false);
 
   return (
     <HomepageContent 
       programs={programs} 
-      reviews={reviews} 
+      reviews={remainingReviews} 
       news={news}
+      featuredReview={featuredReview}
     />
   );
 }

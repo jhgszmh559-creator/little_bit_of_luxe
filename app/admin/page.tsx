@@ -6,9 +6,9 @@ import AdminDashboardClient from './AdminDashboardClient';
 export const dynamic = 'force-dynamic';
 
 export default function AdminPage() {
-  const programs = getPrograms();
-  const reviews = getReviews();
-  const news = getNews();
+  const programs = getPrograms(true);
+  const reviews = getReviews(true);
+  const news = getNews(true);
 
   return (
     <AdminDashboardClient 

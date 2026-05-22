@@ -20,6 +20,7 @@ interface Program {
   date: string;
   category: string;
   draft: boolean;
+  status: 'published' | 'draft' | 'archived';
 }
 
 interface Review {
@@ -33,6 +34,7 @@ interface Review {
   roomType: string;
   date: string;
   draft: boolean;
+  status: 'published' | 'draft' | 'archived';
   category: string;
 }
 
@@ -46,6 +48,7 @@ interface News {
   projectedOpening: string;
   date: string;
   draft: boolean;
+  status: 'published' | 'draft' | 'archived';
   category: string;
 }
 
@@ -58,7 +61,7 @@ interface AdminDashboardClientProps {
 export default function AdminDashboardClient({ programs, reviews, news }: AdminDashboardClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'analytics' | 'posts' | 'pages' | 'tags' | 'decap' | 'settings'>('analytics');
-  const [postFilter, setPostFilter] = useState<'all' | 'published' | 'drafts'>('all');
+  const [postFilter, setPostFilter] = useState<'all' | 'published' | 'drafts' | 'archived'>('all');
   const [selectedPostType, setSelectedPostType] = useState<'all' | 'Review' | 'News' | 'Partner Guide'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -152,6 +155,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
       category: 'Hotel Review',
       location: r.location,
       draft: r.draft,
+      status: r.status,
       date: r.date,
       rating: r.rating,
       brand: r.brand,
@@ -165,6 +169,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
       category: 'Hotel News',
       location: n.location,
       draft: n.draft,
+      status: n.status,
       date: n.date,
       rating: undefined,
       brand: n.brand,
@@ -178,6 +183,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
       category: 'Preferred Partner',
       location: p.loyaltyNetwork,
       draft: p.draft,
+      status: p.status,
       date: p.date,
       rating: undefined,
       brand: undefined,
@@ -364,8 +370,9 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
     
     // Status Filter
     const matchesStatus = postFilter === 'all' || 
-                         (postFilter === 'drafts' && post.draft) || 
-                         (postFilter === 'published' && !post.draft);
+                         (postFilter === 'drafts' && post.status === 'draft') || 
+                         (postFilter === 'published' && post.status === 'published') ||
+                         (postFilter === 'archived' && post.status === 'archived');
                          
     // Type Filter
     const matchesType = selectedPostType === 'all' || post.type === selectedPostType;
@@ -480,24 +487,35 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
               
               <button 
                 onClick={() => { setActiveTab('posts'); setPostFilter('published'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center justify-between pl-8 pr-3 py-2 text-xs font-medium uppercase tracking-wider rounded-none cursor-pointer transition-colors ${
+                className={`flex items-center justify-between pl-8 pr-3 py-2 text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer transition-colors ${
                   activeTab === 'posts' && postFilter === 'published'
                     ? 'text-midnight dark:text-sand font-bold border-l border-midnight dark:border-sand' 
                     : 'text-ink-3 hover:text-ink dark:text-sand/65 dark:hover:text-white'
                 }`}
               >
-                Published ({unifiedPosts.filter(p => !p.draft).length})
+                Published ({unifiedPosts.filter(p => p.status === 'published').length})
               </button>
 
               <button 
                 onClick={() => { setActiveTab('posts'); setPostFilter('drafts'); setIsMobileMenuOpen(false); }}
-                className={`flex items-center justify-between pl-8 pr-3 py-2 text-xs font-medium uppercase tracking-wider rounded-none cursor-pointer transition-colors ${
+                className={`flex items-center justify-between pl-8 pr-3 py-2 text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer transition-colors ${
                   activeTab === 'posts' && postFilter === 'drafts'
                     ? 'text-midnight dark:text-sand font-bold border-l border-midnight dark:border-sand' 
                     : 'text-ink-3 hover:text-ink dark:text-sand/65 dark:hover:text-white'
                 }`}
               >
-                Drafts ({unifiedPosts.filter(p => p.draft).length})
+                Drafts ({unifiedPosts.filter(p => p.status === 'draft').length})
+              </button>
+
+              <button 
+                onClick={() => { setActiveTab('posts'); setPostFilter('archived'); setIsMobileMenuOpen(false); }}
+                className={`flex items-center justify-between pl-8 pr-3 py-2 text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer transition-colors ${
+                  activeTab === 'posts' && postFilter === 'archived'
+                    ? 'text-midnight dark:text-sand font-bold border-l border-midnight dark:border-sand' 
+                    : 'text-ink-3 hover:text-ink dark:text-sand/65 dark:hover:text-white'
+                }`}
+              >
+                Archived ({unifiedPosts.filter(p => p.status === 'archived').length})
               </button>
             </div>
 
@@ -678,7 +696,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
           <div>
             <h2 className="font-serif text-xl font-semibold uppercase tracking-wider text-ink dark:text-sand">
               {activeTab === 'analytics' && 'Analytics Overview'}
-              {activeTab === 'posts' && `${postFilter === 'all' ? 'All Posts' : postFilter === 'published' ? 'Published Posts' : 'Draft Posts'}`}
+              {activeTab === 'posts' && `${postFilter === 'all' ? 'All Posts' : postFilter === 'published' ? 'Published Posts' : postFilter === 'drafts' ? 'Draft Posts' : 'Archived Posts'}`}
               {activeTab === 'pages' && 'Site Pages Directory'}
               {activeTab === 'tags' && 'Categories & Destinations'}
               {activeTab === 'decap' && 'Decap CMS Admin'}
@@ -1066,8 +1084,14 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
                                   <MapPin className="w-2.5 h-2.5" /> {post.location}
                                 </span>
 
-                                {post.draft && (
+                                {post.status === 'draft' && (
                                   <span className="text-[8px] uppercase tracking-wider bg-bordeaux/10 text-bordeaux px-1.5 py-0.5 rounded-none font-bold">Draft</span>
+                                )}
+                                {post.status === 'archived' && (
+                                  <span className="text-[8px] uppercase tracking-wider bg-ink-3/15 text-ink-3 dark:bg-sand/15 dark:text-sand/75 px-1.5 py-0.5 rounded-none font-bold">Archived</span>
+                                )}
+                                {post.status === 'published' && (
+                                  <span className="text-[8px] uppercase tracking-wider bg-sage/15 text-sage px-1.5 py-0.5 rounded-none font-bold">Published</span>
                                 )}
                               </div>
                               
@@ -1101,6 +1125,18 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
                               >
                                 Audit
                               </button>
+
+                              {post.status === 'published' && (
+                                <a 
+                                  href={post.type === 'Review' ? `/review/${post.slug}` : post.type === 'News' ? `/news/${post.slug}` : `/program/${post.slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-2.5 py-1.5 border border-ink/20 dark:border-sand/20 text-ink dark:text-sand hover:border-ink text-[10px] font-semibold uppercase tracking-wider rounded-none cursor-pointer flex items-center gap-1 min-h-[32px]"
+                                  title="View Live Page"
+                                >
+                                  <ExternalLink className="w-3 h-3" /> Live
+                                </a>
+                              )}
 
                               <Link 
                                 href={`/admin/editor?type=${post.type === 'Review' ? 'review' : post.type === 'News' ? 'news' : 'program'}&slug=${post.slug}`}

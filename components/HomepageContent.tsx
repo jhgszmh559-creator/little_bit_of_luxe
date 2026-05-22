@@ -56,9 +56,10 @@ interface HomepageContentProps {
   programs: ProgramData[];
   reviews: ReviewData[];
   news: NewsData[];
+  featuredReview?: ReviewData | null;
 }
 
-export default function HomepageContent({ programs, reviews, news = [] }: HomepageContentProps) {
+export default function HomepageContent({ programs, reviews, news = [], featuredReview }: HomepageContentProps) {
   // Combine programs, reviews, and news into a unified list of articles
   const allArticles = [
     ...programs.map((p) => ({
@@ -106,8 +107,29 @@ export default function HomepageContent({ programs, reviews, news = [] }: Homepa
   ].sort((a, b) => b.date.localeCompare(a.date));
 
   // Partition articles into the UI template slots
-  const featured = allArticles[0];
-  const rest = allArticles.slice(1);
+  let featured: any = null;
+  let rest = allArticles;
+
+  if (featuredReview) {
+    featured = {
+      slug: featuredReview.slug,
+      title: featuredReview.title,
+      excerpt: featuredReview.excerpt,
+      location: featuredReview.location,
+      eyebrow: 'HOTEL REVIEW · ' + featuredReview.location.toUpperCase(),
+      author: 'Our Editors',
+      readTime: '8 MIN READ',
+      date: featuredReview.date,
+      rating: featuredReview.rating,
+      cover: featuredReview.ogImage || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
+      category: 'Hotel Review',
+      link: `/review/${featuredReview.slug}`,
+    };
+  } else {
+    featured = allArticles[0];
+    rest = allArticles.slice(1);
+  }
+
   const latest = rest.slice(0, 3);
   const edit = rest.slice(3, 7);
   const more = rest.slice(7, 10);

@@ -14,6 +14,12 @@ function slugify(text: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const secret = request.headers.get('x-admin-secret') || request.headers.get('X-Admin-Secret');
+    const adminSecret = process.env.ADMIN_SECRET || 'luxe2026';
+    if (!secret || secret !== adminSecret) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!process.env.GITHUB_ACCESS_TOKEN) {
       return NextResponse.json({ error: "GITHUB_ACCESS_TOKEN is not configured. Please add it to your platform deployment environment variables." }, { status: 500 });
     }
@@ -68,6 +74,7 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Perplexity Sonar search for background info to ensure factual correctness
     let searchContext = '';
+    let citations: string[] = [];
     if (process.env.PERPLEXITY_API_KEY && hotelName) {
       try {
         console.log(`Querying Perplexity Sonar for details on email entity: ${hotelName}...`);
@@ -96,6 +103,7 @@ export async function POST(request: NextRequest) {
         if (pepResponse.ok) {
           const pepData = await pepResponse.json();
           searchContext = pepData.choices?.[0]?.message?.content || '';
+          citations = pepData.citations || [];
         }
       } catch (err) {
         console.error('Failed to query Perplexity during email-ingest:', err);
@@ -107,6 +115,8 @@ export async function POST(request: NextRequest) {
       model: 'gemini-2.5-flash',
       generationConfig: { temperature: 0.3 }
     });
+
+    const citationsStr = JSON.stringify(citations);
 
     const draftPrompt = `You are a Principal Luxury Travel Editorial Director for "Little Bit of Luxe".
     Write a gorgeous, 800-word magazine-style review draft for: "${hotelName}".
@@ -153,6 +163,8 @@ export async function POST(request: NextRequest) {
     date: "${new Date().toISOString().split('T')[0]}"
     category: "Hotel Review"
     draft: true
+    status: "draft"
+    sources: ${citationsStr}
     ogImage: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
     ---
     

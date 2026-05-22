@@ -25,7 +25,7 @@ export default async function NewsPage({ params }: NewsPageProps) {
   const { slug } = await params;
   const news = getNewsBySlug(slug);
 
-  if (!news) {
+  if (!news || news.status !== 'published') {
     notFound();
   }
 
@@ -33,9 +33,9 @@ export default async function NewsPage({ params }: NewsPageProps) {
   const htmlContent = parseMarkdown(news.content);
 
   // Get related news
-  const allNews = getNews();
+  const allNews = getNews(false);
   const relatedNews = allNews
-    .filter((n) => n.slug !== slug && !n.draft)
+    .filter((n) => n.slug !== slug && n.status === 'published')
     .slice(0, 3);
 
   // Splitting content for early newsletter CTA if required
@@ -146,21 +146,6 @@ export default async function NewsPage({ params }: NewsPageProps) {
           </div>
 
           {renderedContent}
-
-          {/* Original Intelligence Citation Link */}
-          {news.sourceUrl && (
-            <div className="mt-12 pt-6 border-t border-rule-soft select-none text-xs text-ink-3">
-              <span>Original Intelligence: </span>
-              <a 
-                href={news.sourceUrl} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-midnight hover:text-bordeaux underline decoration-1 underline-offset-2"
-              >
-                Read original source coverage ({new URL(news.sourceUrl).hostname})
-              </a>
-            </div>
-          )}
         </article>
 
         {/* Related Articles Section */}

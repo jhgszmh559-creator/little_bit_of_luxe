@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Enforce Perplexity Sonar search as absolute first action step
     let searchResults = '';
+    let citations: string[] = [];
     try {
       const perplexityRes = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
 
       const perplexityData = await perplexityRes.json();
       searchResults = perplexityData.choices?.[0]?.message?.content || '';
+      citations = perplexityData.citations || [];
       if (!searchResults.trim()) {
         throw new Error('Perplexity returned empty research results');
       }
@@ -178,7 +180,9 @@ Please return the response as a single valid JSON object following the format co
       excerpt: excerpt || '',
       date: new Date().toISOString().split('T')[0],
       category: type === 'program' ? 'Preferred Partner' : type === 'news' ? 'Hotel News' : 'Hotel Review',
-      draft: false,
+      draft: true,
+      status: 'draft',
+      sources: citations,
     };
 
     if (type === 'program') {
@@ -222,6 +226,12 @@ Please return the response as a single valid JSON object following the format co
       if (typeof val === 'string') {
         const cleanVal = val.replace(/"/g, '\\"');
         yamlLines.push(`${key}: "${cleanVal}"`);
+      } else if (Array.isArray(val)) {
+        yamlLines.push(`${key}:`);
+        val.forEach((item) => {
+          const cleanItem = String(item).replace(/"/g, '\\"');
+          yamlLines.push(`  - "${cleanItem}"`);
+        });
       } else if (typeof val === 'object' && val !== null) {
         yamlLines.push(`${key}:`);
         Object.entries(val).forEach(([subKey, subVal]) => {

@@ -25,7 +25,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   const { slug } = await params;
   const review = getReviewBySlug(slug);
 
-  if (!review) {
+  if (!review || review.status !== 'published') {
     notFound();
   }
 
@@ -44,9 +44,9 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   }
 
   // Get related reviews
-  const allReviews = getReviews();
+  const allReviews = getReviews(false);
   const relatedReviews = allReviews
-    .filter((r) => r.slug !== slug && !r.draft)
+    .filter((r) => r.slug !== slug && r.status === 'published')
     .slice(0, 3);
 
   // Format verdict score
