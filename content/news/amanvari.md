@@ -19,7 +19,7 @@ Baja's peninsula is a place of geological drama: ancient volcanic formations, de
 
 ### A Setting Unlike Any Other Aman
 
-Unlike the ocean-facing Amanpulo or the terraced hillsides of Amanjiwo, Amanvari turns inward — toward the land itself. The property is situated in one of the most isolated stretches of the Baja peninsula, where the Pacific light arrives differently at every hour: golden and low at dawn, bleached to near-white by midday, and burnished copper by late afternoon. The terrain shifts between sparse desert flora, dramatic rock formations, and the occasional flash of a dry riverbed that betrays the canyon's more violent meteorological history.
+<span style="font-family: var(--lbl-sans)">Unlike the ocean-facing Amanpulo or the terraced hillsides of Amanjiwo, Amanvari turns inward — toward the land itself. The property is situated in one of the most isolated stretches of the Baja peninsula, where the Pacific light arrives differently at every <span style="font-family: var(--lbl-sans)">hour</span>: golden and low at dawn, bleached to near-white by midday, and burnished copper by late afternoon. The terrain shifts between sparse desert flora, dramatic rock formations, and the occasional flash of a dry riverbed that betrays the canyon's more violent meteorological history.</span>
 
 Architecturally, early design details suggest structures that emerge from the landscape organically — low-profile pavilions using local stone, deep shade overhangs to counter the intensity of the desert sun, and open-air living spaces that blur the boundary between interior comfort and exterior wilderness. Expect the restraint Aman is known for: no excess ornamentation, no theatrical gesture, just precise material choices that age well under a punishing climate.
 
