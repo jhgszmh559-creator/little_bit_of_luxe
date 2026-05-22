@@ -4,6 +4,11 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Exclude automated webhooks from basic auth protection
+  if (pathname.startsWith('/api/news-ingest') || pathname.startsWith('/api/email-ingest')) {
+    return NextResponse.next();
+  }
+
   // Only protect /admin and /api routes
   if (pathname.startsWith('/admin') || pathname.startsWith('/api')) {
     const authHeader = request.headers.get('authorization');
