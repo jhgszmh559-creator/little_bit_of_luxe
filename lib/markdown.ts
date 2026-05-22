@@ -82,7 +82,9 @@ export function parseMarkdown(md: string): string {
     } else if (trimmed.startsWith('## ')) {
       flushParagraph();
       const val = trimmed.substring(3);
-      resultBlocks.push(`<div class="lbl-lede mb-8">${parseInlineMarkdown(val)}</div>`);
+      const text = val.replace(/[*_`]/g, '').trim();
+      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      resultBlocks.push(`<h2 id="${id}" class="lbl-h2 mb-4 text-midnight scroll-mt-24">${parseInlineMarkdown(val)}</h2>`);
     } else if (trimmed.startsWith('### ')) {
       flushParagraph();
       const val = trimmed.substring(4);

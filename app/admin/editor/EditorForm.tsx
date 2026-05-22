@@ -73,11 +73,11 @@ const GlobalAttributes = Extension.create({
   addGlobalAttributes() {
     return [
       {
-        types: ['paragraph', 'heading', 'textStyle', 'image'],
+        types: ['paragraph', 'heading', 'textStyle', 'image', 'divNode', 'figureNode', 'figcaptionNode'],
         attributes: {
           class: {
             default: null,
-            parseHTML: element => element.getAttribute('class'),
+            parseHTML: element => element.getAttribute('class') || element.getAttribute('className'),
             renderHTML: attributes => {
               if (!attributes.class) return {};
               return { class: attributes.class };
@@ -90,34 +90,66 @@ const GlobalAttributes = Extension.create({
               if (!attributes.style) return {};
               return { style: attributes.style };
             },
+          },
+          id: {
+            default: null,
+            parseHTML: element => element.getAttribute('id'),
+            renderHTML: attributes => {
+              if (!attributes.id) return {};
+              return { id: attributes.id };
+            },
           }
         }
       }
     ]
   }
 });
-// Custom Raw HTML Node for Gallery and Figure
-const RawHtmlBlock = TiptapNode.create({
-  name: 'rawHtmlBlock',
+
+// Custom Tiptap Node for div wrapper
+const DivNode = TiptapNode.create({
+  name: 'divNode',
   group: 'block',
-  content: 'inline*',
+  content: 'block+', // Can contain block elements
+  defining: true,
   parseHTML() {
     return [
-      { tag: 'div.gallery' },
-      { tag: 'figure' },
-      { tag: 'figcaption' },
-      { tag: 'div.aspect-video' }
+      { tag: 'div' },
     ];
   },
-  renderHTML({ HTMLAttributes, node }) {
-    // Tiptap's renderHTML expects an array. To render a generic div/figure, 
-    // we use mergeAttributes to preserve classes and styles.
-    // However, the easiest way to preserve raw HTML blocks exactly is 
-    // to just let Tiptap parse them as standard blocks and use global attributes 
-    // or just rely on the existing HTML schema if possible.
-    // Wait, let's keep it simple: we define the tags.
-    // For div.gallery, it renders as a div.
+  renderHTML({ HTMLAttributes }) {
     return ['div', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+// Custom Tiptap Node for figure wrapper
+const FigureNode = TiptapNode.create({
+  name: 'figureNode',
+  group: 'block',
+  content: 'block+', // Can contain block elements (img, figcaption)
+  defining: true,
+  parseHTML() {
+    return [
+      { tag: 'figure' },
+    ];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['figure', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+// Custom Tiptap Node for figcaption
+const FigcaptionNode = TiptapNode.create({
+  name: 'figcaptionNode',
+  group: 'block',
+  content: 'inline*', // Can contain inline text
+  defining: true,
+  parseHTML() {
+    return [
+      { tag: 'figcaption' },
+    ];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['figcaption', mergeAttributes(HTMLAttributes), 0];
   },
 });
 
@@ -159,11 +191,13 @@ function nodeToMarkdown(node: Node): string {
     const tagName = element.tagName.toLowerCase();
     
     // Check if it's a specific custom block we preserve as raw HTML
-    const isCustomBlock = tagName === 'figure' || tagName === 'iframe' || tagName === 'video' || 
-      (tagName === 'div' && (element.className.includes('bg-midnight') || element.className.includes('aspect-video')));
+    const isCustomBlock = tagName === 'div' || tagName === 'figure' || tagName === 'figcaption' || tagName === 'iframe' || tagName === 'video';
     
     if (isCustomBlock) {
-      return '\n\n' + element.outerHTML.trim() + '\n\n';
+      let html = element.outerHTML.trim();
+      // Replace class="..." with className="..." inside the HTML string to maintain consistency with the JSX markdown style
+      html = html.replace(/\bclass=/g, 'className=');
+      return '\n\n' + html + '\n\n';
     }
     
     let childrenMarkdown = '';
@@ -387,6 +421,9 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
         HTMLAttributes: { class: 'w-full aspect-video my-8 border border-sand/10' },
       }),
       Image,
+      DivNode,
+      FigureNode,
+      FigcaptionNode,
       Placeholder.configure({ placeholder: 'Write the full luxury travel prose article...' }),
     ],
     content: parseMarkdown(content),
@@ -685,6 +722,8 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
     const payload = {
       type: currentType,
       slug,
+      oldType: type,
+      oldSlug: initialSlug,
       title,
       excerpt,
       content,
@@ -727,7 +766,11 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
       const resData = await response.json();
       if (response.ok) {
         setMessage('Draft saved successfully.');
-        router.refresh();
+        if (currentType !== type || slug !== initialSlug) {
+          router.push(`/admin/editor?type=${currentType}&slug=${slug}`);
+        } else {
+          router.refresh();
+        }
       } else {
         setMessage(`Error: ${resData.error || 'Failed to save'}`);
       }

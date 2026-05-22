@@ -65,3 +65,76 @@ export async function saveContentToGithub(
     sha: putData.content?.sha,
   };
 }
+
+export async function deleteContentFromGithub(
+  relPath: string,
+  commitMessage?: string
+): Promise<{ success: boolean; error?: string }> {
+  const token = process.env.GITHUB_ACCESS_TOKEN;
+  if (!token) {
+    throw new Error('GITHUB_ACCESS_TOKEN is not configured in environment variables');
+  }
+
+  const repo = 'jhgszmh559-creator/little_bit_of_luxe';
+  const url = `https://api.github.com/repos/${repo}/contents/${relPath}`;
+  const message = commitMessage || `Delete ${relPath}`;
+
+  // Step 1: Fetch the file metadata to get the SHA
+  let sha: string | undefined = undefined;
+  try {
+    const getRes = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'NextJS-App',
+      },
+      cache: 'no-store',
+    });
+
+    if (getRes.ok) {
+      const data = await getRes.json();
+      sha = data.sha;
+    } else if (getRes.status === 404) {
+      // File already doesn't exist, which is fine
+      return { success: true };
+    } else {
+      const errorText = await getRes.text();
+      console.error(`GitHub API GET failed with status ${getRes.status}:`, errorText);
+      return { success: false, error: `Get metadata failed: ${errorText}` };
+    }
+  } catch (err: any) {
+    console.error('Error fetching file metadata from GitHub:', err);
+    return { success: false, error: err.message };
+  }
+
+  if (!sha) {
+    return { success: true }; // Already deleted/doesn't exist
+  }
+
+  // Step 2: Delete the file
+  const deleteRes = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      'User-Agent': 'NextJS-App',
+    },
+    body: JSON.stringify({
+      message,
+      sha,
+      branch: 'main',
+    }),
+  });
+
+  if (!deleteRes.ok) {
+    const errorText = await deleteRes.text();
+    throw new Error(`GitHub API delete failed (${deleteRes.status}): ${errorText}`);
+  }
+
+  return {
+    success: true,
+  };
+}
+

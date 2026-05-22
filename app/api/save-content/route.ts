@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveContentToGithub } from '@/lib/github';
+import { saveContentToGithub, deleteContentFromGithub } from '@/lib/github';
+import fs from 'fs';
+import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +13,8 @@ export async function POST(request: NextRequest) {
       type, 
       slug, 
       content,
+      oldType,
+      oldSlug,
       // Frontmatter fields
       title,
       excerpt,
@@ -52,6 +56,29 @@ export async function POST(request: NextRequest) {
       subfolder = 'news';
     }
     const relPath = `content/${subfolder}/${slug}.md`;
+
+    // Handle renaming / moving articles if type or slug changes
+    if (oldType && oldSlug && (oldType !== type || oldSlug !== slug)) {
+      let oldSubfolder = 'programs';
+      if (oldType === 'review') {
+        oldSubfolder = 'reviews';
+      } else if (oldType === 'news') {
+        oldSubfolder = 'news';
+      }
+      const oldRelPath = `content/${oldSubfolder}/${oldSlug}.md`;
+      const oldLocalPath = path.join(process.cwd(), oldRelPath);
+
+      if (fs.existsSync(oldLocalPath)) {
+        fs.unlinkSync(oldLocalPath);
+      }
+
+      try {
+        await deleteContentFromGithub(oldRelPath, `Delete old file during category/slug change to ${type}: ${slug}`);
+      } catch (delErr) {
+        console.error('Failed to delete old file from GitHub:', delErr);
+      }
+    }
+
 
     // Resolve initial status and draft status
     const finalStatus = status || (draft === true ? 'draft' : 'published');
@@ -119,6 +146,11 @@ export async function POST(request: NextRequest) {
     // Clean up content block wrapping (remove starting newlines)
     const bodyContent = content ? content.trim() : '';
     const fileContents = `${yamlLines.join('\n')}\n${bodyContent}`;
+
+    // Write content locally
+    const localPath = path.join(process.cwd(), relPath);
+    fs.mkdirSync(path.dirname(localPath), { recursive: true });
+    fs.writeFileSync(localPath, fileContents, 'utf-8');
 
     await saveContentToGithub(relPath, fileContents, `Update ${type}: ${slug}`);
 
