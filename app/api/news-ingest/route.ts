@@ -120,8 +120,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 3: Claude/Gemini Drafting - Generate the structured, editorial, on-brand article
-    const draftingModel = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
+    let draftingModel = genAI.getGenerativeModel({ 
+      model: 'gemini-3.5-flash',
       generationConfig: { temperature: 0.3 }
     });
 
@@ -182,8 +182,38 @@ export async function POST(request: NextRequest) {
     
     Return ONLY the raw content for the markdown file. Do not wrap the response in markdown blocks (\`\`\`markdown ... \`\`\`).`;
 
-    const draftResult = await draftingModel.generateContent(draftPrompt);
-    let draftContent = draftResult.response.text();
+    let draftContent = '';
+    let success = false;
+    let attempts = 0;
+    
+    while (attempts < 3 && !success) {
+      try {
+        const draftResult = await draftingModel.generateContent(draftPrompt);
+        draftContent = draftResult.response.text();
+        success = true;
+      } catch (err: any) {
+        attempts++;
+        const status = err?.status || err?.response?.status;
+        const msg = err?.message || '';
+        if (status === 503 || status === 429 || msg.includes('503') || msg.includes('429')) {
+          console.warn(`Gemini 3.5 Flash failed (Attempt ${attempts}). Retrying in 2s...`);
+          await new Promise(r => setTimeout(r, 2000));
+        } else {
+          console.warn(`Gemini 3.5 Flash failed with non-retryable error: ${msg}`);
+          break;
+        }
+      }
+    }
+
+    if (!success) {
+      console.warn('Gemini 3.5 Flash failed completely. Failing over to gemini-1.5-pro...');
+      draftingModel = genAI.getGenerativeModel({ 
+        model: 'gemini-1.5-pro',
+        generationConfig: { temperature: 0.3 }
+      });
+      const draftResult = await draftingModel.generateContent(draftPrompt);
+      draftContent = draftResult.response.text();
+    }
 
     // Clean markdown wrap wraps if any
     if (draftContent.startsWith('```markdown')) {

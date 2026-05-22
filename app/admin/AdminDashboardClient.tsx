@@ -590,7 +590,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
 
       {/* Mobile Sidebar Overlay Drawer */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-40 md:hidden bg-midnight/70 flex">
+        <div className="fixed inset-0 z-50 md:hidden bg-midnight/70 flex">
           <div className="w-64 bg-card dark:bg-[#121A33] border-r border-ink/10 dark:border-sand/10 h-full flex flex-col justify-between p-5 animate-slide-right">
             <div>
               <div className="flex justify-between items-center pb-4 border-b border-ink/5 mb-4">

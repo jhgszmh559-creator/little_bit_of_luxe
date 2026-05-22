@@ -68,8 +68,25 @@ export default async function NewsPage({ params }: NewsPageProps) {
     renderedContent = <div className="prose" dangerouslySetInnerHTML={{ __html: htmlContent }} />;
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": news.title.replace(/[*_`]/g, ''),
+    "description": news.excerpt.replace(/[*_`]/g, ''),
+    "datePublished": news.date,
+    "author": {
+      "@type": "Organization",
+      "name": "Little Bit of Luxe"
+    },
+    "image": news.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80"
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-paper">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
 
       <main className="flex-grow py-12" data-screen-label="02 Article">

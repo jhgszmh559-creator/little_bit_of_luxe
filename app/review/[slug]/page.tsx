@@ -55,8 +55,34 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
 
   const coverImage = review.ogImage || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80";
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Review",
+    "itemReviewed": {
+      "@type": "Hotel",
+      "name": review.hotelName,
+      "address": review.location
+    },
+    "reviewRating": {
+      "@type": "Rating",
+      "ratingValue": scoreStr,
+      "bestRating": "10",
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Little Bit of Luxe"
+    },
+    "headline": review.title.replace(/[*_`]/g, ''),
+    "datePublished": review.date,
+    "image": coverImage
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-paper">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
 
       <main className="flex-grow py-12" data-screen-label="02 Article">

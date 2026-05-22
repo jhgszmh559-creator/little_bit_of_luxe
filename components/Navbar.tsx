@@ -85,6 +85,7 @@ export default function Navbar({ onSearchClick }: NavbarProps) {
             <img
               src={theme === 'dark' ? '/logos/logo-sand.png' : '/logos/logo-darkblue.png'}
               alt="Little Bit of Luxe"
+              className="mix-blend-multiply dark:mix-blend-normal"
               style={{ height: '36px', width: 'auto' }}
             />
           ) : (
@@ -92,6 +93,7 @@ export default function Navbar({ onSearchClick }: NavbarProps) {
             <img
               src="/logos/logo-darkblue.png"
               alt="Little Bit of Luxe"
+              className="mix-blend-multiply dark:mix-blend-normal"
               style={{ height: '36px', width: 'auto' }}
             />
           )}

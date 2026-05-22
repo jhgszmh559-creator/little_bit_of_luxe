@@ -44,8 +44,25 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
     .filter((p) => p.slug !== slug && p.status === 'published')
     .slice(0, 3);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": program.title.replace(/[*_`]/g, ''),
+    "description": program.excerpt.replace(/[*_`]/g, ''),
+    "datePublished": program.date,
+    "author": {
+      "@type": "Organization",
+      "name": "Little Bit of Luxe"
+    },
+    "image": program.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80"
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-paper">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
 
       {/* Sticky Header Info Bar */}

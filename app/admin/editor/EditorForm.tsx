@@ -241,6 +241,13 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [keywordSuggestions, setKeywordSuggestions] = useState<Array<{ context: string; suggestion: string }>>([]);
   const [analyzingKeyword, setAnalyzingKeyword] = useState(false);
 
+  // New GEO & SEO Toggles
+  const [geoPassed, setGeoPassed] = useState(false);
+  const [altTextOptimized, setAltTextOptimized] = useState(false);
+  const [entityDensity, setEntityDensity] = useState(false);
+  const [citationReadiness, setCitationReadiness] = useState(false);
+  const [directAnswerFormatting, setDirectAnswerFormatting] = useState(false);
+
   // Auto-close dropdowns when clicking outside
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -471,8 +478,32 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
     }
   };
 
-  const handleSave = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  // Automated On-Page SEO Checks
+  const isSingleH1 = () => {
+    if (!content) return false;
+    const h1Count = (content.match(/^#\s+.+$/gm) || []).length;
+    return h1Count === 1;
+  };
+
+  const noSkippedHeadings = () => {
+    if (!content) return true;
+    const headings = content.match(/^#{1,6}\s+.+$/gm) || [];
+    let prevLevel = 1; // Assuming title is H1
+    for (const heading of headings) {
+      const level = heading.match(/^#{1,6}/)?.[0].length || 1;
+      if (level > prevLevel + 1) return false;
+      prevLevel = level;
+    }
+    return true;
+  };
+  
+  const internalLinksPresent = () => {
+    if (!content) return false;
+    return content.includes('](/') || content.includes('href="/') || content.includes('href=\\"/');
+  };
+
+  const handleSave = async (overrideStatus?: 'published' | 'draft' | 'archived', e?: React.FormEvent) => {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (!slug) {
       alert('Please provide a unique URL slug.');
       return;
@@ -481,6 +512,11 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
     setSaving(true);
     setMessage('');
 
+    const currentStatus = overrideStatus || status;
+    if (overrideStatus && overrideStatus !== status) {
+      setStatus(overrideStatus);
+    }
+
     const payload = {
       type,
       slug,
@@ -488,8 +524,8 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
       excerpt,
       content,
       category,
-      draft: status !== 'published',
-      status,
+      draft: currentStatus !== 'published',
+      status: currentStatus,
       sources,
       date,
       // Review specific
@@ -663,13 +699,41 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           
-          <button 
-            onClick={() => handleSave()}
-            disabled={saving}
-            className="btn--sand text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-midnight rounded-none"
-          >
-            <Save className="w-4 h-4" /> {saving ? 'Saving...' : initialSlug ? 'Update Article' : 'Save Draft'}
-          </button>
+          {status === 'published' ? (
+            <>
+              <button 
+                onClick={() => handleSave('archived')}
+                disabled={saving}
+                className="btn--secondary text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-bordeaux text-bordeaux hover:bg-bordeaux hover:text-white rounded-none transition-colors"
+              >
+                Archive
+              </button>
+              <button 
+                onClick={() => handleSave('published')}
+                disabled={saving}
+                className="btn--sand text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-midnight rounded-none"
+              >
+                <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Update Published Article'}
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                onClick={() => handleSave('draft')}
+                disabled={saving}
+                className="text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-ink/20 text-ink/70 hover:bg-ink/5 rounded-none transition-colors"
+              >
+                Save Draft
+              </button>
+              <button 
+                onClick={() => handleSave('published')}
+                disabled={saving}
+                className="btn--sand text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-midnight rounded-none"
+              >
+                <Save className="w-4 h-4" /> {saving ? 'Publishing...' : 'Publish Article'}
+              </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -1007,78 +1071,96 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   />
                 </div>
 
-                {/* Keyword Analysis Metrics */}
-                {targetKeyword ? (
-                  <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs">
-                    <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                      <span className="text-ink-2 font-medium">Found in Title</span>
-                      {isKeywordInTitle() ? (
-                        <span className="text-sage font-semibold flex items-center gap-1">
-                          <Check className="w-3.5 h-3.5" /> Yes
-                        </span>
-                      ) : (
-                        <span className="text-bordeaux font-medium">— No</span>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                      <span className="text-ink-2 font-medium">Found in Excerpt</span>
-                      {isKeywordInExcerpt() ? (
-                        <span className="text-sage font-semibold flex items-center gap-1">
-                          <Check className="w-3.5 h-3.5" /> Yes
-                        </span>
-                      ) : (
-                        <span className="text-bordeaux font-medium">— No</span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-ink-2 font-medium">Body Density</span>
-                      <span className={`font-mono font-bold ${
-                        getKeywordDensity() >= 0.8 && getKeywordDensity() <= 2.5
-                          ? 'text-sage'
-                          : 'text-terracotta'
-                      }`}>
-                        {getKeywordDensity()}%
-                      </span>
-                    </div>
-                    <div className="text-[9px] text-ink-3 mt-1 leading-normal italic pb-2 border-b border-ink/5">
-                      Recommended keyword density is 0.8% - 2.5%.
-                    </div>
-
-                    {/* Gemini Optimization Analysis Trigger */}
-                    <button
-                      type="button"
-                      onClick={analyzeKeywordInsertion}
-                      disabled={analyzingKeyword || !content}
-                      className="w-full text-xs py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight cursor-pointer rounded-none hover:opacity-90 font-semibold uppercase tracking-wider disabled:opacity-50 min-h-[38px] flex items-center justify-center gap-1.5"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      {analyzingKeyword ? 'Analyzing...' : 'Analyze Insertion Points'}
-                    </button>
-                    
-                    {/* Suggestions List */}
-                    {keywordSuggestions.length > 0 && (
-                      <div className="mt-3 border-t border-ink/10 pt-3 flex flex-col gap-3">
-                        <span className="text-[9px] uppercase tracking-wider text-ink-3 font-semibold">Semantic Optimization Hints</span>
-                        {keywordSuggestions.map((item, index) => (
-                          <div key={index} className="p-3 bg-paper/50 border border-ink/5 flex flex-col gap-2">
-                            <div className="text-[10px] text-ink-3 italic">
-                              &ldquo;{item.context}&rdquo;
-                            </div>
-                            <div className="text-[11px] text-ink-2 font-medium leading-relaxed border-l-2 border-bordeaux dark:border-gold pl-2">
-                              {item.suggestion}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                {/* On-Page SEO Checklist */}
+                <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs">
+                  <div className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold mb-1">On-Page Automated Checks</div>
+                  
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <span className="text-ink-2 font-medium">Exactly One H1 Tag</span>
+                    {isSingleH1() ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">— No</span>
                     )}
                   </div>
-                ) : (
-                  <div className="bg-paper/20 p-4 border border-ink/5 border-dashed text-center text-xs text-ink-3 italic">
-                    Enter a focus keyword above to begin live analysis.
+                  
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <span className="text-ink-2 font-medium">No Skipped Heading Levels</span>
+                    {noSkippedHeadings() ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">— No</span>
+                    )}
                   </div>
-                )}
+
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <span className="text-ink-2 font-medium">Title Length Optimal (40-60)</span>
+                    {title.length >= 40 && title.length <= 60 ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">{title.length} chars</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <span className="text-ink-2 font-medium">Excerpt Length Optimal (120-160)</span>
+                    {excerpt.length >= 120 && excerpt.length <= 160 ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">{excerpt.length} chars</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <span className="text-ink-2 font-medium">Content Length (&gt;800 words)</span>
+                    {getWordCount() > 800 ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">{getWordCount()} words</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-ink-2 font-medium">Internal Links Present</span>
+                    {internalLinksPresent() ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">— No</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* GEO & Manual SEO Toggles */}
+                <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs mt-2">
+                  <div className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold mb-1">GEO & Manual SEO Toggles</div>
+                  
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" checked={entityDensity} onChange={e => setEntityDensity(e.target.checked)} className="accent-midnight w-4 h-4" />
+                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Entity Density Optimal</span>
+                  </label>
+                  
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" checked={citationReadiness} onChange={e => setCitationReadiness(e.target.checked)} className="accent-midnight w-4 h-4" />
+                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Citation Readiness Check</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" checked={directAnswerFormatting} onChange={e => setDirectAnswerFormatting(e.target.checked)} className="accent-midnight w-4 h-4" />
+                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Direct Answer Formatting</span>
+                  </label>
+
+                  <div className="border-t border-ink/5 my-1" />
+
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" checked={geoPassed} onChange={e => setGeoPassed(e.target.checked)} className="accent-midnight w-4 h-4" />
+                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">GEO (Generative Optimization) Passed</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" checked={altTextOptimized} onChange={e => setAltTextOptimized(e.target.checked)} className="accent-midnight w-4 h-4" />
+                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Featured Image Alt-Text Optimized</span>
+                  </label>
+                </div>
 
                 {/* Copy Stats Block */}
                 <div className="border-t border-ink/10 pt-4 flex flex-col gap-3">
