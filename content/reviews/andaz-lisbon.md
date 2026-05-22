@@ -25,7 +25,13 @@ metaDescription: ""
 ogImage: "https://assets.hyatt.com/content/dam/hyatt/hyattdam/images/2024/10/07/0430/LISAZ-P0007-Lift-Landing.jpg/LISAZ-P0007-Lift-Landing.16x9.jpg?imwidth=2560"
 ---
 
-# *The quiet rebirth of a historic **Lisbon** icon*
+# *
+
+<figure class="my-8">
+  <figcaption class="lbl-caption mt-2">Andaz Lisbon exterior — Editor</figcaption>
+</figure>
+
+The quiet rebirth of a historic **Lisbon** icon*
 
 *Where the Atlantic breeze meets the ancient stone of Baixa, a new sanctuary of understated Portuguese modernism unfolds.*
 
@@ -35,14 +41,14 @@ The architectural narrative, conceived in collaboration with local master crafts
 
 In the residential-style suites, this commitment to local materiality translates into an atmosphere of profound comfort. The layout is fluid and intuitive, eschewing rigid corridors in favor of open, light-filled spaces that encourage a slower pace of living. Floor-to-ceiling windows frame cinematic vistas of red-tiled rooftops stretching toward the river, while deep-set daybeds offer the perfect vantage point for watching the golden hour paint the city in shades of ochre and rose. The bathrooms are private sanctuaries of their own, carved from monolithic blocks of local limestone and featuring deep soaking tubs, rain showers, and custom bath amenities infused with the essence of wild rosemary and sea salt. It is a space designed for contemplation, where the boundary between the historic city outside and the private sanctuary within begins to dissolve.
 
-<div className="my-12 p-8 bg-midnight text-sand border-none">
-  <p className="lbl-eyebrow mb-2 text-sand/70">The Preferred Privilege</p>
-  <h3 className="lbl-h3 text-sand mb-4">Book Andaz Lisbon with Perks</h3>
-  <p className="lbl-body text-sand/85 mb-6">
+<div class="my-12 p-8 bg-midnight text-sand border-none">
+  <p class="lbl-eyebrow mb-2 text-sand/70">The Preferred Privilege</p>
+  <h3 class="lbl-h3 text-sand mb-4">Book Andaz Lisbon with Perks</h3>
+  <p class="lbl-body text-sand/85 mb-6">
     Through our preferred partnership, we unlock daily breakfast, priority upgrades, and property credits — matching the best flexible rates available directly, with all your standard loyalty nights and points fully recognized.
   </p>
-  <a href="https://www.qxtravel.io/search-hotels" target="_blank" rel="noopener noreferrer" className="btn--subscribe">
-    Book with Perks <span className="arrow">→</span>
+  <a href="https://www.qxtravel.io/search-hotels" target="_blank" rel="noopener noreferrer" class="btn--subscribe">
+    Book with Perks <span class="arrow">→</span>
   </a>
 </div>
 
