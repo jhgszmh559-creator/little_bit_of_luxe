@@ -670,32 +670,22 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   <span className="text-ink-3/50">TipTap Editor Active</span>
                 </div>
                 
-                <div className="bg-card border border-ink/10 flex items-center p-2 gap-2 mb-4 rounded-none overflow-x-auto">
-                  <span className="text-[10px] uppercase tracking-widest text-ink/50 font-bold ml-2 mr-2 whitespace-nowrap">Luxury Assets</span>
-                  <div className="w-px h-4 bg-ink/10 mx-1" />
-                  <button type="button" onClick={() => setCloudinaryOpen(true)} className="text-[10px] uppercase font-bold tracking-wider px-3 py-2 hover:bg-ink/5 text-ink transition-colors border border-transparent whitespace-nowrap">
-                    Image (Cloudinary)
-                  </button>
-                  <button type="button" onClick={() => setVideoOpen(true)} className="text-[10px] uppercase font-bold tracking-wider px-3 py-2 hover:bg-ink/5 text-ink transition-colors border border-transparent whitespace-nowrap">
-                    Video
-                  </button>
-                  <button type="button" onClick={() => {
-                    const html = `<div class="gallery gallery-${galleryStyle}">[Gallery Placeholder]</div>`;
-                    if (editorInstanceRef.current) {
-                      editorInstanceRef.current.commands.insertContent(html);
-                    } else {
-                      setContent((prev: string) => prev + '\n\n' + html);
-                    }
-                  }} className="text-[10px] uppercase font-bold tracking-wider px-3 py-2 hover:bg-ink/5 text-ink transition-colors border border-transparent whitespace-nowrap">
-                    Gallery Block
-                  </button>
-                </div>
                 <div className="bg-transparent relative">
                   <SimpleEditor 
                     content={parseMarkdown(content)} 
                     onUpdate={(html) => setContent(convertHtmlToMarkdown(html))} 
                     onEditorReady={(editor) => {
                       editorInstanceRef.current = editor;
+                    }}
+                    onInsertCloudinary={() => setCloudinaryOpen(true)}
+                    onInsertVideo={() => setVideoOpen(true)}
+                    onInsertGallery={() => {
+                      const html = `<div class="gallery gallery-${galleryStyle}">[Gallery Placeholder]</div>`;
+                      if (editorInstanceRef.current) {
+                        editorInstanceRef.current.commands.insertContent(html);
+                      } else {
+                        setContent((prev: string) => prev + '\n\n' + html);
+                      }
                     }}
                   />
                 </div>

@@ -374,17 +374,50 @@ export const handleImageUpload = async (
     )
   }
 
-  // For demo/testing: Simulate upload progress. In production, replace the following code
-  // with your own upload implementation.
-  for (let progress = 0; progress <= 100; progress += 10) {
-    if (abortSignal?.aborted) {
-      throw new Error("Upload cancelled")
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    onProgress?.({ progress })
-  }
+  const formData = new FormData()
+  formData.append("file", file)
 
-  return "/images/tiptap-ui-placeholder-image.jpg"
+  return new Promise<string>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open("POST", "/api/upload", true)
+
+    if (abortSignal) {
+      abortSignal.addEventListener("abort", () => {
+        xhr.abort()
+        reject(new Error("Upload cancelled"))
+      })
+    }
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const progress = Math.round((event.loaded / event.total) * 100)
+        onProgress?.({ progress })
+      }
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const response = JSON.parse(xhr.responseText)
+          if (response.url) {
+            resolve(response.url)
+          } else {
+            reject(new Error("Upload failed: No URL returned"))
+          }
+        } catch (err) {
+          reject(new Error("Upload failed: Invalid response"))
+        }
+      } else {
+        reject(new Error(`Upload failed with status ${xhr.status}`))
+      }
+    }
+
+    xhr.onerror = () => {
+      reject(new Error("Upload network error"))
+    }
+
+    xhr.send(formData)
+  })
 }
 
 type ProtocolOptions = {

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
+import { Image as ImageIcon, Video as VideoIcon, Layers } from "lucide-react"
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit"
@@ -79,10 +80,16 @@ const MainToolbarContent = ({
   onHighlighterClick,
   onLinkClick,
   isMobile,
+  onInsertCloudinary,
+  onInsertVideo,
+  onInsertGallery,
 }: {
   onHighlighterClick: () => void
   onLinkClick: () => void
   isMobile: boolean
+  onInsertCloudinary?: () => void
+  onInsertVideo?: () => void
+  onInsertGallery?: () => void
 }) => {
   return (
     <>
@@ -138,6 +145,34 @@ const MainToolbarContent = ({
 
       <ToolbarSeparator />
 
+      <ToolbarSeparator />
+
+      <ToolbarGroup>
+        <button
+          type="button"
+          onClick={onInsertCloudinary}
+          className="text-[10px] uppercase font-bold tracking-wider px-2 py-1.5 hover:bg-ink/5 border border-ink/10 transition-colors text-ink rounded-none whitespace-nowrap min-h-[32px] flex items-center gap-1 cursor-pointer"
+        >
+          <ImageIcon className="w-3.5 h-3.5" /> Luxury Image
+        </button>
+        <button
+          type="button"
+          onClick={onInsertVideo}
+          className="text-[10px] uppercase font-bold tracking-wider px-2 py-1.5 hover:bg-ink/5 border border-ink/10 transition-colors text-ink rounded-none whitespace-nowrap min-h-[32px] flex items-center gap-1 cursor-pointer"
+        >
+          <VideoIcon className="w-3.5 h-3.5" /> Luxury Video
+        </button>
+        <button
+          type="button"
+          onClick={onInsertGallery}
+          className="text-[10px] uppercase font-bold tracking-wider px-2 py-1.5 hover:bg-ink/5 border border-ink/10 transition-colors text-ink rounded-none whitespace-nowrap min-h-[32px] flex items-center gap-1 cursor-pointer"
+        >
+          <Layers className="w-3.5 h-3.5" /> Luxury Gallery
+        </button>
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
       <ToolbarGroup>
         <ImageUploadButton text="Add" />
       </ToolbarGroup>
@@ -185,11 +220,17 @@ const MobileToolbarContent = ({
 export function SimpleEditor({ 
   content, 
   onUpdate, 
-  onEditorReady 
+  onEditorReady,
+  onInsertCloudinary,
+  onInsertVideo,
+  onInsertGallery
 }: { 
   content: string
   onUpdate: (html: string) => void
   onEditorReady?: (editor: any) => void
+  onInsertCloudinary?: () => void
+  onInsertVideo?: () => void
+  onInsertGallery?: () => void
 }) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
@@ -275,7 +316,9 @@ export function SimpleEditor({
               ? {
                   bottom: `calc(100% - ${height - rect.y}px)`,
                 }
-              : {}),
+              : {
+                  top: "76px",
+                }),
           }}
         >
           {mobileView === "main" ? (
@@ -283,6 +326,9 @@ export function SimpleEditor({
               onHighlighterClick={() => setMobileView("highlighter")}
               onLinkClick={() => setMobileView("link")}
               isMobile={isMobile}
+              onInsertCloudinary={onInsertCloudinary}
+              onInsertVideo={onInsertVideo}
+              onInsertGallery={onInsertGallery}
             />
           ) : (
             <MobileToolbarContent
