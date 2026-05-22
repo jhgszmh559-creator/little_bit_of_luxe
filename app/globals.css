@@ -799,6 +799,8 @@ h1 em, h2 em, h3 em, .lbl-display em {
 }
 .prose p { margin: 0 0 1.25em; }
 .prose p:first-of-type::first-letter { font-family: var(--lbl-serif); font-size: 72px; line-height: 0.85; float: left; padding: 4px 12px 0 0; font-weight: 500; }
+.prose h2 { font-family: var(--lbl-serif); font-weight: 400; font-size: 40px; line-height: 1.1; margin: 1.4em 0 0.5em; letter-spacing: -0.01em; }
+.prose h2 em { font-style: italic; font-weight: 600; }
 .prose h3 { font-family: var(--lbl-serif); font-weight: 500; font-size: 32px; line-height: 1.15; margin: 1.6em 0 0.6em; letter-spacing: -0.01em; }
 .prose h3 em { font-style: italic; font-weight: 600; }
 .prose a { color: var(--lbl-link, var(--lbl-midnight)); border-bottom: 1px solid currentColor; text-underline-offset: 4px; transition: color 180ms; }

@@ -31,6 +31,96 @@ import { FloatingMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
+import UnderlineExtension from '@tiptap/extension-underline';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
+import FontFamily from '@tiptap/extension-font-family';
+import LinkExtension from '@tiptap/extension-link';
+import Youtube from '@tiptap/extension-youtube';
+import { Extension, Node as TiptapNode, mergeAttributes } from '@tiptap/core';
+
+// Custom FontSize Extension
+const FontSize = Extension.create({
+  name: 'fontSize',
+  addOptions() { return { types: ['textStyle'] } },
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: element => element.style.fontSize?.replace(/['"]+/g, '') || null,
+            renderHTML: attributes => {
+              if (!attributes.fontSize) return {};
+              return { style: `font-size: ${attributes.fontSize}` };
+            },
+          },
+        },
+      },
+    ];
+  },
+  addCommands() {
+    return {
+      setFontSize: fontSize => ({ chain }) => chain().setMark('textStyle', { fontSize }).run(),
+      unsetFontSize: () => ({ chain }) => chain().setMark('textStyle', { fontSize: null }).run(),
+    };
+  },
+});
+
+const GlobalAttributes = Extension.create({
+  name: 'globalAttributes',
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['paragraph', 'heading', 'textStyle', 'image'],
+        attributes: {
+          class: {
+            default: null,
+            parseHTML: element => element.getAttribute('class'),
+            renderHTML: attributes => {
+              if (!attributes.class) return {};
+              return { class: attributes.class };
+            },
+          },
+          style: {
+            default: null,
+            parseHTML: element => element.getAttribute('style'),
+            renderHTML: attributes => {
+              if (!attributes.style) return {};
+              return { style: attributes.style };
+            },
+          }
+        }
+      }
+    ]
+  }
+});
+// Custom Raw HTML Node for Gallery and Figure
+const RawHtmlBlock = TiptapNode.create({
+  name: 'rawHtmlBlock',
+  group: 'block',
+  content: 'inline*',
+  parseHTML() {
+    return [
+      { tag: 'div.gallery' },
+      { tag: 'figure' },
+      { tag: 'figcaption' },
+      { tag: 'div.aspect-video' }
+    ];
+  },
+  renderHTML({ HTMLAttributes, node }) {
+    // Tiptap's renderHTML expects an array. To render a generic div/figure, 
+    // we use mergeAttributes to preserve classes and styles.
+    // However, the easiest way to preserve raw HTML blocks exactly is 
+    // to just let Tiptap parse them as standard blocks and use global attributes 
+    // or just rely on the existing HTML schema if possible.
+    // Wait, let's keep it simple: we define the tags.
+    // For div.gallery, it renders as a div.
+    return ['div', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
 
 interface ArticleItem {
   title: string;
@@ -224,6 +314,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [message, setMessage] = useState('');
   const [editorTab, setEditorTab] = useState<'write' | 'design' | 'strategy'>('write');
 
+
   // Lifecycle & Citations State
   const [status, setStatus] = useState<'published' | 'draft' | 'archived'>(initialData?.status || (initialData?.draft === false ? 'published' : 'draft'));
   const [sources, setSources] = useState<string[]>(initialData?.sources || []);
@@ -281,6 +372,20 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const editor = useEditor({
     extensions: [
       StarterKit,
+      UnderlineExtension,
+      TextStyle,
+      Color,
+      FontFamily,
+      FontSize,
+      GlobalAttributes,
+      LinkExtension.configure({
+        openOnClick: false,
+        HTMLAttributes: { class: 'lbl-link' },
+      }),
+      Youtube.configure({
+        inline: false,
+        HTMLAttributes: { class: 'w-full aspect-video my-8 border border-sand/10' },
+      }),
       Image,
       Placeholder.configure({ placeholder: 'Write the full luxury travel prose article...' }),
     ],
@@ -299,6 +404,16 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   });
 
   // Auto-close dropdowns when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.color-picker-container')) setIsColorDropdownOpen(false);
+      if (!target.closest('.font-picker-container')) setIsFontDropdownOpen(false);
+      if (!target.closest('.size-picker-container')) setIsSizeDropdownOpen(false);
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -892,6 +1007,201 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   </FloatingMenu>
                 )}
 
+                {editor && (
+                  <div className="sticky top-0 z-50 bg-card border-b border-ink/10 py-2 flex flex-wrap items-center gap-1 select-none">
+                    
+                    {/* Bold */}
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().toggleBold().run()}
+                      title="Bold text"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <Bold className="w-4 h-4" />
+                    </button>
+
+                    {/* Italic */}
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().toggleItalic().run()}
+                      title="Italic text"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <Italic className="w-4 h-4" />
+                    </button>
+
+                    {/* Underline */}
+                    <button
+                      type="button"
+                      onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                      title="Underline text"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <Underline className="w-4 h-4" />
+                    </button>
+
+                    {/* Divider */}
+                    <div className="w-px h-6 bg-ink/10 mx-1" />
+
+                    {/* Color Picker Dropdown */}
+                    <div className="relative color-picker-container">
+                      <button
+                        type="button"
+                        onClick={() => setIsColorDropdownOpen(!isColorDropdownOpen)}
+                        title="Text Color"
+                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                      >
+                        <Palette className="w-4 h-4" />
+                      </button>
+                      {isColorDropdownOpen && (
+                        <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 p-3 shadow-xl rounded-none w-52 grid grid-cols-3 gap-2">
+                          {BRAND_COLORS.map((color) => (
+                            <button
+                              key={color.name}
+                              type="button"
+                              title={color.name}
+                              onClick={() => {
+                                editor?.chain().focus().setColor(color.hex).run();
+                                setIsColorDropdownOpen(false);
+                              }}
+                              className={`w-full aspect-square text-[9px] font-bold rounded-none flex items-center justify-center shadow-sm cursor-pointer transition-transform hover:scale-105 ${color.bgClass}`}
+                            >
+                              {color.name.substring(0, 2)}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Font Toggle Dropdown */}
+                    <div className="relative font-picker-container">
+                      <button
+                        type="button"
+                        onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
+                        title="Font Family Override"
+                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                      >
+                        <Type className="w-4 h-4" />
+                      </button>
+                      {isFontDropdownOpen && (
+                        <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 py-1.5 shadow-xl rounded-none w-44 flex flex-col">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              editor?.chain().focus().setFontFamily('var(--lbl-serif)').run();
+                              setIsFontDropdownOpen(false);
+                            }}
+                            className="px-4 py-2.5 text-left text-xs font-serif hover:bg-ink/5 text-ink cursor-pointer"
+                          >
+                            Serif (Cormorant)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              editor?.chain().focus().setFontFamily('var(--lbl-sans)').run();
+                              setIsFontDropdownOpen(false);
+                            }}
+                            className="px-4 py-2.5 text-left text-xs font-sans hover:bg-ink/5 text-ink cursor-pointer"
+                          >
+                            Sans-serif (Manrope)
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Font Size Dropdown */}
+                    <div className="relative size-picker-container font-sans">
+                      <button
+                        type="button"
+                        onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
+                        title="Font Size"
+                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent text-sm font-semibold"
+                      >
+                        A<span className="text-[10px] ml-0.5 font-normal">±</span>
+                      </button>
+                      {isSizeDropdownOpen && (
+                        <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 py-1.5 shadow-xl rounded-none w-44 flex flex-col font-sans">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              editor?.chain().focus().setFontSize('14px').run();
+                              setIsSizeDropdownOpen(false);
+                            }}
+                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-xs"
+                          >
+                            Small (14px)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              editor?.chain().focus().setFontSize('17px').run();
+                              setIsSizeDropdownOpen(false);
+                            }}
+                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-sm font-medium"
+                          >
+                            Base (17px)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              editor?.chain().focus().setFontSize('22px').run();
+                              setIsSizeDropdownOpen(false);
+                            }}
+                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-base font-semibold"
+                          >
+                            Large (22px)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              editor?.chain().focus().setFontSize('28px').run();
+                              setIsSizeDropdownOpen(false);
+                            }}
+                            className="px-4 py-2 text-left hover:bg-ink/5 text-ink cursor-pointer text-lg font-bold"
+                          >
+                            Extra Large (28px)
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Hyperlink Tool */}
+                    <button
+                      type="button"
+                      onClick={() => setIsLinkModalOpen(true)}
+                      title="Add Custom Hyperlink"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <Link2 className="w-4 h-4" />
+                    </button>
+
+                    {/* Divider */}
+                    <div className="w-px h-6 bg-ink/10 mx-1" />
+
+                    {/* Cloudinary Image Loader */}
+                    <button
+                      type="button"
+                      onClick={() => setCloudinaryOpen(true)}
+                      title="Add Cloudinary Image"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                    </button>
+
+                    {/* Vimeo/Video Loader */}
+                    <button
+                      type="button"
+                      onClick={() => setVideoOpen(true)}
+                      title="Add Video Player Embed"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <VideoIcon className="w-4 h-4" />
+                    </button>
+
+                  </div>
+
+                  
+                )}
                 <div className="bg-transparent relative">
                   <EditorContent editor={editor} />
                 </div>
@@ -1116,9 +1426,202 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
 
             </div>
           )}
-
         </div>
       </main>
+{/* CLOUDINARY LOADER POPUP */}
+      {cloudinaryOpen && (
+        <div className="fixed inset-0 bg-midnight/60 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-ivory dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[480px] w-full shadow-2xl rounded-none flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-ink/10 pb-2">
+              <h4 className="font-serif text-lg font-semibold text-ink">Load Cloudinary Media</h4>
+              <button 
+                type="button"
+                onClick={() => setCloudinaryOpen(false)}
+                className="text-ink/60 hover:text-ink text-xl font-bold min-h-[32px] min-w-[32px] cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Cloudinary Image URL</label>
+                <input 
+                  type="text" 
+                  placeholder="https://res.cloudinary.com/..." 
+                  value={cloudinaryUrl}
+                  onChange={e => setCloudinaryUrl(e.target.value)}
+                  className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Image Caption</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Grand Canal view from Aman Venice balcony" 
+                  value={cloudinaryCaption}
+                  onChange={e => setCloudinaryCaption(e.target.value)}
+                  className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-2">
+              <button 
+                type="button" 
+                onClick={() => setCloudinaryOpen(false)}
+                className="px-4 py-2 border border-ink/20 text-xs uppercase tracking-wider hover:bg-ink/5 cursor-pointer rounded-none min-h-[44px]"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (cloudinaryUrl) {
+                    const imgTag = `\n<figure class="my-8">\n  <img src="${cloudinaryUrl}" alt="${cloudinaryCaption || 'Luxury travel image'}" class="w-full h-auto object-cover" />\n  ${cloudinaryCaption ? `<figcaption class="lbl-caption mt-2">${cloudinaryCaption} — Editor</figcaption>` : ''}\n</figure>\n`;
+                    editor?.commands.insertContent(imgTag);
+                    setCloudinaryUrl('');
+                    setCloudinaryCaption('');
+                    setCloudinaryOpen(false);
+                  }
+                }}
+                className="px-4 py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight text-xs uppercase tracking-wider font-bold cursor-pointer rounded-none min-h-[44px]"
+              >
+                Insert Image
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIDEO LOADER POPUP */}
+      {videoOpen && (
+        <div className="fixed inset-0 bg-midnight/60 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-ivory dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[480px] w-full shadow-2xl rounded-none flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-ink/10 pb-2">
+              <h4 className="font-serif text-lg font-semibold text-ink">Load Video Media</h4>
+              <button 
+                type="button"
+                onClick={() => setVideoOpen(false)}
+                className="text-ink/60 hover:text-ink text-xl font-bold min-h-[32px] min-w-[32px] cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Vimeo, YouTube, or Custom Video Link</label>
+              <input 
+                type="text" 
+                placeholder="e.g. https://vimeo.com/839485" 
+                value={videoUrl}
+                onChange={e => setVideoUrl(e.target.value)}
+                className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-2">
+              <button 
+                type="button" 
+                onClick={() => setVideoOpen(false)}
+                className="px-4 py-2 border border-ink/20 text-xs uppercase tracking-wider hover:bg-ink/5 cursor-pointer rounded-none min-h-[44px]"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (videoUrl) {
+                    let embedUrl = videoUrl;
+                    const ytMatch = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+                    const vimeoMatch = videoUrl.match(/(?:vimeo\.com\/(?:[a-z0-9-_]+\/)*|player\.vimeo\.com\/video\/)([0-9]+)/i);
+                    
+                    let markup = '';
+                    if (ytMatch) {
+                      embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <iframe src="${embedUrl}" class="absolute inset-0 w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n</div>\n`;
+                    } else if (vimeoMatch) {
+                      embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <iframe src="${embedUrl}" class="absolute inset-0 w-full h-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>\n</div>\n`;
+                    } else {
+                      markup = `\n<div class="relative w-full aspect-video my-8 bg-midnight border border-sand/10">\n  <video src="${videoUrl}" controls class="absolute inset-0 w-full h-full object-cover"></video>\n</div>\n`;
+                    }
+                    
+                    editor?.commands.insertContent(markup);
+                    setVideoUrl('');
+                    setVideoOpen(false);
+                  }
+                }}
+                className="px-4 py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight text-xs uppercase tracking-wider font-bold cursor-pointer rounded-none min-h-[44px]"
+              >
+                Insert Video
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LINK LOADER POPUP */}
+      {isLinkModalOpen && (
+        <div className="fixed inset-0 bg-midnight/60 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-ivory dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[480px] w-full shadow-2xl rounded-none flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-ink/10 pb-2">
+              <h4 className="font-serif text-lg font-semibold text-ink">Add Custom Hyperlink</h4>
+              <button 
+                type="button"
+                onClick={() => setIsLinkModalOpen(false)}
+                className="text-ink/60 hover:text-ink text-xl font-bold min-h-[32px] min-w-[32px] cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold font-sans">Destination URL</label>
+              <input 
+                type="text" 
+                placeholder="e.g. https://www.hyatt.com or /review/aman-venice" 
+                value={hyperlinkUrl}
+                onChange={e => setHyperlinkUrl(e.target.value)}
+                className="w-full text-xs p-3 border border-ink/15 bg-transparent outline-none focus:border-ink text-ink rounded-none"
+                autoFocus
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (hyperlinkUrl) {
+                      editor?.chain().focus().setLink({ href: hyperlinkUrl }).run(); setIsLinkModalOpen(false);
+                    }
+                  }
+                }}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-2">
+              <button 
+                type="button" 
+                onClick={() => setIsLinkModalOpen(false)}
+                className="px-4 py-2 border border-ink/20 text-xs uppercase tracking-wider hover:bg-ink/5 cursor-pointer rounded-none min-h-[44px]"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (hyperlinkUrl) {
+                    editor?.chain().focus().setLink({ href: hyperlinkUrl }).run(); setIsLinkModalOpen(false);
+                  }
+                }}
+                disabled={!hyperlinkUrl}
+                className="px-4 py-2 bg-midnight text-sand dark:bg-sand dark:text-midnight text-xs uppercase tracking-wider font-bold cursor-pointer rounded-none min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Insert Link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    
     </div>
   );
 }
