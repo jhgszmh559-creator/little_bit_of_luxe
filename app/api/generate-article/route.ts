@@ -17,10 +17,58 @@ function slugify(text: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.GITHUB_ACCESS_TOKEN) {
+      return NextResponse.json({ error: "GITHUB_ACCESS_TOKEN is not configured. Please add it to your platform deployment environment variables." }, { status: 500 });
+    }
+
     const { type, name, notes } = await request.json();
 
     if (!type || !name) {
       return NextResponse.json({ error: 'Missing required fields: type and name' }, { status: 400 });
+    }
+
+    const perplexityKey = process.env.PERPLEXITY_API_KEY;
+    if (!perplexityKey) {
+      return NextResponse.json({ error: 'Perplexity API key is not configured' }, { status: 500 });
+    }
+
+    // Enforce Perplexity Sonar search as absolute first action step
+    let searchResults = '';
+    try {
+      const perplexityRes = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${perplexityKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'sonar-reasoning-pro',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a research assistant. Provide detailed fact sheets, opening dates, brand ownership, structural data, and recent press reports for the requested hotel asset.'
+            },
+            {
+              role: 'user',
+              content: `Research the hotel/property asset: "${name}". Focus on live asset modifications, opening dates, location, brand networks, key designers, and global press records.`
+            }
+          ]
+        }),
+      });
+
+      if (!perplexityRes.ok) {
+        const errText = await perplexityRes.text();
+        throw new Error(`Perplexity API error: ${perplexityRes.status} ${errText}`);
+      }
+
+      const perplexityData = await perplexityRes.json();
+      searchResults = perplexityData.choices?.[0]?.message?.content || '';
+      if (!searchResults.trim()) {
+        throw new Error('Perplexity returned empty research results');
+      }
+    } catch (searchError: any) {
+      console.error('Perplexity search failed:', searchError);
+      return NextResponse.json({ error: `Perplexity research failed: ${searchError.message || searchError}` }, { status: 500 });
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -76,6 +124,9 @@ metadata should contain:
 
     const userPrompt = `Generate a travel ${type} article about "${name}".
 Additional prompt guidelines/notes: ${notes || 'None provided.'}
+
+Here is the real-time research context retrieved from Perplexity Sonar for "${name}" (use these live details to formulate the article content, avoid blind generation or hallucination):
+${searchResults}
 
 Please return the response as a single valid JSON object following the format constraints exactly.`;
 

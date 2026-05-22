@@ -109,6 +109,19 @@ function nodeToMarkdown(node: Node): string {
           return `<span style="font-family: ${styleFontFamily}">${childrenMarkdown}</span>`;
         }
         return childrenMarkdown;
+      case 'font':
+        const colorAttr = element.getAttribute('color');
+        const faceAttr = element.getAttribute('face');
+        if (colorAttr && faceAttr) {
+          return `<span style="color: ${colorAttr}; font-family: ${faceAttr}">${childrenMarkdown}</span>`;
+        }
+        if (colorAttr) {
+          return `<span style="color: ${colorAttr}">${childrenMarkdown}</span>`;
+        }
+        if (faceAttr) {
+          return `<span style="font-family: ${faceAttr}">${childrenMarkdown}</span>`;
+        }
+        return childrenMarkdown;
       case 'br':
         return '\n';
       case 'ul':
@@ -642,138 +655,136 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                 </div>
 
                 {/* Main Body Content Field */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-2">
-                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
-                      Main Body Content
-                    </label>
+                <div className="flex flex-col gap-2 relative">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
+                    Main Body Content
+                  </label>
+                  
+                  {/* PREMIUM RICH TEXT FORMATTING TOOLBAR */}
+                  <div className="sticky top-0 z-50 bg-card border-b border-ink/10 py-2 flex flex-wrap items-center gap-1 select-none">
                     
-                    {/* PREMIUM RICH TEXT FORMATTING TOOLBAR */}
-                    <div className="flex flex-wrap items-center bg-paper/50 dark:bg-midnight/30 border border-ink/10 p-1 rounded-none select-none">
-                      
-                      {/* Bold */}
+                    {/* Bold */}
+                    <button
+                      type="button"
+                      onClick={() => applyStyle('bold')}
+                      title="Bold text"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <Bold className="w-4 h-4" />
+                    </button>
+
+                    {/* Italic */}
+                    <button
+                      type="button"
+                      onClick={() => applyStyle('italic')}
+                      title="Italic text"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <Italic className="w-4 h-4" />
+                    </button>
+
+                    {/* Underline */}
+                    <button
+                      type="button"
+                      onClick={() => applyStyle('underline')}
+                      title="Underline text"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <Underline className="w-4 h-4" />
+                    </button>
+
+                    {/* Divider */}
+                    <div className="w-px h-6 bg-ink/10 mx-1" />
+
+                    {/* Color Picker Dropdown */}
+                    <div className="relative color-picker-container">
                       <button
                         type="button"
-                        onClick={() => applyStyle('bold')}
-                        title="Bold text"
+                        onClick={() => setIsColorDropdownOpen(!isColorDropdownOpen)}
+                        title="Text Color"
                         className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
                       >
-                        <Bold className="w-4 h-4" />
+                        <Palette className="w-4 h-4" />
                       </button>
-
-                      {/* Italic */}
-                      <button
-                        type="button"
-                        onClick={() => applyStyle('italic')}
-                        title="Italic text"
-                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                      >
-                        <Italic className="w-4 h-4" />
-                      </button>
-
-                      {/* Underline */}
-                      <button
-                        type="button"
-                        onClick={() => applyStyle('underline')}
-                        title="Underline text"
-                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                      >
-                        <Underline className="w-4 h-4" />
-                      </button>
-
-                      {/* Divider */}
-                      <div className="w-px h-6 bg-ink/10 mx-1" />
-
-                      {/* Color Picker Dropdown */}
-                      <div className="relative color-picker-container">
-                        <button
-                          type="button"
-                          onClick={() => setIsColorDropdownOpen(!isColorDropdownOpen)}
-                          title="Text Color"
-                          className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                        >
-                          <Palette className="w-4 h-4" />
-                        </button>
-                        {isColorDropdownOpen && (
-                          <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 p-3 shadow-xl rounded-none w-52 grid grid-cols-3 gap-2">
-                            {BRAND_COLORS.map((color) => (
-                              <button
-                                key={color.name}
-                                type="button"
-                                title={color.name}
-                                onClick={() => {
-                                  applyStyle('foreColor', color.hex);
-                                  setIsColorDropdownOpen(false);
-                                }}
-                                className={`w-full aspect-square text-[9px] font-bold rounded-none flex items-center justify-center shadow-sm cursor-pointer transition-transform hover:scale-105 ${color.bgClass}`}
-                              >
-                                {color.name.substring(0, 2)}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Font Toggle Dropdown */}
-                      <div className="relative font-picker-container">
-                        <button
-                          type="button"
-                          onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
-                          title="Font Family Override"
-                          className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                        >
-                          <Type className="w-4 h-4" />
-                        </button>
-                        {isFontDropdownOpen && (
-                          <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 py-1.5 shadow-xl rounded-none w-44 flex flex-col">
+                      {isColorDropdownOpen && (
+                        <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 p-3 shadow-xl rounded-none w-52 grid grid-cols-3 gap-2">
+                          {BRAND_COLORS.map((color) => (
                             <button
+                              key={color.name}
                               type="button"
+                              title={color.name}
                               onClick={() => {
-                                applyFontFamily('var(--lbl-serif)');
-                                setIsFontDropdownOpen(false);
+                                applyStyle('foreColor', color.hex);
+                                setIsColorDropdownOpen(false);
                               }}
-                              className="px-4 py-2.5 text-left text-xs font-serif hover:bg-ink/5 text-ink cursor-pointer"
+                              className={`w-full aspect-square text-[9px] font-bold rounded-none flex items-center justify-center shadow-sm cursor-pointer transition-transform hover:scale-105 ${color.bgClass}`}
                             >
-                              Serif (Cormorant)
+                              {color.name.substring(0, 2)}
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                applyFontFamily('var(--lbl-sans)');
-                                setIsFontDropdownOpen(false);
-                              }}
-                              className="px-4 py-2.5 text-left text-xs font-sans hover:bg-ink/5 text-ink cursor-pointer"
-                            >
-                              Sans-serif (Manrope)
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Divider */}
-                      <div className="w-px h-6 bg-ink/10 mx-1" />
-
-                      {/* Cloudinary Image Loader */}
-                      <button
-                        type="button"
-                        onClick={() => setCloudinaryOpen(true)}
-                        title="Add Cloudinary Image"
-                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                      >
-                        <ImageIcon className="w-4 h-4" />
-                      </button>
-
-                      {/* Vimeo/Video Loader */}
-                      <button
-                        type="button"
-                        onClick={() => setVideoOpen(true)}
-                        title="Add Video Player Embed"
-                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
-                      >
-                        <VideoIcon className="w-4 h-4" />
-                      </button>
-
+                          ))}
+                        </div>
+                      )}
                     </div>
+
+                    {/* Font Toggle Dropdown */}
+                    <div className="relative font-picker-container">
+                      <button
+                        type="button"
+                        onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
+                        title="Font Family Override"
+                        className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                      >
+                        <Type className="w-4 h-4" />
+                      </button>
+                      {isFontDropdownOpen && (
+                        <div className="absolute right-0 top-12 z-50 bg-card border border-ink/10 py-1.5 shadow-xl rounded-none w-44 flex flex-col">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              applyFontFamily('var(--lbl-serif)');
+                              setIsFontDropdownOpen(false);
+                            }}
+                            className="px-4 py-2.5 text-left text-xs font-serif hover:bg-ink/5 text-ink cursor-pointer"
+                          >
+                            Serif (Cormorant)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              applyFontFamily('var(--lbl-sans)');
+                              setIsFontDropdownOpen(false);
+                            }}
+                            className="px-4 py-2.5 text-left text-xs font-sans hover:bg-ink/5 text-ink cursor-pointer"
+                          >
+                            Sans-serif (Manrope)
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Divider */}
+                    <div className="w-px h-6 bg-ink/10 mx-1" />
+
+                    {/* Cloudinary Image Loader */}
+                    <button
+                      type="button"
+                      onClick={() => setCloudinaryOpen(true)}
+                      title="Add Cloudinary Image"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                    </button>
+
+                    {/* Vimeo/Video Loader */}
+                    <button
+                      type="button"
+                      onClick={() => setVideoOpen(true)}
+                      title="Add Video Player Embed"
+                      className="w-11 h-11 flex items-center justify-center text-ink/75 hover:bg-ink/5 hover:text-ink transition-colors cursor-pointer rounded-none border border-transparent"
+                    >
+                      <VideoIcon className="w-4 h-4" />
+                    </button>
+
                   </div>
 
                   {/* Visual contentEditable Editor Container */}

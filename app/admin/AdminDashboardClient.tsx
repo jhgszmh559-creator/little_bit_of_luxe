@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  FileText, Plus, Search, Settings, CheckCircle, 
+  FileText, Plus, Search, Settings, CheckCircle, Check,
   AlertCircle, ExternalLink, Link2, MapPin, 
   Sun, Moon, Loader2, Sparkles, BarChart2, Calendar, Eye,
   Tag, User, TrendingUp, Globe, ChevronRight, X, Layout, Menu
@@ -76,6 +76,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
   const [generationMode, setGenerationMode] = useState<'manual' | 'ai'>('ai');
   const [aiNotes, setAiNotes] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [aiStep, setAiStep] = useState<number>(0);
 
   // Article-Level Analytics State
   const [selectedPostForAnalytics, setSelectedPostForAnalytics] = useState<any | null>(null);
@@ -298,6 +299,12 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
       router.push(`/admin/editor?type=${articleType}&slug=${slug}`);
     } else {
       setGenerating(true);
+      setAiStep(1);
+
+      // Drive timeline steps with timed progression while the real API runs
+      const stepTimer2 = setTimeout(() => setAiStep(2), 6000);
+      const stepTimer3 = setTimeout(() => setAiStep(3), 14000);
+
       try {
         const response = await fetch('/api/generate-article', {
           method: 'POST',
@@ -311,11 +318,18 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
           }),
         });
 
+        clearTimeout(stepTimer2);
+        clearTimeout(stepTimer3);
+
         if (response.ok) {
+          setAiStep(4); // Complete
           const result = await response.json();
+          // Brief delay so user can see "Complete" state
+          await new Promise(resolve => setTimeout(resolve, 1200));
           setIsModalOpen(false);
           setPropertyName('');
           setAiNotes('');
+          setAiStep(0);
           router.refresh();
           router.push(`/admin/editor?type=${articleType}&slug=${result.slug}`);
         } else {
@@ -323,10 +337,13 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
           alert(`AI generation failed: ${errData.error || 'Unknown error'}`);
         }
       } catch (err) {
+        clearTimeout(stepTimer2);
+        clearTimeout(stepTimer3);
         console.error(err);
         alert('An unexpected error occurred during AI generation.');
       } finally {
         setGenerating(false);
+        setAiStep(0);
       }
     }
   };
@@ -1437,120 +1454,228 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
               </button>
             </div>
 
-            <form onSubmit={handleCreateArticle} className="flex flex-col gap-5">
+            {generating && generationMode === 'ai' ? (
+              /* ── MULTI-AGENT VISUAL TIMELINE ── */
+              <div className="flex flex-col gap-6 py-2">
+                <div className="text-center">
+                  <p className="text-[9px] uppercase tracking-[0.2em] text-sage dark:text-sage/80 font-bold mb-1">AI Pipeline Active</p>
+                  <p className="font-serif text-lg text-ink dark:text-sand">Generating: <em>{propertyName}</em></p>
+                </div>
+
+                {/* Timeline */}
+                <div className="relative flex flex-col gap-0 pl-8">
+                  {/* Vertical connector line */}
+                  <div className="absolute left-[15px] top-[12px] bottom-[12px] w-[2px] bg-gradient-to-b from-sage/40 via-terracotta/40 to-bordeaux/40 dark:from-sage/30 dark:via-terracotta/30 dark:to-bordeaux/30" />
+
+                  {/* Step 1: Deep Research */}
+                  <div className="relative flex items-start gap-4 pb-6">
+                    <div className={`absolute left-[-17px] top-[2px] w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
+                      aiStep >= 2 ? 'bg-sage border-sage' : aiStep === 1 ? 'bg-sage/20 border-sage animate-pulse' : 'bg-transparent border-ink/20 dark:border-sand/20'
+                    }`}>
+                      {aiStep >= 2 && <Check className="w-3 h-3 text-white" />}
+                      {aiStep === 1 && <div className="w-2 h-2 rounded-full bg-sage animate-ping" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-[10px] uppercase tracking-wider font-bold mb-1 transition-colors duration-300 ${
+                        aiStep >= 1 ? 'text-sage' : 'text-ink-3 dark:text-sand/40'
+                      }`}>Step 1 &middot; Deep Research</p>
+                      <p className={`text-xs leading-relaxed transition-colors duration-300 ${
+                        aiStep === 1 ? 'text-ink dark:text-sand/90' : aiStep >= 2 ? 'text-ink-3 dark:text-sand/50' : 'text-ink-3/60 dark:text-sand/30'
+                      }`}>
+                        {aiStep >= 1 ? `Querying Perplexity Sonar for live "${propertyName}" asset records and global press data…` : 'Waiting…'}
+                      </p>
+                      {aiStep === 1 && (
+                        <div className="mt-2 h-[3px] bg-ink/5 dark:bg-sand/10 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-sage to-sage/60 rounded-full animate-progress-indeterminate" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Step 2: Persona Alignment */}
+                  <div className="relative flex items-start gap-4 pb-6">
+                    <div className={`absolute left-[-17px] top-[2px] w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
+                      aiStep >= 3 ? 'bg-terracotta border-terracotta' : aiStep === 2 ? 'bg-terracotta/20 border-terracotta animate-pulse' : 'bg-transparent border-ink/20 dark:border-sand/20'
+                    }`}>
+                      {aiStep >= 3 && <Check className="w-3 h-3 text-white" />}
+                      {aiStep === 2 && <div className="w-2 h-2 rounded-full bg-terracotta animate-ping" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-[10px] uppercase tracking-wider font-bold mb-1 transition-colors duration-300 ${
+                        aiStep >= 2 ? 'text-terracotta' : 'text-ink-3 dark:text-sand/40'
+                      }`}>Step 2 &middot; Persona Alignment</p>
+                      <p className={`text-xs leading-relaxed transition-colors duration-300 ${
+                        aiStep === 2 ? 'text-ink dark:text-sand/90' : aiStep >= 3 ? 'text-ink-3 dark:text-sand/50' : 'text-ink-3/60 dark:text-sand/30'
+                      }`}>
+                        {aiStep >= 2 ? 'Retrieving local historical articles to clone your specific Little Bit of Luxe phrasing cadence…' : 'Waiting…'}
+                      </p>
+                      {aiStep === 2 && (
+                        <div className="mt-2 h-[3px] bg-ink/5 dark:bg-sand/10 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-terracotta to-terracotta/60 rounded-full animate-progress-indeterminate" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Step 3: Composition Engine */}
+                  <div className="relative flex items-start gap-4 pb-6">
+                    <div className={`absolute left-[-17px] top-[2px] w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
+                      aiStep >= 4 ? 'bg-bordeaux border-bordeaux' : aiStep === 3 ? 'bg-bordeaux/20 border-bordeaux animate-pulse' : 'bg-transparent border-ink/20 dark:border-sand/20'
+                    }`}>
+                      {aiStep >= 4 && <Check className="w-3 h-3 text-white" />}
+                      {aiStep === 3 && <div className="w-2 h-2 rounded-full bg-bordeaux animate-ping" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-[10px] uppercase tracking-wider font-bold mb-1 transition-colors duration-300 ${
+                        aiStep >= 3 ? 'text-bordeaux' : 'text-ink-3 dark:text-sand/40'
+                      }`}>Step 3 &middot; Composition Engine</p>
+                      <p className={`text-xs leading-relaxed transition-colors duration-300 ${
+                        aiStep === 3 ? 'text-ink dark:text-sand/90' : aiStep >= 4 ? 'text-ink-3 dark:text-sand/50' : 'text-ink-3/60 dark:text-sand/30'
+                      }`}>
+                        {aiStep >= 3 ? 'Engaging Claude-3-5-Sonnet to formulate the structured layout and inject QX Travel CTA links…' : 'Waiting…'}
+                      </p>
+                      {aiStep === 3 && (
+                        <div className="mt-2 h-[3px] bg-ink/5 dark:bg-sand/10 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-bordeaux to-bordeaux/60 rounded-full animate-progress-indeterminate" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Complete state */}
+                  {aiStep >= 4 && (
+                    <div className="relative flex items-start gap-4 animate-fade-in">
+                      <div className="absolute left-[-17px] top-[2px] w-[18px] h-[18px] rounded-full border-2 bg-gold border-gold flex items-center justify-center">
+                        <Sparkles className="w-3 h-3 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[10px] uppercase tracking-wider font-bold mb-1 text-gold">Complete</p>
+                        <p className="text-xs leading-relaxed text-ink dark:text-sand/90">
+                          Article generated successfully. Opening editor…
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Elapsed timer */}
+                <div className="text-center pt-2 border-t border-ink/5 dark:border-sand/10">
+                  <p className="text-[9px] uppercase tracking-wider text-ink-3 dark:text-sand/40 font-bold flex items-center justify-center gap-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Pipeline in progress — this takes 20–40 seconds
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleCreateArticle} className="flex flex-col gap-5">
               
-              {/* Layout Type Selection */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] tracking-wider uppercase text-midnight/70 dark:text-sand/70 font-semibold">
-                  Article Layout type
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {(['review', 'news', 'program'] as const).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setArticleType(t)}
-                      className={`py-3 px-2 text-center text-xs uppercase font-bold tracking-wider rounded-none border transition-all min-h-[44px] cursor-pointer ${
-                        articleType === t 
-                          ? 'bg-midnight text-sand border-midnight dark:bg-sand dark:text-midnight dark:border-sand' 
-                          : 'bg-transparent text-midnight/60 dark:text-sand/65 border-midnight/15 dark:border-sand/15 hover:border-midnight dark:hover:border-sand'
-                      }`}
-                    >
-                      {t === 'review' ? 'Hotel Review' : t === 'news' ? 'Hotel News' : 'Partner Guide'}
-                    </button>
-                  ))}
+                {/* Layout Type Selection */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-midnight/70 dark:text-sand/70 font-semibold">
+                    Article Layout type
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {(['review', 'news', 'program'] as const).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setArticleType(t)}
+                        className={`py-3 px-2 text-center text-xs uppercase font-bold tracking-wider rounded-none border transition-all min-h-[44px] cursor-pointer ${
+                          articleType === t 
+                            ? 'bg-midnight text-sand border-midnight dark:bg-sand dark:text-midnight dark:border-sand' 
+                            : 'bg-transparent text-midnight/60 dark:text-sand/65 border-midnight/15 dark:border-sand/15 hover:border-midnight dark:hover:border-sand'
+                        }`}
+                      >
+                        {t === 'review' ? 'Hotel Review' : t === 'news' ? 'Hotel News' : 'Partner Guide'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Property / Brand / Program Title */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] tracking-wider uppercase text-midnight/70 dark:text-sand/70 font-semibold">
-                  {articleType === 'review' ? 'Hotel Name' : articleType === 'news' ? 'New Property Name' : 'Program Name'}
-                </label>
-                <input 
-                  type="text"
-                  placeholder={articleType === 'review' ? 'e.g. Aman Venice' : articleType === 'news' ? 'e.g. The Emory London' : 'e.g. Rosewood Elite'}
-                  className="w-full text-sm bg-transparent border border-midnight/15 dark:border-sand/15 px-4 py-3 outline-none focus:border-midnight dark:focus:border-sand text-midnight dark:text-sand rounded-none min-h-[44px]"
-                  value={propertyName}
-                  onChange={e => setPropertyName(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* Creation Mode selection */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] tracking-wider uppercase text-midnight/70 dark:text-sand/70 font-semibold">
-                  Creation Mode
-                </label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer min-h-[44px]">
-                    <input 
-                      type="radio" 
-                      name="creationMode" 
-                      value="ai"
-                      checked={generationMode === 'ai'}
-                      onChange={() => setGenerationMode('ai')}
-                      className="w-4 h-4 cursor-pointer accent-midnight dark:accent-sand"
-                    />
-                    <span>Draft with Claude AI</span>
+                {/* Property / Brand / Program Title */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-midnight/70 dark:text-sand/70 font-semibold">
+                    {articleType === 'review' ? 'Hotel Name' : articleType === 'news' ? 'New Property Name' : 'Program Name'}
                   </label>
-                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer min-h-[44px]">
-                    <input 
-                      type="radio" 
-                      name="creationMode" 
-                      value="manual"
-                      checked={generationMode === 'manual'}
-                      onChange={() => setGenerationMode('manual')}
-                      className="w-4 h-4 cursor-pointer accent-midnight dark:accent-sand"
-                    />
-                    <span>Manual Draft (Empty)</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Claude AI Prompts */}
-              {generationMode === 'ai' && (
-                <div className="flex flex-col gap-2 animate-slide-down">
-                  <label className="text-[10px] tracking-wider uppercase text-midnight/70 dark:text-sand/70 font-semibold flex items-center justify-between">
-                    <span>AI Writing Instructions / Notes</span>
-                    <span className="text-[9px] text-sage font-bold">Model: claude-sonnet-4-6</span>
-                  </label>
-                  <textarea 
-                    rows={4}
-                    placeholder="Enter any details about location, amenities, rating, or personal editorial notes. Claude will craft a beautiful, publish-ready article in our signature voice..."
-                    className="w-full text-sm bg-transparent border border-midnight/15 dark:border-sand/15 px-4 py-3 outline-none focus:border-midnight dark:focus:border-sand text-midnight dark:text-sand rounded-none resize-none"
-                    value={aiNotes}
-                    onChange={e => setAiNotes(e.target.value)}
+                  <input 
+                    type="text"
+                    placeholder={articleType === 'review' ? 'e.g. Aman Venice' : articleType === 'news' ? 'e.g. The Emory London' : 'e.g. Rosewood Elite'}
+                    className="w-full text-sm bg-transparent border border-midnight/15 dark:border-sand/15 px-4 py-3 outline-none focus:border-midnight dark:focus:border-sand text-midnight dark:text-sand rounded-none min-h-[44px]"
+                    value={propertyName}
+                    onChange={e => setPropertyName(e.target.value)}
+                    required
                   />
                 </div>
-              )}
 
-              {/* Actions */}
-              <div className="flex gap-3 justify-end pt-4 border-t border-midnight/10 dark:border-sand/10">
-                <button
-                  type="button"
-                  onClick={() => { setIsModalOpen(false); setPropertyName(''); }}
-                  className="px-5 py-3 border border-midnight/15 dark:border-sand/15 text-midnight dark:text-sand text-xs uppercase font-bold tracking-wider rounded-none hover:bg-midnight/5 dark:hover:bg-sand/5 cursor-pointer min-h-[44px]"
-                  disabled={generating}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn--sand dark:btn--primary text-xs py-3 px-6 flex items-center justify-center gap-2 min-h-[44px] rounded-none cursor-pointer"
-                  disabled={generating}
-                >
-                  {generating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Drafting Article...
-                    </>
-                  ) : (
-                    generationMode === 'ai' ? 'Draft with AI' : 'Create Article'
-                  )}
-                </button>
-              </div>
+                {/* Creation Mode selection */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-midnight/70 dark:text-sand/70 font-semibold">
+                    Creation Mode
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer min-h-[44px]">
+                      <input 
+                        type="radio" 
+                        name="creationMode" 
+                        value="ai"
+                        checked={generationMode === 'ai'}
+                        onChange={() => setGenerationMode('ai')}
+                        className="w-4 h-4 cursor-pointer accent-midnight dark:accent-sand"
+                      />
+                      <span>Draft with Claude AI</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer min-h-[44px]">
+                      <input 
+                        type="radio" 
+                        name="creationMode" 
+                        value="manual"
+                        checked={generationMode === 'manual'}
+                        onChange={() => setGenerationMode('manual')}
+                        className="w-4 h-4 cursor-pointer accent-midnight dark:accent-sand"
+                      />
+                      <span>Manual Draft (Empty)</span>
+                    </label>
+                  </div>
+                </div>
 
-            </form>
+                {/* Claude AI Prompts */}
+                {generationMode === 'ai' && (
+                  <div className="flex flex-col gap-2 animate-slide-down">
+                    <label className="text-[10px] tracking-wider uppercase text-midnight/70 dark:text-sand/70 font-semibold flex items-center justify-between">
+                      <span>AI Writing Instructions / Notes</span>
+                      <span className="text-[9px] text-sage font-bold">Model: claude-sonnet-4-6</span>
+                    </label>
+                    <textarea 
+                      rows={4}
+                      placeholder="Enter any details about location, amenities, rating, or personal editorial notes. Claude will craft a beautiful, publish-ready article in our signature voice..."
+                      className="w-full text-sm bg-transparent border border-midnight/15 dark:border-sand/15 px-4 py-3 outline-none focus:border-midnight dark:focus:border-sand text-midnight dark:text-sand rounded-none resize-none"
+                      value={aiNotes}
+                      onChange={e => setAiNotes(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-3 justify-end pt-4 border-t border-midnight/10 dark:border-sand/10">
+                  <button
+                    type="button"
+                    onClick={() => { setIsModalOpen(false); setPropertyName(''); }}
+                    className="px-5 py-3 border border-midnight/15 dark:border-sand/15 text-midnight dark:text-sand text-xs uppercase font-bold tracking-wider rounded-none hover:bg-midnight/5 dark:hover:bg-sand/5 cursor-pointer min-h-[44px]"
+                    disabled={generating}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn--sand dark:btn--primary text-xs py-3 px-6 flex items-center justify-center gap-2 min-h-[44px] rounded-none cursor-pointer"
+                    disabled={generating}
+                  >
+                    {generationMode === 'ai' ? 'Draft with AI' : 'Create Article'}
+                  </button>
+                </div>
+
+              </form>
+            )}
 
           </div>
         </div>

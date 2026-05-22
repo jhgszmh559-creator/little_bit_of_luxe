@@ -14,6 +14,9 @@ function slugify(text: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.GITHUB_ACCESS_TOKEN) {
+      return NextResponse.json({ error: "GITHUB_ACCESS_TOKEN is not configured. Please add it to your platform deployment environment variables." }, { status: 500 });
+    }
     const formData = await request.formData();
     const imageFile = formData.get('image') as File | null;
     const customPrompt = formData.get('instructions') as string || '';
