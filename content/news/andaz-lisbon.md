@@ -30,18 +30,17 @@ To arrive in Lisbon is to submit to its light — a brilliant, amber-hued clarit
 
 The architectural narrative, conceived in collaboration with local master craftsmen, celebrates the raw, tactile materials of the Iberian Peninsula. Floors of honed Estremoz marble stretch beneath high, vaulted ceilings, while walls are clad in a patchwork of textured plaster and warm, wire-brushed oak. The traditional Portuguese *azulejo* tile is reimagined here not as a relic of the past, but as a minimalist sculptural element — hand-glazed in deep forest greens and soft terracotta tones that catch the shifting afternoon sun. Every corner reveals a quiet reverence for the handmade, from the bespoke woven tapestries hanging in the corridors to the custom-designed brass fixtures that will acquire a rich, dark patina over years of touch.
 
+## Design
+
 In the residential-style suites, this commitment to local materiality translates into an atmosphere of profound comfort. The layout is fluid and intuitive, eschewing rigid corridors in favor of open, light-filled spaces that encourage a slower pace of living. Floor-to-ceiling windows frame cinematic vistas of red-tiled rooftops stretching toward the river, while deep-set daybeds offer the perfect vantage point for watching the golden hour paint the city in shades of ochre and rose. The bathrooms are private sanctuaries of their own, carved from monolithic blocks of local limestone and featuring deep soaking tubs, rain showers, and custom bath amenities infused with the essence of wild rosemary and sea salt. It is a space designed for contemplation, where the boundary between the historic city outside and the private sanctuary within begins to dissolve.
 
-<div class="my-12 p-8 bg-midnight text-sand border-none">
-  <p class="lbl-eyebrow mb-2 text-sand/70">The Preferred Privilege</p>
-  <h3 class="lbl-h3 text-sand mb-4">Book Andaz Lisbon with Perks</h3>
-  <p class="lbl-body text-sand/85 mb-6"><span style="color: rgb(250, 248, 242);">
-    Through our preferred partnership, we unlock daily breakfast, priority upgrades, and property credits — matching the best flexible rates available directly, with all your standard loyalty nights and points fully recognized.
-  </span></p>
-  <a href="https://www.qxtravel.io/search-hotels" target="_blank" rel="noopener noreferrer" class="btn--subscribe">
-    Book with Perks <span class="arrow">→</span>
-  </a>
-</div>
+The Preferred Privilege
+
+### Book Andaz Lisbon with Perks
+
+Through our preferred partnership, we unlock daily breakfast, priority upgrades, and property credits — matching the best flexible rates available directly, with all your standard loyalty nights and points fully recognized.
+
+<a href="https://www.qxtravel.io/search-hotels" class="btn--subscribe" target="_blank" rel="noopener noreferrer"> Book with Perks →</a>
 
 Dining at Andaz Lisbon is an elegant exploration of Portugal’s rich culinary geography, elevated by a philosophy of seasonal simplicity. The signature restaurant, nestled within a sun-dappled courtyard, serves as a social hearth where guests and discerning locals mingle over plates of dry-aged Atlantic sea bass and heirloom tomatoes drizzled with estate-bottled olive oil. Upstairs, the rooftop lounge offers a more dramatic setting — a panoramic terrace where the breeze off the Atlantic cools the evening air as bartenders craft botanical cocktails infused with white port and local herbs. The wine cellar is equally thoughtful, showcasing a curated selection of rare vintages from the volcanic soils of the Azores to the steep terraces of the Douro Valley, each bottle telling a story of the terroir that defines this corner of Europe.
 
