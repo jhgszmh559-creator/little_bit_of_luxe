@@ -24,7 +24,7 @@ collections:
       - { label: "Category", name: "category", widget: "string", default: "Preferred Partner" }
       - { label: "Draft", name: "draft", widget: "boolean", default: false }
       - { label: "Featured Image", name: "image", widget: "image" }
-      - { label: "Body", name: "body", widget: "markdown" }
+      - { label: "Body", name: "body", widget: "markdown", buttons: ["bold", "italic", "code", "link", "image", "heading-one", "heading-two", "heading-three", "quote", "bulleted-list", "numbered-list"] }
       - { label: "Verdict Score Card", name: "verdict", widget: "object", fields: [
           { label: "Best For", name: "best_for", widget: "string", required: false },
           { label: "Highlight", name: "highlight", widget: "string", required: false },
@@ -48,7 +48,7 @@ collections:
       - { label: "Date", name: "date", widget: "date" }
       - { label: "Category", name: "category", widget: "string", default: "Hotel News" }
       - { label: "Featured Image", name: "image", widget: "image" }
-      - { label: "Body", name: "body", widget: "markdown" }
+      - { label: "Body", name: "body", widget: "markdown", buttons: ["bold", "italic", "code", "link", "image", "heading-one", "heading-two", "heading-three", "quote", "bulleted-list", "numbered-list"] }
 
   - name: "reviews"
     label: "Hotel Reviews"
@@ -70,4 +70,4 @@ collections:
       - { label: "OG/Featured Image", name: "image", widget: "image" }
       - { label: "Date", name: "date", widget: "date" }
       - { label: "Category", name: "category", widget: "string", default: "Hotel Review" }
-      - { label: "Body", name: "body", widget: "markdown" }
+      - { label: "Body", name: "body", widget: "markdown", buttons: ["bold", "italic", "code", "link", "image", "heading-one", "heading-two", "heading-three", "quote", "bulleted-list", "numbered-list"] }

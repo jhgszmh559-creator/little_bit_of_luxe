@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.97.1",
     "@google/generative-ai": "^0.24.1",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "dotenv": "^17.4.2",
     "flexsearch": "^0.8.212",
     "googleapis": "^172.0.0",

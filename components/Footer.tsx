@@ -28,7 +28,7 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="footer">
+    <footer className="footer" style={{ marginTop: '0px' }}>
       <div className="container footer__inner">
         {/* Brand Block */}
         <div className="footer__brand">
@@ -136,9 +136,9 @@ export default function Footer() {
       <div className="container footer__bottom">
         <span>© {currentYear} Little Bit of Luxe</span>
         <span>
-          <Link href="/admin" className="hover:text-white transition-colors uppercase font-semibold" style={{ marginRight: '16px', letterSpacing: '0.18em' }}>
+          <a href="/admin" className="hover:text-white transition-colors uppercase font-semibold" style={{ marginRight: '16px', letterSpacing: '0.18em' }}>
             ADMIN
-          </Link>
+          </a>
         </span>
       </div>
     </footer>

@@ -8,7 +8,18 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/admin') || pathname.startsWith('/api')) {
     const authHeader = request.headers.get('authorization');
 
+    // Detect if this is a Next.js client-side prefetch or RSC data request
+    const isPrefetch = 
+      request.headers.get('x-middleware-prefetch') === '1' ||
+      request.headers.get('next-router-prefetch') === '1' ||
+      request.headers.get('purpose') === 'prefetch' ||
+      request.headers.has('rsc');
+
     if (!authHeader) {
+      // If it's a prefetch, return 401 without the WWW-Authenticate header to prevent browser dialog popup
+      if (isPrefetch) {
+        return new NextResponse('Authentication Required', { status: 401 });
+      }
       return new NextResponse('Authentication Required', {
         status: 401,
         headers: {
@@ -32,6 +43,9 @@ export function middleware(request: NextRequest) {
       // Decode failed
     }
 
+    if (isPrefetch) {
+      return new NextResponse('Invalid Credentials', { status: 401 });
+    }
     return new NextResponse('Invalid Credentials', {
       status: 401,
       headers: {

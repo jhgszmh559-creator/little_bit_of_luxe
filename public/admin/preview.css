@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+
+/* Basic pane styling */
+body {
+  font-family: 'Manrope', 'Helvetica Neue', Arial, sans-serif;
+  color: #0D152D;
+  background-color: #FAF8F2;
+  line-height: 1.6;
+  padding: 32px;
+  font-size: 17px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Cormorant Garamond', 'Times New Roman', Georgia, serif;
+  color: #0D152D;
+  margin-top: 1.6em;
+  margin-bottom: 0.6em;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 3rem;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(13, 21, 45, 0.15);
+  padding-bottom: 12px;
+}
+
+h2 {
+  font-size: 2.25rem;
+  font-weight: 500;
+}
+
+h3 {
+  font-size: 1.75rem;
+  font-weight: 400;
+  font-style: italic;
+}
+
+h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Styling elements */
+p {
+  margin-bottom: 1.5em;
+}
+
+em, i {
+  font-family: 'Cormorant Garamond', 'Times New Roman', Georgia, serif;
+  font-style: italic;
+  font-size: 1.05em;
+}
+
+strong, b {
+  font-weight: 700;
+}
+
+a {
+  color: #B08442;
+  text-decoration: underline;
+  transition: color 180ms;
+}
+
+a:hover {
+  color: #6B1F2A;
+}
+
+/* Blockquotes */
+blockquote {
+  border-left: 2px solid #0D152D;
+  padding-left: 20px;
+  margin: 24px 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1.25rem;
+  color: #5C6480;
+}
+
+/* Lists */
+ul, ol {
+  margin-bottom: 1.5em;
+  padding-left: 24px;
+}
+
+li {
+  margin-bottom: 0.5em;
+}
+
+/* Code block styles */
+code {
+  font-family: monospace;
+  background-color: rgba(13, 21, 45, 0.05);
+  padding: 2px 6px;
+  border-radius: 0px;
+  font-size: 0.9em;
+}
+
+pre {
+  background-color: #FAF8F2;
+  border: 1px solid rgba(13, 21, 45, 0.1);
+  padding: 16px;
+  overflow-x: auto;
+  margin-bottom: 1.5em;
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+/* Uploaded Images styles */
+img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0px;
+  margin: 24px 0;
+  border: 1px solid rgba(13, 21, 45, 0.08);
+}

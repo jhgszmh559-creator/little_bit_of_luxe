@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -36,6 +37,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || "d64a1b02-0aaf-4a1c-b701-403a9b5f7701";
+
   return (
     <html
       lang="en"
@@ -59,10 +62,17 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* Umami Tracking Script */}
+        <script 
+          defer 
+          src="https://cloud.umami.is/script.js" 
+          data-website-id={umamiWebsiteId}
+        />
       </head>
       <body className="min-h-full flex flex-col bg-paper text-midnight selection:bg-sand selection:text-midnight transition-colors duration-200">
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
