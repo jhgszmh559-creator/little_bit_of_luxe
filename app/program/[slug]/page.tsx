@@ -3,7 +3,11 @@ import { notFound } from 'next/navigation';
 import { getProgramBySlug, getPrograms } from '@/lib/content';
 import { parseMarkdown, parseInlineMarkdown } from '@/lib/markdown';
 import { formatPremiumDate } from '@/lib/dateUtils';
+import { stripToPlainText } from '@/lib/textUtils';
 import SaveButton from '@/components/SaveButton';
+import TableOfContents from '@/components/TableOfContents';
+import AudioPlayer from '@/components/AudioPlayer';
+import ShareMenu from '@/components/ShareMenu';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import QxScrollBlock from '@/components/QxScrollBlock';
@@ -40,11 +44,26 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
   // Parse markdown body
   const htmlContent = parseMarkdown(cleanedContent);
 
+  // Extract H2 and H3 headings for the Table of Contents
+  const headingRegex = /^(#{2,3})\s+(.+)$/gm;
+  const headings: { id: string; text: string }[] = [];
+  let match;
+  while ((match = headingRegex.exec(cleanedContent)) !== null) {
+    const text = match[2].replace(/[*_`]/g, '').trim();
+    const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    headings.push({ id, text });
+  }
+
+  // Plain text for audio reader
+  const plainText = stripToPlainText(cleanedContent);
+
   // Get related programs
   const allPrograms = getPrograms(false);
   const relatedPrograms = allPrograms
     .filter((p) => p.slug !== slug && p.status === 'published')
     .slice(0, 3);
+
+  const articleUrl = `https://littlebitofluxe.com/program/${slug}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -76,111 +95,127 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
       </div>
 
       <main className="flex-grow py-12" data-screen-label="02 Article">
-        {/* Breadcrumbs and Header */}
-        <div className="container container--narrow">
-          <div className="article-hero__crumbs">
-            <Link href="/">JOURNAL</Link>
-            <span>/</span>
-            <Link href="/search?category=Preferred+Partner">THE EDIT</Link>
-            <span>/</span>
-            <span>{program.loyaltyNetwork.toUpperCase()}</span>
-          </div>
-
-          <div className="lbl-eyebrow--accent mb-4">
-            {program.loyaltyNetwork} Network Portfolio
-          </div>
-
-          <h1 
-            className="article-hero__title"
-            dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(program.title) }}
-          />
-
-          <p 
-            className="article-hero__dek"
-            dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(program.excerpt) }}
-          />
-
-          <div className="article-hero__meta">
-            <div className="article-hero__byline">
-              <strong>By</strong> Our Editors
+        <article>
+          {/* Breadcrumbs and Header */}
+          <header className="container container--narrow">
+            <div className="article-hero__crumbs">
+              <Link href="/">JOURNAL</Link>
+              <span>/</span>
+              <Link href="/search?category=Preferred+Partner">THE EDIT</Link>
+              <span>/</span>
+              <span>{program.loyaltyNetwork.toUpperCase()}</span>
             </div>
-            <div className="article-hero__metabits flex items-center gap-3">
-              <span>5 MIN READ</span>
-              <span>·</span>
-              <span>{formatPremiumDate(program.date)}</span>
-              <span>·</span>
-              <SaveButton 
-                article={{
-                  slug: program.slug,
-                  title: program.title.replace(/[*_`]/g, ''),
-                  type: 'program',
-                  date: program.date,
-                  image: program.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80",
-                  location: program.loyaltyNetwork
-                }} 
+
+            <div className="lbl-eyebrow--accent mb-4">
+              {program.loyaltyNetwork} Network Portfolio
+            </div>
+
+            <h1 
+              className="article-hero__title"
+              dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(program.title) }}
+            />
+
+            <p 
+              className="article-hero__dek"
+              dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(program.excerpt) }}
+            />
+
+            <div className="article-hero__meta">
+              <div className="article-hero__byline">
+                <strong>By</strong> Our Editors
+              </div>
+              <div className="article-hero__metabits flex items-center gap-3">
+                <span>5 MIN READ</span>
+                <span>·</span>
+                <span>{formatPremiumDate(program.date)}</span>
+                <span>·</span>
+                <SaveButton 
+                  article={{
+                    slug: program.slug,
+                    title: program.title.replace(/[*_`]/g, ''),
+                    type: 'program',
+                    date: program.date,
+                    image: program.image || "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80",
+                    location: program.loyaltyNetwork
+                  }} 
+                />
+              </div>
+            </div>
+
+            {/* Audio + Share Toolbar */}
+            <div className="article-toolbar">
+              <AudioPlayer articleText={plainText} />
+              <ShareMenu url={articleUrl} title={program.title.replace(/[*_`]/g, '')} excerpt={program.excerpt} />
+            </div>
+          </header>
+
+          {/* Banner Media Block */}
+          <div className="container" style={{ marginTop: 40 }}>
+            <div className="article-hero__media">
+              <img 
+                src={program.image} 
+                alt={program.programName} 
+                className="w-full h-full object-cover"
               />
             </div>
-          </div>
-        </div>
-
-        {/* Banner Media Block */}
-        <div className="container" style={{ marginTop: 40 }}>
-          <div className="article-hero__media">
-            <img 
-              src={program.image} 
-              alt={program.programName} 
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <p className="article-hero__caption" style={{ maxWidth: 760, margin: '12px auto 0' }}>
-            {program.programName} portfolio, curated with considered luxury. — Our Editors
-          </p>
-        </div>
-
-        {/* Article Body */}
-        <article className="container container--narrow" style={{ marginTop: 56 }}>
-          {/* Participating Brands Eyebrow Banner */}
-          <div className="mb-8 p-6 bg-paper-2 border-l-2 border-bordeaux">
-            <span className="lbl-eyebrow text-ink-2 mb-2 block">Participating Portfolios</span>
-            <p className="font-sans text-sm text-ink-3 leading-relaxed">
-              {program.brands}
+            <p className="article-hero__caption" style={{ maxWidth: 760, margin: '12px auto 0' }}>
+              {program.programName} portfolio, curated with considered luxury. — Our Editors
             </p>
           </div>
 
-          <div 
-            className="prose"
-            dangerouslySetInnerHTML={{ __html: htmlContent }} 
-          />
+          {/* Article Body with optional Sidebar ToC */}
+          <div className="container" style={{ marginTop: 56 }}>
+            <div className="max-w-[1000px] mx-auto flex flex-col lg:flex-row gap-12">
+              {/* Sidebar Table of Contents */}
+              <TableOfContents headings={headings} />
 
-          {/* Program Verdict Card */}
-          {program.verdict && (
-            <div className="my-12 p-8 border border-rule-soft bg-paper-2 flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="flex-1">
-                <span className="lbl-eyebrow text-bordeaux mb-2 block">The Verdict</span>
-                <h3 className="lbl-h3 text-midnight mb-4">Our Program Verdict</h3>
-                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {program.verdict.best_for && (
-                    <div>
-                      <dt className="lbl-eyebrow text-ink-3 text-[10px] mb-1">Best For</dt>
-                      <dd className="lbl-body text-sm font-medium">{program.verdict.best_for}</dd>
-                    </div>
-                  )}
-                  {program.verdict.highlight && (
-                    <div>
-                      <dt className="lbl-eyebrow text-ink-3 text-[10px] mb-1">Highlight</dt>
-                      <dd className="lbl-body text-sm font-medium">{program.verdict.highlight}</dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-              {program.verdict.score && (
-                <div className="flex flex-col items-center justify-center w-24 h-24 rounded-full border-2 border-midnight bg-midnight text-sand">
-                  <span className="text-2xl font-serif font-bold">{program.verdict.score}</span>
-                  <span className="text-[10px] uppercase tracking-widest text-sand/65">/ 10</span>
+              {/* Main Content Column */}
+              <section className="flex-grow max-w-[720px]">
+                {/* Participating Brands Eyebrow Banner */}
+                <div className="mb-8 p-6 bg-paper-2 border-l-2 border-bordeaux">
+                  <span className="lbl-eyebrow text-ink-2 mb-2 block">Participating Portfolios</span>
+                  <p className="font-sans text-sm text-ink-3 leading-relaxed">
+                    {program.brands}
+                  </p>
                 </div>
-              )}
+
+                <div 
+                  className="prose"
+                  dangerouslySetInnerHTML={{ __html: htmlContent }} 
+                />
+
+                {/* Program Verdict Card */}
+                {program.verdict && (
+                  <div className="my-12 p-8 border border-rule-soft bg-paper-2 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex-1">
+                      <span className="lbl-eyebrow text-bordeaux mb-2 block">The Verdict</span>
+                      <h3 className="lbl-h3 text-midnight mb-4">Our Program Verdict</h3>
+                      <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {program.verdict.best_for && (
+                          <div>
+                            <dt className="lbl-eyebrow text-ink-3 text-[10px] mb-1">Best For</dt>
+                            <dd className="lbl-body text-sm font-medium">{program.verdict.best_for}</dd>
+                          </div>
+                        )}
+                        {program.verdict.highlight && (
+                          <div>
+                            <dt className="lbl-eyebrow text-ink-3 text-[10px] mb-1">Highlight</dt>
+                            <dd className="lbl-body text-sm font-medium">{program.verdict.highlight}</dd>
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                    {program.verdict.score && (
+                      <div className="flex flex-col items-center justify-center w-24 h-24 rounded-full border-2 border-midnight bg-midnight text-sand">
+                        <span className="text-2xl font-serif font-bold">{program.verdict.score}</span>
+                        <span className="text-[10px] uppercase tracking-widest text-sand/65">/ 10</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
             </div>
-          )}
+          </div>
         </article>
 
         {/* Related Articles Section */}
