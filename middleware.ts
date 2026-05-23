@@ -5,7 +5,11 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Exclude automated webhooks from basic auth protection
-  if (pathname.startsWith('/api/news-ingest') || pathname.startsWith('/api/email-ingest')) {
+  if (
+    pathname.startsWith('/api/news-ingest') || 
+    pathname.startsWith('/api/email-ingest') || 
+    pathname.startsWith('/api/text-ingest')
+  ) {
     return NextResponse.next();
   }
 
