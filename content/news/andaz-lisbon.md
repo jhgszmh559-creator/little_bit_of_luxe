@@ -13,6 +13,11 @@ sources:
   - "https://newsroom.hyatt.com/news-releases?item=124710"
   - "https://andaz-lisbon.com"
   - "https://www.hyatt.com/andaz/en-US/lisaz-andaz-lisbon"
+galleryStyle: "grid"
+tldr: ""
+partnerLink: ""
+heroVideo: ""
+heroCaption: ""
 brand: "Andaz"
 property_name: ""
 location: "Lisbon, Portugal"
@@ -29,6 +34,8 @@ The quiet rebirth of a historic **Lisbon** icon
 ## Location
 
 To arrive in Lisbon is to submit to its light — a brilliant, amber-hued clarity that bounces off whitewashed facades and the shimmering expanse of the Tagus River. At Andaz Lisbon, this luminous atmosphere is not merely observed; it is curated. Situated in a meticulously restored historic enclave, the property marks a sophisticated evolution for Hyatt’s luxury lifestyle brand, bridging the gap between the city’s storied maritime heritage and a highly refined, contemporary design language. The transition from the cobblestone streets of the Baixa district into the hotel’s soaring lobby is an exercise in sensory decompression. Here, the clamor of tram bells and Fado melodies fades into a serene, acoustic stillness, punctuated only by the soft rustle of linen and the subtle scent of native pine and citrus.
+
+![678902de0ec9470abf7723f4_vanden hero](/uploads/1779541610476-250214539.png)
 
 ## Design
 
