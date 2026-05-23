@@ -41,7 +41,13 @@ export async function POST(request: NextRequest) {
       category,
       draft,
       status,
-      sources
+      sources,
+      galleryStyle,
+      tldr,
+      verdictHead,
+      verdictHighlight,
+      verdictBestFor,
+      verdictScore
     } = data;
 
     if (!type || !slug) {
@@ -97,6 +103,9 @@ export async function POST(request: NextRequest) {
       draft: finalDraft,
       status: finalStatus,
       sources: sources || [],
+      galleryStyle: galleryStyle || 'grid',
+      tldr: tldr || '',
+      partnerLink: partnerLink || '',
     };
 
     if (type === 'program') {
@@ -104,8 +113,14 @@ export async function POST(request: NextRequest) {
       frontmatter.loyaltyNetwork = loyaltyNetwork || 'Independent';
       frontmatter.brands = brands || '';
       frontmatter.officialLink = officialLink || '';
-      frontmatter.partnerLink = partnerLink || '';
       frontmatter.image = ogImage || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80';
+      if (verdictBestFor || verdictHighlight || verdictScore) {
+        frontmatter.verdict = {
+          best_for: verdictBestFor || '',
+          highlight: verdictHighlight || '',
+          score: verdictScore !== undefined && verdictScore !== '' ? Number(verdictScore) : ''
+        };
+      }
     } else if (type === 'news') {
       frontmatter.brand = brand || '';
       frontmatter.property_name = propertyName || '';
@@ -125,6 +140,9 @@ export async function POST(request: NextRequest) {
       frontmatter.metaTitle = metaTitle || '';
       frontmatter.metaDescription = metaDescription || '';
       frontmatter.ogImage = ogImage || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
+      frontmatter.image = ogImage || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
+      frontmatter.verdictHead = verdictHead || '';
+      frontmatter.verdictHighlight = verdictHighlight || '';
     }
 
     // Serialize frontmatter using gray-matter style block
@@ -139,6 +157,16 @@ export async function POST(request: NextRequest) {
         val.forEach((item) => {
           const cleanItem = String(item).replace(/"/g, '\\"');
           yamlLines.push(`  - "${cleanItem}"`);
+        });
+      } else if (typeof val === 'object' && val !== null) {
+        yamlLines.push(`${key}:`);
+        Object.entries(val).forEach(([subKey, subVal]) => {
+          const cleanSubVal = String(subVal).replace(/"/g, '\\"');
+          if (typeof subVal === 'number' || typeof subVal === 'boolean') {
+            yamlLines.push(`  ${subKey}: ${subVal}`);
+          } else {
+            yamlLines.push(`  ${subKey}: "${cleanSubVal}"`);
+          }
         });
       } else {
         yamlLines.push(`${key}: ${val}`);

@@ -34,6 +34,8 @@ export interface Program {
   sources?: string[];
   image: string;
   content: string;
+  galleryStyle?: string;
+  tldr?: string;
   verdict?: {
     best_for?: string;
     highlight?: string;
@@ -61,6 +63,11 @@ export interface Review {
   sources?: string[];
   category: string;
   content: string;
+  galleryStyle?: string;
+  partnerLink?: string;
+  tldr?: string;
+  verdictHead?: string;
+  verdictHighlight?: string;
 }
 
 export interface News {
@@ -80,6 +87,9 @@ export interface News {
   category: string;
   image: string;
   content: string;
+  galleryStyle?: string;
+  partnerLink?: string;
+  tldr?: string;
 }
 
 export function getPrograms(includeHidden = false): Program[] {
@@ -124,6 +134,8 @@ export function getPrograms(includeHidden = false): Program[] {
         image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
         content,
         verdict,
+        galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
+        tldr: getField(data, 'tldr', 'tldr', ''),
       };
     })
     .filter(program => includeHidden || program.status === 'published');
@@ -168,6 +180,11 @@ export function getReviews(includeHidden = false): Review[] {
         sources: data.sources || [],
         category: data.category || 'Hotel Review',
         content,
+        galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
+        partnerLink: getField(data, 'partnerLink', 'partner_link', ''),
+        tldr: getField(data, 'tldr', 'tldr', ''),
+        verdictHead: getField(data, 'verdictHead', 'verdict_head', ''),
+        verdictHighlight: getField(data, 'verdictHighlight', 'verdict_highlight', ''),
       };
     })
     .filter(review => includeHidden || review.status === 'published');
@@ -207,6 +224,9 @@ export function getNews(includeHidden = false): News[] {
         category: data.category || 'Hotel News',
         image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
         content,
+        galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
+        partnerLink: getField(data, 'partnerLink', 'partner_link', ''),
+        tldr: getField(data, 'tldr', 'tldr', ''),
       };
     })
     .filter(news => includeHidden || news.status === 'published');
@@ -250,6 +270,8 @@ export function getProgramBySlug(slug: string): Program | null {
     image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
     content,
     verdict,
+    galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
+    tldr: getField(data, 'tldr', 'tldr', ''),
   };
 }
 
@@ -284,6 +306,11 @@ export function getReviewBySlug(slug: string): Review | null {
     sources: data.sources || [],
     category: data.category || 'Hotel Review',
     content,
+    galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
+    partnerLink: getField(data, 'partnerLink', 'partner_link', ''),
+    tldr: getField(data, 'tldr', 'tldr', ''),
+    verdictHead: getField(data, 'verdictHead', 'verdict_head', ''),
+    verdictHighlight: getField(data, 'verdictHighlight', 'verdict_highlight', ''),
   };
 }
 
@@ -313,5 +340,8 @@ export function getNewsBySlug(slug: string): News | null {
     category: data.category || 'Hotel News',
     image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
     content,
+    galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
+    partnerLink: getField(data, 'partnerLink', 'partner_link', ''),
+    tldr: getField(data, 'tldr', 'tldr', ''),
   };
 }

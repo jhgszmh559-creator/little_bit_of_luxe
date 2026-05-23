@@ -214,7 +214,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [partnerLink, setPartnerLink] = useState(initialData?.partnerLink || '');
   const defaultHero = "https://cdn.prod.website-files.com/678444b2dafe38769d2ef04e/6895092d01a98987f2bbc29e_Light%20Gradient%2007.avif";
   const [ogImage, setOgImage] = useState(initialData?.image || initialData?.ogImage || defaultHero);
-  const [galleryStyle, setGalleryStyle] = useState('grid');
+  const [galleryStyle, setGalleryStyle] = useState(initialData?.galleryStyle || 'grid');
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   // News specific fields
@@ -223,10 +223,17 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [earlyNewsletterCta, setEarlyNewsletterCta] = useState(initialData?.earlyNewsletterCta !== false);
   const [sourceUrl, setSourceUrl] = useState(initialData?.sourceUrl || '');
 
+  // Editorial Box fields
+  const [tldr, setTldr] = useState(initialData?.tldr || '');
+  const [verdictHead, setVerdictHead] = useState(initialData?.verdictHead || 'A considered residency *inspected*');
+  const [verdictHighlight, setVerdictHighlight] = useState(initialData?.verdictHighlight || 'Exceptional architecture and local integration');
+  const [verdictBestFor, setVerdictBestFor] = useState(initialData?.verdictBestFor || '');
+  const [verdictScore, setVerdictScore] = useState(initialData?.verdictScore || '');
+
   // UI state
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const [editorTab, setEditorTab] = useState<'write' | 'design' | 'strategy'>('write');
+  const [editorTab, setEditorTab] = useState<'write' | 'design' | 'editorial'>('write');
 
 
   // Lifecycle & Citations State
@@ -381,6 +388,13 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
       projectedOpening,
       earlyNewsletterCta,
       sourceUrl,
+      // New custom metadata fields
+      galleryStyle,
+      tldr,
+      verdictHead,
+      verdictHighlight,
+      verdictBestFor,
+      verdictScore,
     };
 
     try {
@@ -642,12 +656,12 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
             <ImageIcon className="w-4 h-4" /> Design & Media
           </button>
           <button
-            onClick={() => setEditorTab('strategy')}
+            onClick={() => setEditorTab('editorial')}
             className={`flex-1 py-3 text-xs uppercase font-bold tracking-wider rounded-none transition-colors flex items-center justify-center gap-2 min-h-[44px] cursor-pointer ${
-              editorTab === 'strategy' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink bg-transparent font-medium'
+              editorTab === 'editorial' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink bg-transparent font-medium'
             }`}
           >
-            <Settings className="w-4 h-4" /> SEO & Strategy
+            <Settings className="w-4 h-4" /> Editorial Boxes
           </button>
         </div>
 
@@ -655,74 +669,247 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
         <div className="flex-grow">
           
           {editorTab === 'write' && (
-            <div className="w-full lg:w-[800px] mx-auto flex flex-col gap-6 bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none">
-              
-              {/* Article Title Field */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
-                  Article Title
-                </label>
-                <input 
-                  type="text"
-                  placeholder="e.g. A weekend at the Splendido that lived up to its name."
-                  className="w-full text-lg md:text-2xl font-serif bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none min-h-[52px]"
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* Excerpt / Summary Field */}
-              <div className="flex flex-col gap-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
-                    Short Excerpt / Summary (Shows on homepage & newsletters)
-                  </label>
-                  <button type="button" onClick={generateSummary} disabled={isGeneratingSummary} className="text-[10px] uppercase tracking-wider text-bordeaux dark:text-gold-soft hover:underline flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> {isGeneratingSummary ? 'Generating...' : 'AI Summary'}
-                  </button>
-                </div>
-                <textarea 
-                  rows={2}
-                  placeholder="One elegant, poetic, serif italic sentence setting the scene."
-                  className="w-full text-sm font-serif italic bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none resize-none"
-                  value={excerpt}
-                  onChange={e => setExcerpt(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* Main Body Content Field */}
-              <div className="flex flex-col gap-2 relative border border-ink/15">
-                <div className="bg-card px-4 py-2 border-b border-ink/10 text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans flex justify-between items-center">
-                  <span>Main Body Canvas</span>
-                  <span className="text-ink-3/50">TipTap Editor Active</span>
-                </div>
+            <div className="flex flex-col lg:flex-row gap-6 max-w-[1280px] w-full mx-auto items-start">
+              {/* Main Content Column */}
+              <div className="flex-grow lg:max-w-[800px] w-full flex flex-col gap-6 bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none">
                 
-                <div className="bg-transparent relative">
-                  <SimpleEditor 
-                    content={parseMarkdown(content)} 
-                    onUpdate={(html) => setContent(convertHtmlToMarkdown(html))} 
-                    onEditorReady={(editor) => {
-                      editorInstanceRef.current = editor;
-                    }}
-                    onInsertCloudinary={() => setCloudinaryOpen(true)}
-                    onInsertVideo={() => setVideoOpen(true)}
-                    onInsertGallery={() => {
-                      const html = `<div class="gallery gallery-${galleryStyle}">[Gallery Placeholder]</div>`;
-                      if (editorInstanceRef.current) {
-                        editorInstanceRef.current.commands.insertContent(html);
-                      } else {
-                        setContent((prev: string) => prev + '\n\n' + html);
-                      }
-                    }}
-                    onInsertVerdict={handleInsertVerdict}
-                    onInsertQxPerks={handleInsertQxPerks}
-                    onInsertTldr={handleInsertTldr}
+                {/* Article Title Field */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
+                    Article Title
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="e.g. A weekend at the Splendido that lived up to its name."
+                    className="w-full text-lg md:text-2xl font-serif bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none min-h-[52px]"
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    required
                   />
                 </div>
+
+                {/* Excerpt / Summary Field */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans">
+                      Short Excerpt / Summary (Shows on homepage & newsletters)
+                    </label>
+                    <button type="button" onClick={generateSummary} disabled={isGeneratingSummary} className="text-[10px] uppercase tracking-wider text-bordeaux dark:text-gold-soft hover:underline flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> {isGeneratingSummary ? 'Generating...' : 'AI Summary'}
+                    </button>
+                  </div>
+                  <textarea 
+                    rows={2}
+                    placeholder="One elegant, poetic, serif italic sentence setting the scene."
+                    className="w-full text-sm font-serif italic bg-transparent border border-ink/15 p-4 outline-none focus:border-ink text-ink rounded-none resize-none"
+                    value={excerpt}
+                    onChange={e => setExcerpt(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {/* Main Body Content Field */}
+                <div className="flex flex-col gap-2 relative border border-ink/15">
+                  <div className="bg-card px-4 py-2 border-b border-ink/10 text-[10px] tracking-wider uppercase text-ink-3 font-semibold font-sans flex justify-between items-center">
+                    <span>Main Body Canvas</span>
+                    <span className="text-ink-3/50">TipTap Editor Active</span>
+                  </div>
+                  
+                  <div className="bg-transparent relative">
+                    <SimpleEditor 
+                      content={parseMarkdown(content)} 
+                      onUpdate={(html) => setContent(convertHtmlToMarkdown(html))} 
+                      onEditorReady={(editor) => {
+                        editorInstanceRef.current = editor;
+                      }}
+                      onInsertCloudinary={() => setCloudinaryOpen(true)}
+                      onInsertVideo={() => setVideoOpen(true)}
+                      onInsertGallery={() => {
+                        const html = `<div class="gallery gallery-${galleryStyle}">[Gallery Placeholder]</div>`;
+                        if (editorInstanceRef.current) {
+                          editorInstanceRef.current.commands.insertContent(html);
+                        } else {
+                          setContent((prev: string) => prev + '\n\n' + html);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
               </div>
 
+              {/* Right Column: SEO Strategy Sidebar */}
+              <aside className="w-full lg:w-[380px] lg:sticky lg:top-[120px] bg-card border border-ink/10 p-6 shadow-sm rounded-none flex flex-col gap-6 self-start">
+                <div className="border-b border-ink/10 pb-4">
+                  <h4 className="font-serif text-lg font-semibold flex items-center gap-2">
+                    <Sparkles className="w-4.5 h-4.5 text-bordeaux dark:text-gold-soft" />
+                    Strategy & SEO Hub
+                  </h4>
+                  <p className="text-[10px] text-ink-3 uppercase tracking-wider mt-1">Real-time content scoring</p>
+                </div>
+
+                {/* Focus Keyword Section */}
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">Target Keyword</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Splendido Hotel" 
+                    value={targetKeyword}
+                    onChange={e => setTargetKeyword(e.target.value)}
+                    className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
+                  />
+                </div>
+
+                {/* On-Page SEO Checklist */}
+                <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs">
+                  <div className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold mb-1">On-Page Automated Checks</div>
+                  
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <span className="text-ink-2 font-medium">Exactly One H1 Tag</span>
+                    {isSingleH1() ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">— No</span>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <span className="text-ink-2 font-medium">No Skipped Heading Levels</span>
+                    {noSkippedHeadings() ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">— No</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <span className="text-ink-2 font-medium">Title Length Optimal (40-60)</span>
+                    {title.length >= 40 && title.length <= 60 ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">{title.length} chars</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <span className="text-ink-2 font-medium">Excerpt Length Optimal (120-160)</span>
+                    {excerpt.length >= 120 && excerpt.length <= 160 ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">{excerpt.length} chars</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <span className="text-ink-2 font-medium">Content Length (&gt;800 words)</span>
+                    {getWordCount() > 800 ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">{getWordCount()} words</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                    <span className="text-ink-2 font-medium">Internal Links Present</span>
+                    {internalLinksPresent() ? (
+                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                    ) : (
+                      <span className="text-bordeaux font-medium">— No</span>
+                    )}
+                  </div>
+
+                  {currentType === 'review' && (
+                    <>
+                      <div className="flex items-center justify-between border-b border-ink/5 pb-2">
+                        <span className="text-ink-2 font-medium">Verdict Box Configured</span>
+                        {tldr || rating || verdictHead || verdictHighlight ? (
+                          <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                        ) : (
+                          <span className="text-bordeaux font-medium">— Missing</span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-ink-2 font-medium">Preferred Privilege CTA Configured</span>
+                        {showQxPerks ? (
+                          <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                        ) : (
+                          <span className="text-bordeaux font-medium">— Disabled</span>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {currentType === 'news' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-ink-2 font-medium">TL;DR Box Configured</span>
+                      {tldr ? (
+                        <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
+                      ) : (
+                        <span className="text-bordeaux font-medium">— Missing</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* GEO & Manual SEO Toggles */}
+                <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs mt-2">
+                  <div className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold mb-1">GEO & Manual SEO Toggles</div>
+                  
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" checked={entityDensity} onChange={e => setEntityDensity(e.target.checked)} className="accent-midnight w-4 h-4" />
+                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Entity Density Optimal</span>
+                  </label>
+                  
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" checked={citationReadiness} onChange={e => setCitationReadiness(e.target.checked)} className="accent-midnight w-4 h-4" />
+                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Citation Readiness Check</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" checked={directAnswerFormatting} onChange={e => setDirectAnswerFormatting(e.target.checked)} className="accent-midnight w-4 h-4" />
+                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Direct Answer Formatting</span>
+                  </label>
+
+                  <div className="border-t border-ink/5 my-1" />
+
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" checked={geoPassed} onChange={e => setGeoPassed(e.target.checked)} className="accent-midnight w-4 h-4" />
+                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">GEO Passed</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" checked={altTextOptimized} onChange={e => setAltTextOptimized(e.target.checked)} className="accent-midnight w-4 h-4" />
+                    <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Hero Alt-Text Optimized</span>
+                  </label>
+                </div>
+
+                {/* Private Sources Citations Section */}
+                <div className="border-t border-ink/10 pt-6 mt-2 flex flex-col gap-3">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-serif text-base font-semibold text-ink">Intelligence Sources Dossier</h4>
+                    <span className="text-[9px] uppercase tracking-wider bg-sage/10 text-sage px-2 py-0.5 font-bold">
+                      {sources.length} Verified Sources
+                    </span>
+                  </div>
+                  
+                  {sources.length > 0 ? (
+                    <ul className="flex flex-col gap-2">
+                      {sources.map((source, idx) => (
+                        <li key={idx} className="text-xs flex items-start gap-2 bg-paper/50 p-2.5 border border-ink/5">
+                          <span className="text-ink-3 font-mono mt-0.5">[{idx + 1}]</span>
+                          <a href={source} target="_blank" rel="noreferrer" className="text-ink hover:text-bordeaux dark:hover:text-gold-soft hover:underline break-all">
+                            {source}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="text-xs text-ink-3 italic p-4 bg-paper/30 border border-ink/5 text-center">
+                      No intelligence sources cited for this article.
+                    </div>
+                  )}
+                </div>
+              </aside>
             </div>
           )}
 
@@ -739,7 +926,17 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   <select 
                     className="w-full text-sm bg-card border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
                     value={currentType}
-                    onChange={e => setCurrentType(e.target.value as 'review' | 'program' | 'news')}
+                    onChange={e => {
+                      const newType = e.target.value as 'review' | 'program' | 'news';
+                      setCurrentType(newType);
+                      if (newType === 'program') {
+                        setCategory('Preferred Partner');
+                      } else if (newType === 'news') {
+                        setCategory('Hotel News');
+                      } else {
+                        setCategory('Hotel Review');
+                      }
+                    }}
                   >
                     <option value="review">Hotel Review</option>
                     <option value="program">Preferred Partner Guide</option>
@@ -799,179 +996,160 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
             </div>
           )}
 
-          {editorTab === 'strategy' && (
+          {editorTab === 'editorial' && (
             <div className="w-full lg:w-[800px] mx-auto bg-card border border-ink/10 p-6 md:p-8 shadow-sm rounded-none flex flex-col gap-6">
-              
               <div className="border-b border-ink/10 pb-4">
                 <h4 className="font-serif text-lg font-semibold flex items-center gap-2">
-                  <Sparkles className="w-4.5 h-4.5 text-bordeaux dark:text-gold-soft" />
-                  Strategy & SEO Hub
+                  <BookOpen className="w-4.5 h-4.5 text-bordeaux dark:text-gold-soft" />
+                  Editorial Boxes & Metadata Blocks
                 </h4>
-                <p className="text-[10px] text-ink-3 uppercase tracking-wider mt-1">Real-time content scoring</p>
+                <p className="text-[10px] text-ink-3 uppercase tracking-wider mt-1">Configure layout cards and summary components</p>
               </div>
 
-              {/* Focus Keyword Section */}
-              <div className="flex flex-col gap-3">
-                <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">Target Keyword</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. Splendido Hotel" 
-                  value={targetKeyword}
-                  onChange={e => setTargetKeyword(e.target.value)}
-                  className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
-                />
-              </div>
-
-              {/* On-Page SEO Checklist */}
-              <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs">
-                <div className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold mb-1">On-Page Automated Checks</div>
-                
-                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                  <span className="text-ink-2 font-medium">Exactly One H1 Tag</span>
-                  {isSingleH1() ? (
-                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                  ) : (
-                    <span className="text-bordeaux font-medium">— No</span>
-                  )}
-                </div>
-                
-                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                  <span className="text-ink-2 font-medium">No Skipped Heading Levels</span>
-                  {noSkippedHeadings() ? (
-                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                  ) : (
-                    <span className="text-bordeaux font-medium">— No</span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                  <span className="text-ink-2 font-medium">Title Length Optimal (40-60)</span>
-                  {title.length >= 40 && title.length <= 60 ? (
-                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                  ) : (
-                    <span className="text-bordeaux font-medium">{title.length} chars</span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                  <span className="text-ink-2 font-medium">Excerpt Length Optimal (120-160)</span>
-                  {excerpt.length >= 120 && excerpt.length <= 160 ? (
-                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                  ) : (
-                    <span className="text-bordeaux font-medium">{excerpt.length} chars</span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                  <span className="text-ink-2 font-medium">Content Length (&gt;800 words)</span>
-                  {getWordCount() > 800 ? (
-                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                  ) : (
-                    <span className="text-bordeaux font-medium">{getWordCount()} words</span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                  <span className="text-ink-2 font-medium">Internal Links Present</span>
-                  {internalLinksPresent() ? (
-                    <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                  ) : (
-                    <span className="text-bordeaux font-medium">— No</span>
-                  )}
-                </div>
-
-                {currentType === 'review' && (
-                  <>
-                    <div className="flex items-center justify-between border-b border-ink/5 pb-2">
-                      <span className="text-ink-2 font-medium">Verdict Box Embedded</span>
-                      {content.includes('class="verdict"') || content.includes('<aside') ? (
-                        <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                      ) : (
-                        <span className="text-bordeaux font-medium">— Missing</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-ink-2 font-medium">Preferred Privilege CTA Embedded</span>
-                      {content.includes('class="article-cta-box"') ? (
-                        <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                      ) : (
-                        <span className="text-bordeaux font-medium">— Missing</span>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {currentType === 'news' && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-ink-2 font-medium">TL;DR Box Embedded</span>
-                    {content.includes('class="tldr-box"') ? (
-                      <span className="text-sage font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Yes</span>
-                    ) : (
-                      <span className="text-bordeaux font-medium">— Missing</span>
-                    )}
+              {currentType === 'review' && (
+                <div className="flex flex-col gap-6">
+                  {/* TL;DR Summary Card */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">TL;DR Summary Card (Markdown bullet points)</label>
+                    <textarea 
+                      rows={4}
+                      placeholder="- Point one&#10;- Point two"
+                      value={tldr}
+                      onChange={e => setTldr(e.target.value)}
+                      className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none resize-y font-mono"
+                    />
                   </div>
-                )}
-              </div>
 
-              {/* GEO & Manual SEO Toggles */}
-              <div className="bg-paper/40 p-4 border border-ink/5 flex flex-col gap-3 text-xs mt-2">
-                <div className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold mb-1">GEO & Manual SEO Toggles</div>
-                
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" checked={entityDensity} onChange={e => setEntityDensity(e.target.checked)} className="accent-midnight w-4 h-4" />
-                  <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Entity Density Optimal</span>
-                </label>
-                
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" checked={citationReadiness} onChange={e => setCitationReadiness(e.target.checked)} className="accent-midnight w-4 h-4" />
-                  <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Citation Readiness Check</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" checked={directAnswerFormatting} onChange={e => setDirectAnswerFormatting(e.target.checked)} className="accent-midnight w-4 h-4" />
-                  <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Direct Answer Formatting</span>
-                </label>
-
-                <div className="border-t border-ink/5 my-1" />
-
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" checked={geoPassed} onChange={e => setGeoPassed(e.target.checked)} className="accent-midnight w-4 h-4" />
-                  <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">GEO (Generative Optimization) Passed</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" checked={altTextOptimized} onChange={e => setAltTextOptimized(e.target.checked)} className="accent-midnight w-4 h-4" />
-                  <span className="text-ink-2 font-medium group-hover:text-ink transition-colors">Featured Image Alt-Text Optimized</span>
-                </label>
-              </div>
-
-              {/* Private Sources Citations Section */}
-              <div className="border-t border-ink/10 pt-6 mt-2 flex flex-col gap-3">
-                <div className="flex justify-between items-center">
-                  <h4 className="font-serif text-base font-semibold text-ink">Intelligence Sources Dossier</h4>
-                  <span className="text-[9px] uppercase tracking-wider bg-sage/10 text-sage px-2 py-0.5 font-bold">
-                    {sources.length} Verified Sources
-                  </span>
-                </div>
-                
-                {sources.length > 0 ? (
-                  <ul className="flex flex-col gap-2">
-                    {sources.map((source, idx) => (
-                      <li key={idx} className="text-xs flex items-start gap-2 bg-paper/50 p-2.5 border border-ink/5">
-                        <span className="text-ink-3 font-mono mt-0.5">[{idx + 1}]</span>
-                        <a href={source} target="_blank" rel="noreferrer" className="text-ink hover:text-bordeaux dark:hover:text-gold-soft hover:underline break-all">
-                          {source}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="text-xs text-ink-3 italic p-4 bg-paper/30 border border-ink/5 text-center">
-                    No intelligence sources cited for this article.
+                  <div className="border-t border-ink/10 pt-6">
+                    <h5 className="font-serif text-sm font-semibold text-ink mb-4">Detailed Verdict Box Settings</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">Verdict Headline</label>
+                        <input 
+                          type="text" 
+                          value={verdictHead}
+                          onChange={e => setVerdictHead(e.target.value)}
+                          className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">Verdict Highlight</label>
+                        <input 
+                          type="text" 
+                          value={verdictHighlight}
+                          onChange={e => setVerdictHighlight(e.target.value)}
+                          className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2 md:col-span-2">
+                        <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">Verdict Rating Score (1-10)</label>
+                        <input 
+                          type="number" 
+                          step="0.1" 
+                          min="1" 
+                          max="10" 
+                          value={rating}
+                          onChange={e => setRating(Number(e.target.value))}
+                          className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
+                        />
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
 
+                  <div className="border-t border-ink/10 pt-6 flex flex-col gap-4">
+                    <h5 className="font-serif text-sm font-semibold text-ink">Preferred Privilege Perks</h5>
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        checked={showQxPerks} 
+                        onChange={e => setShowQxPerks(e.target.checked)} 
+                        className="accent-midnight w-4 h-4" 
+                      />
+                      <span className="text-xs text-ink-2 font-medium group-hover:text-ink transition-colors">Show QX Travel Perks Banner?</span>
+                    </label>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">QX Travel Booking Link Override</label>
+                      <input 
+                        type="url" 
+                        placeholder="https://..."
+                        value={partnerLink}
+                        onChange={e => setPartnerLink(e.target.value)}
+                        className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {currentType === 'program' && (
+                <div className="flex flex-col gap-6">
+                  <div className="border-t border-ink/10 pt-6">
+                    <h5 className="font-serif text-sm font-semibold text-ink mb-4">Program Verdict Box Settings</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">Best For</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g. Design Lovers & Wellness Retreats"
+                          value={verdictBestFor}
+                          onChange={e => setVerdictBestFor(e.target.value)}
+                          className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">Program Highlight</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g. Complimentary breakfast & room upgrades"
+                          value={verdictHighlight}
+                          onChange={e => setVerdictHighlight(e.target.value)}
+                          className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2 md:col-span-2">
+                        <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">Program Score (1-10)</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g. 9.5"
+                          value={verdictScore}
+                          onChange={e => setVerdictScore(e.target.value)}
+                          className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {currentType === 'news' && (
+                <div className="flex flex-col gap-6">
+                  {/* TL;DR Summary Card */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">TL;DR Summary Card (Markdown bullet points)</label>
+                    <textarea 
+                      rows={4}
+                      placeholder="- Point one&#10;- Point two"
+                      value={tldr}
+                      onChange={e => setTldr(e.target.value)}
+                      className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none resize-y font-mono"
+                    />
+                  </div>
+
+                  <div className="border-t border-ink/10 pt-6 flex flex-col gap-4">
+                    <h5 className="font-serif text-sm font-semibold text-ink">Early Newsletter Dispatch</h5>
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        checked={earlyNewsletterCta} 
+                        onChange={e => setEarlyNewsletterCta(e.target.checked)} 
+                        className="accent-midnight w-4 h-4" 
+                      />
+                      <span className="text-xs text-ink-2 font-medium group-hover:text-ink transition-colors">Show Early beehiiv Newsletter CTA?</span>
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -83,9 +83,6 @@ const MainToolbarContent = ({
   onInsertCloudinary,
   onInsertVideo,
   onInsertGallery,
-  onInsertVerdict,
-  onInsertQxPerks,
-  onInsertTldr,
 }: {
   onHighlighterClick: () => void
   onLinkClick: () => void
@@ -93,9 +90,6 @@ const MainToolbarContent = ({
   onInsertCloudinary?: () => void
   onInsertVideo?: () => void
   onInsertGallery?: () => void
-  onInsertVerdict?: () => void
-  onInsertQxPerks?: () => void
-  onInsertTldr?: () => void
 }) => {
   return (
     <>
@@ -175,27 +169,6 @@ const MainToolbarContent = ({
         >
           <Layers className="w-3.5 h-3.5" /> Luxury Gallery
         </button>
-        <button
-          type="button"
-          onClick={onInsertVerdict}
-          className="text-[10px] uppercase font-bold tracking-wider px-2 py-1.5 hover:bg-ink/5 border border-ink/10 transition-colors text-ink rounded-none whitespace-nowrap min-h-[32px] flex items-center gap-1 cursor-pointer"
-        >
-          <BookOpenCheck className="w-3.5 h-3.5" /> Verdict Box
-        </button>
-        <button
-          type="button"
-          onClick={onInsertQxPerks}
-          className="text-[10px] uppercase font-bold tracking-wider px-2 py-1.5 hover:bg-ink/5 border border-ink/10 transition-colors text-ink rounded-none whitespace-nowrap min-h-[32px] flex items-center gap-1 cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5" /> QX Perks
-        </button>
-        <button
-          type="button"
-          onClick={onInsertTldr}
-          className="text-[10px] uppercase font-bold tracking-wider px-2 py-1.5 hover:bg-ink/5 border border-ink/10 transition-colors text-ink rounded-none whitespace-nowrap min-h-[32px] flex items-center gap-1 cursor-pointer"
-        >
-          <ClipboardList className="w-3.5 h-3.5" /> TL;DR Box
-        </button>
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -250,10 +223,7 @@ export function SimpleEditor({
   onEditorReady,
   onInsertCloudinary,
   onInsertVideo,
-  onInsertGallery,
-  onInsertVerdict,
-  onInsertQxPerks,
-  onInsertTldr
+  onInsertGallery
 }: { 
   content: string
   onUpdate: (html: string) => void
@@ -261,9 +231,6 @@ export function SimpleEditor({
   onInsertCloudinary?: () => void
   onInsertVideo?: () => void
   onInsertGallery?: () => void
-  onInsertVerdict?: () => void
-  onInsertQxPerks?: () => void
-  onInsertTldr?: () => void
 }) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
@@ -366,9 +333,6 @@ export function SimpleEditor({
               onInsertCloudinary={onInsertCloudinary}
               onInsertVideo={onInsertVideo}
               onInsertGallery={onInsertGallery}
-              onInsertVerdict={onInsertVerdict}
-              onInsertQxPerks={onInsertQxPerks}
-              onInsertTldr={onInsertTldr}
             />
           ) : (
             <MobileToolbarContent

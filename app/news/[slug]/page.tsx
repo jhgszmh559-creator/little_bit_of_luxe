@@ -206,6 +206,13 @@ export default async function NewsPage({ params }: NewsPageProps) {
                     <span className="font-sans text-sm font-semibold text-midnight">{news.projectedOpening}</span>
                   </div>
                 </div>
+                
+                {news.tldr && (
+                  <div className="tldr-box">
+                    <h4 className="tldr-box__title">The TL;DR</h4>
+                    <div dangerouslySetInnerHTML={{ __html: parseMarkdown(news.tldr) }} />
+                  </div>
+                )}
 
                 {renderedContent}
               </section>

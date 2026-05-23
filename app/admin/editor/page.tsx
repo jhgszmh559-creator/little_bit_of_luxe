@@ -42,6 +42,11 @@ export default async function EditorPage({ searchParams }: EditorPageProps) {
           officialLink: prog.officialLink,
           partnerLink: prog.partnerLink,
           image: prog.image,
+          tldr: prog.tldr || '',
+          galleryStyle: prog.galleryStyle || 'grid',
+          verdictBestFor: prog.verdict?.best_for || '',
+          verdictHighlight: prog.verdict?.highlight || '',
+          verdictScore: prog.verdict?.score || '',
         };
       }
     } else if (type === 'news') {
@@ -63,6 +68,9 @@ export default async function EditorPage({ searchParams }: EditorPageProps) {
           earlyNewsletterCta: newsItem.earlyNewsletterCta,
           sourceUrl: newsItem.sourceUrl,
           ogImage: newsItem.image,
+          tldr: newsItem.tldr || '',
+          partnerLink: newsItem.partnerLink || '',
+          galleryStyle: newsItem.galleryStyle || 'grid',
         };
       }
     } else {
@@ -87,6 +95,11 @@ export default async function EditorPage({ searchParams }: EditorPageProps) {
           metaTitle: review.metaTitle,
           metaDescription: review.metaDescription,
           ogImage: review.ogImage,
+          tldr: review.tldr || '',
+          verdictHead: review.verdictHead || '',
+          verdictHighlight: review.verdictHighlight || '',
+          partnerLink: review.partnerLink || '',
+          galleryStyle: review.galleryStyle || 'grid',
         };
       }
     }
@@ -100,6 +113,7 @@ export default async function EditorPage({ searchParams }: EditorPageProps) {
 
   return (
     <EditorForm 
+      key={`${type}-${slug}`}
       type={type as 'review' | 'program' | 'news'} 
       slug={slug} 
       initialData={initialData} 

@@ -1376,3 +1376,22 @@ h1 em, h2 em, h3 em, .lbl-display em {
   color: rgba(245, 242, 205, 0.85);
 }
 
+.tldr-box ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: square;
+}
+.tldr-box li {
+  font-family: var(--lbl-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--lbl-ink-2, #2A3550);
+  margin-bottom: 8px;
+}
+.tldr-box li:last-child {
+  margin-bottom: 0;
+}
+.dark .tldr-box li {
+  color: rgba(245, 242, 205, 0.85);
+}
+

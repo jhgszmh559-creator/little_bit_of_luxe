@@ -200,6 +200,13 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
 
               {/* Main Content Column */}
               <section className="flex-grow max-w-[720px]">
+                {review.tldr && (
+                  <div className="tldr-box">
+                    <h4 className="tldr-box__title">The TL;DR</h4>
+                    <div dangerouslySetInnerHTML={{ __html: parseMarkdown(review.tldr) }} />
+                  </div>
+                )}
+
                 <div 
                   className="prose"
                   dangerouslySetInnerHTML={{ __html: htmlContent }} 
@@ -214,7 +221,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
                       Through our preferred partnerships, we unlock daily breakfast, priority upgrades, and property credits for standard direct bookings.
                     </p>
                     <a 
-                      href="https://www.qxtravel.io/search-hotels" 
+                      href={review.partnerLink || "https://www.qxtravel.io/search-hotels"} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="btn-subscribe"
@@ -231,7 +238,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
                       <div className="verdict__eyebrow">The Verdict</div>
                       <div 
                         className="verdict__head" 
-                        dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(`A considered residency *inspected*`) }}
+                        dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(review.verdictHead || `A considered residency *inspected*`) }}
                       />
                       <dl className="verdict__rows">
                         <dt className="k">Hotel</dt>
@@ -241,7 +248,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
                         <dd style={{ margin: 0 }}>{review.roomType || 'Standard Room'}</dd>
                         
                         <dt className="k">Key Highlight</dt>
-                        <dd style={{ margin: 0 }}>Exceptional architecture and local integration</dd>
+                        <dd style={{ margin: 0 }}>{review.verdictHighlight || 'Exceptional architecture and local integration'}</dd>
                       </dl>
                     </div>
                     <div className="verdict__score">
