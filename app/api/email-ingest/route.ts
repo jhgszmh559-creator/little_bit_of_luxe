@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     const citationsStr = JSON.stringify(citations);
 
     const draftPrompt = `You are a Principal Luxury Travel Editorial Director for "Little Bit of Luxe".
-    Write a gorgeous, 800-word magazine-style hotel news opening announcement/coverage draft for: "${hotelName}".
+    Write a gorgeous, 800-word to 1000-word magazine-style hotel news opening announcement/coverage draft for: "${hotelName}".
     
     Use the following gathered intel:
     ---
@@ -136,7 +136,10 @@ export async function POST(request: NextRequest) {
     - Set the tone with a single poetic serif italic dek sentence beneath the H1.
     - Use em-dashes (—) for structural pauses. Maintain a quiet, trusted, architectural tone.
     - Focus heavily on heritage, design details, tactile materials, and sense of place.
-    - Write 4-5 extensive, flowing, gorgeous prose paragraphs.
+    - Use '##' (H2 headings) for all sub-section headings in the content (for the table of contents to parse). Do NOT use '###' or '#' for subheaders.
+    - The target article length must be strictly between 800 and 1000 words.
+    - Always include a "How to Book" section at the end under a '## How to Book' heading, highlighting QX Travel and the preferred partner benefits (such as complimentary daily breakfast, priority upgrades, property credits, etc.) depending on the hotel brand or program network.
+    - Write 4-5 extensive, flowing, gorgeous prose paragraphs before the How to Book section.
     
     - Output should include a YAML frontmatter block at the very top:
     ---

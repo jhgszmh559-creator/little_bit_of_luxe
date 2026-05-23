@@ -85,13 +85,15 @@ Your writing style is elevated but down-to-earth. Avoid cliches, generic superla
 Ensure markdown formatting is perfectly clean:
 - Use italics like *this* for emphasis or styling.
 - Do NOT combine italics and bold in ways that look buggy (e.g., avoid "*word***").
-- Use ONLY '###' for sub-section headings in the content. Do NOT use '##' or '#' for subheaders.
+- Use '##' (H2 headings) for all sub-section headings in the content (for the table of contents to parse). Do NOT use '###' or '#' for subheaders.
+- The target article length must be between 800 and 1000 words.
+- If relevant (e.g., reviews or program guides), always include a "How to Book" section at the end under a '## How to Book' heading, highlighting QX Travel and the preferred partner benefits (e.g. daily breakfast, priority upgrades, property credits, etc.) depending on the brand/program.
 - Do NOT use placeholders. Generate fully completed, high-quality copy.
 
 You must output your response in raw JSON format with no additional text or conversational wrapper. The JSON must contain:
 1. "title": A poetic, editorial title.
 2. "excerpt": A single poetic, structured description sentence (meta description).
-3. "content": The body copy in markdown, featuring several paragraphs and '###' headers.
+3. "content": The body copy in markdown, featuring several paragraphs and '##' headers.
 4. "metadata": An object containing fields specific to the layout type.
 
 For layout type "review":
