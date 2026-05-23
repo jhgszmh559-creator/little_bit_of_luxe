@@ -6,6 +6,9 @@ category: "Hotel Review"
 draft: false
 status: "published"
 sources:
+galleryStyle: "grid"
+tldr: ""
+partnerLink: ""
 hotelName: "Aman Venice"
 brand: "Aman"
 location: "San Polo, Venice, Italy"
@@ -16,6 +19,9 @@ showQxPerks: true
 metaTitle: ""
 metaDescription: ""
 ogImage: "https://ik.imgkit.net/3vlqs5axxjf/external/https://media.iceportal.com/127230/photos/77058712_XL.jpg?tr=w-1200%2Cfo-auto"
+image: "https://ik.imgkit.net/3vlqs5axxjf/external/https://media.iceportal.com/127230/photos/77058712_XL.jpg?tr=w-1200%2Cfo-auto"
+verdictHead: "A considered residency *inspected*"
+verdictHighlight: "Exceptional architecture and local integration"
 ---
 
 ## Aman Venice: Palazzo Elegance Refined
@@ -37,3 +43,16 @@ Dining at Aman Venice is an exceptional experience. The restaurant, Arva, celebr
 ## A Venetian Sanctuary
 
 For relaxation, the hotel features a small, intimate spa offering signature Aman treatments. There is also a small fitness studio and a rooftop terrace providing panoramic views over the rooftops of Venice. It is a complete sanctuary, offering peace and privacy in one of the world's busiest cities.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Test Page</title>
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <p>This is a small HTML test page.</p>
+    <a href="https://google.com">Go to Google</a>
+</body>
+</html>
