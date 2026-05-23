@@ -15,7 +15,7 @@ youtubeId: "dQw4w9WgXcQ"
 showQxPerks: true
 metaTitle: ""
 metaDescription: ""
-ogImage: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=1200&q=80"
+ogImage: "https://ik.imgkit.net/3vlqs5axxjf/external/https://media.iceportal.com/127230/photos/77058712_XL.jpg?tr=w-1200%2Cfo-auto"
 ---
 
 ## Aman Venice: Palazzo Elegance Refined
