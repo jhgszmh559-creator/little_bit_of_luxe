@@ -1362,7 +1362,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                       {/* Main Prose Copy */}
                       <article 
                         className="prose max-w-none text-sm text-ink-2 leading-relaxed font-sans first-letter:float-left first-letter:text-5xl first-letter:font-serif first-letter:mr-3 first-letter:mt-1 first-letter:text-midnight first-letter:font-semibold"
-                        dangerouslySetInnerHTML={{ __html: content || '<p>Write your article body content...</p>' }}
+                        dangerouslySetInnerHTML={{ __html: parseMarkdown(content) || '<p>Write your article body content...</p>' }}
                       />
 
                       {/* Verdict Box (Reviews/Programs) */}
