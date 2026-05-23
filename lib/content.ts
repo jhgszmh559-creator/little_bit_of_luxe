@@ -11,11 +11,23 @@ function getField<T>(data: any, camelKey: string, snakeKey: string, defaultValue
   return defaultValue;
 }
 
-function getStatus(data: any): 'published' | 'draft' | 'archived' {
-  if (data.status === 'published' || data.status === 'draft' || data.status === 'archived') {
+export type ArticleStatus = 'published' | 'draft' | 'needs_review' | 'scheduled' | 'archived';
+
+function getStatus(data: any): ArticleStatus {
+  if (data.status === 'published' || data.status === 'draft' || data.status === 'needs_review' || data.status === 'scheduled' || data.status === 'archived') {
     return data.status;
   }
   return data.draft === true ? 'draft' : 'published';
+}
+
+export function isPostVisible(status: string, dateStr: string, includeHidden = false): boolean {
+  if (includeHidden) return true;
+  if (status === 'published') return true;
+  if (status === 'scheduled') {
+    const pubDate = new Date(dateStr);
+    return !isNaN(pubDate.getTime()) && pubDate <= new Date();
+  }
+  return false;
 }
 
 export interface Program {
@@ -30,7 +42,7 @@ export interface Program {
   date: string;
   category: string;
   draft: boolean;
-  status: 'published' | 'draft' | 'archived';
+  status: ArticleStatus;
   sources?: string[];
   image: string;
   content: string;
@@ -61,7 +73,7 @@ export interface Review {
   ogImage?: string;
   date: string;
   draft: boolean;
-  status: 'published' | 'draft' | 'archived';
+  status: ArticleStatus;
   sources?: string[];
   category: string;
   content: string;
@@ -86,7 +98,7 @@ export interface News {
   sourceUrl?: string;
   date: string;
   draft: boolean;
-  status: 'published' | 'draft' | 'archived';
+  status: ArticleStatus;
   sources?: string[];
   category: string;
   image: string;
@@ -146,7 +158,7 @@ export function getPrograms(includeHidden = false): Program[] {
         heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
       };
     })
-    .filter(program => includeHidden || program.status === 'published');
+    .filter(program => isPostVisible(program.status, program.date, includeHidden));
 
   return programs.sort((a, b) => b.date.localeCompare(a.date));
 }
@@ -197,7 +209,7 @@ export function getReviews(includeHidden = false): Review[] {
         heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
       };
     })
-    .filter(review => includeHidden || review.status === 'published');
+    .filter(review => isPostVisible(review.status, review.date, includeHidden));
 
   return reviews.sort((a, b) => b.date.localeCompare(a.date));
 }
@@ -241,7 +253,7 @@ export function getNews(includeHidden = false): News[] {
         heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
       };
     })
-    .filter(news => includeHidden || news.status === 'published');
+    .filter(news => isPostVisible(news.status, news.date, includeHidden));
 
   return newsList.sort((a, b) => b.date.localeCompare(a.date));
 }

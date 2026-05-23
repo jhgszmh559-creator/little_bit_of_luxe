@@ -10,6 +10,8 @@ import {
   Tag, User, TrendingUp, Globe, ChevronRight, X, Layout, Menu
 } from 'lucide-react';
 
+type ArticleStatus = 'published' | 'draft' | 'needs_review' | 'scheduled' | 'archived';
+
 interface Program {
   slug: string;
   title: string;
@@ -20,7 +22,7 @@ interface Program {
   date: string;
   category: string;
   draft: boolean;
-  status: 'published' | 'draft' | 'archived';
+  status: ArticleStatus;
 }
 
 interface Review {
@@ -34,7 +36,7 @@ interface Review {
   roomType: string;
   date: string;
   draft: boolean;
-  status: 'published' | 'draft' | 'archived';
+  status: ArticleStatus;
   category: string;
 }
 
@@ -48,7 +50,7 @@ interface News {
   projectedOpening: string;
   date: string;
   draft: boolean;
-  status: 'published' | 'draft' | 'archived';
+  status: ArticleStatus;
   category: string;
 }
 
@@ -61,7 +63,7 @@ interface AdminDashboardClientProps {
 export default function AdminDashboardClient({ programs, reviews, news }: AdminDashboardClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'analytics' | 'posts' | 'pages' | 'tags' | 'decap' | 'settings'>('analytics');
-  const [postFilter, setPostFilter] = useState<'all' | 'published' | 'drafts' | 'archived'>('all');
+  const [postFilter, setPostFilter] = useState<'all' | 'published' | 'drafts' | 'needs_review' | 'scheduled' | 'archived'>('all');
   const [selectedPostType, setSelectedPostType] = useState<'all' | 'Review' | 'News' | 'Partner Guide'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -372,6 +374,8 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
     const matchesStatus = postFilter === 'all' || 
                          (postFilter === 'drafts' && post.status === 'draft') || 
                          (postFilter === 'published' && post.status === 'published') ||
+                         (postFilter === 'needs_review' && post.status === 'needs_review') ||
+                         (postFilter === 'scheduled' && post.status === 'scheduled') ||
                          (postFilter === 'archived' && post.status === 'archived');
                          
     // Type Filter
@@ -494,6 +498,28 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
                 }`}
               >
                 Published ({unifiedPosts.filter(p => p.status === 'published').length})
+              </button>
+
+              <button 
+                onClick={() => { setActiveTab('posts'); setPostFilter('needs_review'); setIsMobileMenuOpen(false); }}
+                className={`flex items-center justify-between pl-8 pr-3 py-2 text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer transition-colors ${
+                  activeTab === 'posts' && postFilter === 'needs_review'
+                    ? 'text-midnight dark:text-sand font-bold border-l border-midnight dark:border-sand' 
+                    : 'text-ink-3 hover:text-ink dark:text-sand/65 dark:hover:text-white'
+                }`}
+              >
+                Needs Review ({unifiedPosts.filter(p => p.status === 'needs_review').length})
+              </button>
+
+              <button 
+                onClick={() => { setActiveTab('posts'); setPostFilter('scheduled'); setIsMobileMenuOpen(false); }}
+                className={`flex items-center justify-between pl-8 pr-3 py-2 text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer transition-colors ${
+                  activeTab === 'posts' && postFilter === 'scheduled'
+                    ? 'text-midnight dark:text-sand font-bold border-l border-midnight dark:border-sand' 
+                    : 'text-ink-3 hover:text-ink dark:text-sand/65 dark:hover:text-white'
+                }`}
+              >
+                Scheduled ({unifiedPosts.filter(p => p.status === 'scheduled').length})
               </button>
 
               <button 
@@ -696,7 +722,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
           <div>
             <h2 className="font-serif text-xl font-semibold uppercase tracking-wider text-ink dark:text-sand">
               {activeTab === 'analytics' && 'Analytics Overview'}
-              {activeTab === 'posts' && `${postFilter === 'all' ? 'All Posts' : postFilter === 'published' ? 'Published Posts' : postFilter === 'drafts' ? 'Draft Posts' : 'Archived Posts'}`}
+              {activeTab === 'posts' && `${postFilter === 'all' ? 'All Posts' : postFilter === 'published' ? 'Published Posts' : postFilter === 'needs_review' ? 'Needs Review Posts' : postFilter === 'scheduled' ? 'Scheduled Posts' : postFilter === 'drafts' ? 'Draft Posts' : 'Archived Posts'}`}
               {activeTab === 'pages' && 'Site Pages Directory'}
               {activeTab === 'tags' && 'Categories & Destinations'}
               {activeTab === 'decap' && 'Decap CMS Admin'}
@@ -1086,6 +1112,12 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
 
                                 {post.status === 'draft' && (
                                   <span className="text-[8px] uppercase tracking-wider bg-bordeaux/10 text-bordeaux px-1.5 py-0.5 rounded-none font-bold">Draft</span>
+                                )}
+                                {post.status === 'needs_review' && (
+                                  <span className="text-[8px] uppercase tracking-wider bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-none font-bold">Needs Review</span>
+                                )}
+                                {post.status === 'scheduled' && (
+                                  <span className="text-[8px] uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 px-1.5 py-0.5 rounded-none font-bold">Scheduled ({new Date(post.date).toLocaleDateString()})</span>
                                 )}
                                 {post.status === 'archived' && (
                                   <span className="text-[8px] uppercase tracking-wider bg-ink-3/15 text-ink-3 dark:bg-sand/15 dark:text-sand/75 px-1.5 py-0.5 rounded-none font-bold">Archived</span>

@@ -22,8 +22,8 @@ import {
   ExternalLink,
   Sparkles,
   Layers,
-  Clock,
-  BookOpenCheck
+  BookOpenCheck,
+  Eye
 } from 'lucide-react';
 import { parseMarkdown } from '@/lib/markdown';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
@@ -42,6 +42,18 @@ interface EditorFormProps {
   initialData: any;
   allArticles?: ArticleItem[];
 }
+
+const formatDatetimeLocal = (isoString: string) => {
+  try {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return '';
+  }
+};
 
 const BRAND_COLORS = [
   { name: 'Midnight', hex: '#0D152D', bgClass: 'bg-[#0D152D]' },
@@ -222,7 +234,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [content, setContent] = useState(initialData?.content || '');
   const [category, setCategory] = useState(initialData?.category || (currentType === 'program' ? 'Preferred Partner' : currentType === 'news' ? 'Hotel News' : 'Hotel Review'));
   const [draft, setDraft] = useState(initialData?.draft !== undefined ? initialData.draft : true);
-  const [date, setDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(initialData?.date || new Date().toISOString());
 
   // Review specific fields
   const [hotelName, setHotelName] = useState(initialData?.hotelName || '');
@@ -262,11 +274,12 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   // UI state
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const [editorTab, setEditorTab] = useState<'write' | 'design' | 'editorial'>('write');
+  const [editorTab, setEditorTab] = useState<'write' | 'design' | 'editorial' | 'preview'>('write');
+  const [previewViewport, setPreviewViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
 
   // Lifecycle & Citations State
-  const [status, setStatus] = useState<'published' | 'draft' | 'archived'>(initialData?.status || (initialData?.draft === false ? 'published' : 'draft'));
+  const [status, setStatus] = useState<'published' | 'draft' | 'needs_review' | 'scheduled' | 'archived'>(initialData?.status || (initialData?.draft === false ? 'published' : 'draft'));
   const [sources, setSources] = useState<string[]>(initialData?.sources || []);
 
   // Rich Text Toolbars & Popups State
@@ -369,7 +382,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
     return content.includes('](/') || content.includes('href="/') || content.includes('href=\\"/');
   };
 
-  const handleSave = async (overrideStatus?: 'published' | 'draft' | 'archived', e?: React.FormEvent) => {
+  const handleSave = async (overrideStatus?: 'published' | 'draft' | 'needs_review' | 'scheduled' | 'archived', e?: React.FormEvent) => {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (!slug) {
       alert('Please provide a unique URL slug.');
@@ -614,44 +627,45 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           
-          {status === 'published' ? (
-            <>
-              <button
-                type="button"
-                onClick={() => handleSave('archived')}
-                disabled={saving}
-                className="btn--secondary text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-bordeaux text-bordeaux hover:bg-bordeaux hover:text-white rounded-none transition-colors"
-              >
-                Archive
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSave('published')}
-                disabled={saving}
-                className="btn--sand text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-midnight rounded-none"
-              >
-                <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Update Published Article'}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => handleSave('draft')}
-                disabled={saving}
-                className="text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-ink/20 text-ink/70 hover:bg-ink/5 rounded-none transition-colors"
-              >
-                Save Draft
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSave('published')}
-                disabled={saving}
-                className="btn--sand text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-midnight rounded-none"
-              >
-                <Save className="w-4 h-4" /> {saving ? 'Publishing...' : 'Publish Article'}
-              </button>
-            </>
+          {/* Status selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-ink-3 font-sans">Status:</span>
+            <select
+              value={status}
+              onChange={e => {
+                const nextStatus = e.target.value as any;
+                setStatus(nextStatus);
+              }}
+              className="text-xs bg-card border border-ink/15 px-3 py-2 outline-none focus:border-ink text-ink rounded-none font-sans font-semibold uppercase tracking-wider min-h-[44px]"
+            >
+              <option value="draft">Draft</option>
+              <option value="needs_review">Needs Review</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+
+          {/* Action button */}
+          <button
+            type="button"
+            onClick={() => handleSave(status)}
+            disabled={saving}
+            className="btn--sand text-xs py-2 px-5 flex items-center gap-2 min-h-[44px] cursor-pointer disabled:opacity-50 font-sans tracking-widest uppercase font-semibold border border-midnight rounded-none"
+          >
+            <Save className="w-4 h-4" /> 
+            {saving ? 'Saving...' : (
+              status === 'published' ? 'Publish' :
+              status === 'scheduled' ? 'Schedule' :
+              status === 'needs_review' ? 'Submit Review' :
+              status === 'archived' ? 'Archive' : 'Save Draft'
+            )}
+          </button>
+          
+          {status === 'scheduled' && new Date(date) <= new Date() && (
+            <span className="text-[9px] text-bordeaux font-sans uppercase font-bold tracking-wider max-w-[120px] text-right leading-tight">
+              Note: Date is in past, will be live
+            </span>
           )}
         </div>
       </header>
@@ -669,7 +683,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
       <main className="flex-grow max-w-[1280px] w-full mx-auto p-4 md:p-8 flex flex-col gap-6">
         
         {/* Segmented Editor Tabs */}
-        <div className="flex bg-card border border-ink/10 p-1 rounded-none shadow-sm max-w-[720px] mx-auto w-full">
+        <div className="flex bg-card border border-ink/10 p-1 rounded-none shadow-sm max-w-[900px] mx-auto w-full">
           <button
             onClick={() => setEditorTab('write')}
             className={`flex-1 py-3 text-xs uppercase font-bold tracking-wider rounded-none transition-colors flex items-center justify-center gap-2 min-h-[44px] cursor-pointer ${
@@ -693,6 +707,14 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
             }`}
           >
             <Settings className="w-4 h-4" /> Editorial Boxes
+          </button>
+          <button
+            onClick={() => setEditorTab('preview')}
+            className={`flex-1 py-3 text-xs uppercase font-bold tracking-wider rounded-none transition-colors flex items-center justify-center gap-2 min-h-[44px] cursor-pointer ${
+              editorTab === 'preview' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink bg-transparent font-medium'
+            }`}
+          >
+            <Eye className="w-4 h-4" /> Live Preview
           </button>
         </div>
 
@@ -975,6 +997,26 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   </select>
                 </div>
 
+                {/* Publish / Scheduling Date & Time */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                    Publish / Scheduling Date & Time
+                  </label>
+                  <input 
+                    type="datetime-local"
+                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                    value={formatDatetimeLocal(date)}
+                    onChange={e => {
+                      if (e.target.value) {
+                        setDate(new Date(e.target.value).toISOString());
+                      }
+                    }}
+                  />
+                  <p className="text-[10px] text-ink-3">
+                    Specify the date-time this article is published or scheduled.
+                  </p>
+                </div>
+
                 {/* Gallery Style */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
@@ -1200,6 +1242,179 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {editorTab === 'preview' && (
+            <div className="w-full flex flex-col gap-4">
+              {/* Viewport toggle controls */}
+              <div className="flex justify-center items-center gap-3 bg-card border border-ink/10 p-2 max-w-[320px] mx-auto w-full shadow-sm rounded-none">
+                <button
+                  type="button"
+                  onClick={() => setPreviewViewport('desktop')}
+                  className={`p-2 flex items-center justify-center rounded-none transition-colors cursor-pointer min-h-[36px] min-w-[36px] ${
+                    previewViewport === 'desktop' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink font-medium'
+                  }`}
+                  title="Desktop View"
+                >
+                  <span className="text-xs uppercase font-bold tracking-wider px-1">Desktop</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewViewport('tablet')}
+                  className={`p-2 flex items-center justify-center rounded-none transition-colors cursor-pointer min-h-[36px] min-w-[36px] ${
+                    previewViewport === 'tablet' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink font-medium'
+                  }`}
+                  title="Tablet View"
+                >
+                  <span className="text-xs uppercase font-bold tracking-wider px-1">Tablet</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewViewport('mobile')}
+                  className={`p-2 flex items-center justify-center rounded-none transition-colors cursor-pointer min-h-[36px] min-w-[36px] ${
+                    previewViewport === 'mobile' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink font-medium'
+                  }`}
+                  title="Mobile View"
+                >
+                  <span className="text-xs uppercase font-bold tracking-wider px-1">Mobile</span>
+                </button>
+              </div>
+
+              {/* Viewport Frame */}
+              <div className="w-full overflow-x-auto py-4 flex justify-center">
+                <div 
+                  className={`bg-paper border border-ink/15 shadow-2xl transition-all duration-300 ${
+                    previewViewport === 'desktop' ? 'w-full max-w-[1100px]' : 
+                    previewViewport === 'tablet' ? 'w-[768px] min-h-[1024px]' : 'w-[375px] min-h-[667px]'
+                  }`}
+                >
+                  {/* Website Simulator */}
+                  <div className="p-6 md:p-12 text-midnight bg-[#FAF8F2] min-h-[800px] flex flex-col font-sans select-none">
+                    
+                    {/* Simulated Navbar header */}
+                    <div className="border-b border-ink/10 pb-6 mb-8 flex justify-between items-center opacity-60">
+                      <span className="font-serif italic font-semibold text-sm">Little bit of LUXE</span>
+                      <span className="text-[9px] uppercase tracking-widest font-bold">Journal</span>
+                    </div>
+
+                    {/* Simulated Article Header */}
+                    <header className="text-center max-w-[800px] mx-auto mb-8">
+                      <span className="lbl-eyebrow text-ink-3 text-[10px] uppercase tracking-widest mb-3 block">
+                        {category}
+                      </span>
+                      <h1 className="font-serif text-3xl md:text-5xl font-semibold leading-tight mb-4 text-midnight"
+                          dangerouslySetInnerHTML={{ __html: parseMarkdown(title || '*Headline*') }}
+                      />
+                      <p className="font-serif italic text-base md:text-lg text-ink-2 max-w-[640px] mx-auto leading-relaxed mb-6">
+                        {excerpt || 'Poetic sub-headline deck sentence...'}
+                      </p>
+                      
+                      <div className="flex items-center justify-center gap-3 text-[10px] text-ink-3 font-semibold uppercase tracking-wider">
+                        <span>By Our Editors</span>
+                        <span>·</span>
+                        <span>{currentType === 'review' ? (location || 'Inspection Location') : (location || 'Brand Headquarters')}</span>
+                        {currentType === 'review' && (
+                          <>
+                            <span>·</span>
+                            <span className="bg-sage/10 text-sage px-2 py-0.5 font-bold">{verdictScore || '9.0'} / 10</span>
+                          </>
+                        )}
+                      </div>
+                    </header>
+
+                    {/* Hero Media Block */}
+                    <div className="w-full mb-10">
+                      <div className="w-full aspect-[16/9] bg-midnight border border-ink/10 relative overflow-hidden flex items-center justify-center">
+                        {heroVideo ? (
+                          <div className="text-center text-sand flex flex-col items-center gap-2">
+                            <VideoIcon className="w-8 h-8 text-gold-soft animate-pulse" />
+                            <span className="text-[10px] tracking-wider uppercase font-bold">Video Theatre Active</span>
+                            <span className="text-[9px] text-sand/60 max-w-[200px] truncate">{heroVideo}</span>
+                          </div>
+                        ) : (
+                          <img 
+                            src={ogImage} 
+                            alt="Cover Preview" 
+                            className="w-full h-full object-cover" 
+                          />
+                        )}
+                      </div>
+                      <p className="text-[10px] text-ink-3 font-sans max-w-[640px] mx-auto mt-3 text-center italic">
+                        {heroCaption || (currentType === 'review' ? `${hotelName || 'Property'} inspection, captured by Our Editors.` : `${propertyName || 'Property'} brand vision announcement.`)}
+                      </p>
+                    </div>
+
+                    {/* Main Content Column */}
+                    <div className="max-w-[720px] mx-auto w-full flex flex-col gap-8">
+                      
+                      {/* TL;DR Box */}
+                      {tldr && (
+                        <div className="p-6 bg-[#F0ECE0] border border-ink/10 font-sans my-4">
+                          <span className="lbl-eyebrow text-ink-3 text-[10px] block mb-3">At a Glance</span>
+                          <div 
+                            className="prose prose-sm max-w-none text-xs text-ink-2 leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: parseMarkdown(tldr) }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Main Prose Copy */}
+                      <article 
+                        className="prose max-w-none text-sm text-ink-2 leading-relaxed font-sans first-letter:float-left first-letter:text-5xl first-letter:font-serif first-letter:mr-3 first-letter:mt-1 first-letter:text-midnight first-letter:font-semibold"
+                        dangerouslySetInnerHTML={{ __html: content || '<p>Write your article body content...</p>' }}
+                      />
+
+                      {/* Verdict Box (Reviews/Programs) */}
+                      {currentType === 'review' && (
+                        <div className="border border-midnight p-8 my-8 bg-paper">
+                          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-ink/15">
+                            <div>
+                              <span className="lbl-eyebrow text-ink-3 text-[10px] block mb-1">The Verdict</span>
+                              <h3 className="font-serif text-xl font-bold text-midnight">{verdictHead || 'A quiet inspection summary'}</h3>
+                            </div>
+                            <div className="flex items-baseline gap-1">
+                              <span className="font-serif text-3xl font-bold text-midnight">{verdictScore || '9.0'}</span>
+                              <span className="text-[10px] uppercase tracking-wider text-ink-3 font-semibold">/ 10</span>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+                            <div>
+                              <span className="text-[9px] uppercase tracking-widest font-bold text-ink-3 block mb-2">Ideal For</span>
+                              <p className="text-xs text-ink-2 leading-relaxed font-sans">{verdictBestFor || 'Considered, silent travelers seeking design depth.'}</p>
+                            </div>
+                            <div>
+                              <span className="text-[9px] uppercase tracking-widest font-bold text-ink-3 block mb-2">Editor Highlight</span>
+                              <p className="text-xs text-ink-2 leading-relaxed font-sans">{verdictHighlight || 'Exceptional craftsmanship and local materials integration.'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Perks Banner */}
+                      {currentType === 'review' && showQxPerks && (
+                        <div className="my-12 p-8 bg-midnight text-sand border-none">
+                          <p className="lbl-eyebrow mb-2 text-sand/70">The Preferred Privilege</p>
+                          <h3 className="lbl-h3 text-sand mb-4">Book {hotelName || 'this property'} with Perks</h3>
+                          <p className="lbl-body text-sand/85 mb-6 text-xs leading-relaxed">
+                            Through our preferred partnership, we unlock daily breakfast, priority upgrades, and property credits — matching the best flexible rates available directly, with all your standard loyalty nights and points fully recognized.
+                          </p>
+                          <span className="inline-block bg-sand text-midnight text-[10px] uppercase font-bold tracking-widest px-6 py-3 cursor-not-allowed">
+                            Book via QX Travel
+                          </span>
+                        </div>
+                      )}
+
+                    </div>
+
+                    {/* Footer simulation */}
+                    <div className="border-t border-ink/10 pt-8 mt-16 text-center text-[9px] uppercase tracking-widest text-ink-3 font-bold opacity-50">
+                      Little Bit of Luxe &copy; 2026
+                    </div>
+
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

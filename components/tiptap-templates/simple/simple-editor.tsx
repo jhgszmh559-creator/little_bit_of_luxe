@@ -249,6 +249,51 @@ export function SimpleEditor({
         "aria-label": "Main content area, start typing to enter text.",
         class: "simple-editor prose max-w-none",
       },
+      handleDrop(view, event, slice, moved) {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+          const files = Array.from(event.dataTransfer.files);
+          const images = files.filter(file => file.type.startsWith('image/'));
+          if (images.length > 0) {
+            event.preventDefault();
+            const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+            if (coordinates) {
+              images.forEach(async (file) => {
+                try {
+                  const url = await handleImageUpload(file);
+                  const node = view.state.schema.nodes.image.create({ src: url, alt: file.name });
+                  const transaction = view.state.tr.insert(coordinates.pos, node);
+                  view.dispatch(transaction);
+                } catch (err) {
+                  console.error('Drop upload failed:', err);
+                }
+              });
+            }
+            return true;
+          }
+        }
+        return false;
+      },
+      handlePaste(view, event, slice) {
+        if (event.clipboardData && event.clipboardData.files && event.clipboardData.files.length > 0) {
+          const files = Array.from(event.clipboardData.files);
+          const images = files.filter(file => file.type.startsWith('image/'));
+          if (images.length > 0) {
+            event.preventDefault();
+            images.forEach(async (file) => {
+              try {
+                const url = await handleImageUpload(file);
+                const node = view.state.schema.nodes.image.create({ src: url, alt: file.name });
+                const transaction = view.state.tr.insert(view.state.selection.to, node);
+                view.dispatch(transaction);
+              } catch (err) {
+                console.error('Paste upload failed:', err);
+              }
+            });
+            return true;
+          }
+        }
+        return false;
+      }
     },
     extensions: [
       StarterKit.configure({
