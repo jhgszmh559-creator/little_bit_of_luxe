@@ -80,19 +80,19 @@ export async function POST(request: NextRequest) {
     
     Return a JSON object containing:
     {
-      "hotelName": "string or empty",
+      "hotelName": "string or empty (the name of the hotel or article subject)",
       "brand": "string or empty",
       "location": "string or empty",
-      "articleType": "news" | "review" | "program",
+      "articleType": "general" | "news" | "review" | "program",
       "takeaways": "string summarizing key highlights"
     }
     
-    If the text notes do not specify an article type, default to "news".`;
+    If the text notes do not specify an article type, default to "general".`;
 
     let hotelName = overrideName;
     let brand = '';
     let location = '';
-    let articleType = overrideType || 'news';
+    let articleType = overrideType || 'general';
     let takeaways = '';
 
     try {
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       if (!hotelName) hotelName = extracted.hotelName || 'Luxury Retreat';
       brand = extracted.brand || 'Independent';
       location = extracted.location || 'Global';
-      if (!overrideType) articleType = extracted.articleType || 'news';
+      if (!overrideType) articleType = extracted.articleType || 'general';
       takeaways = extracted.takeaways || '';
     } catch (extractErr) {
       console.error('Gemini extraction failed, using defaults:', extractErr);
@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure the articleType is normalized
-    if (articleType !== 'review' && articleType !== 'program') {
-      articleType = 'news';
+    if (articleType !== 'review' && articleType !== 'program' && articleType !== 'news') {
+      articleType = 'general';
     }
 
     console.log(`Extracted metadata - Name: ${hotelName}, Brand: ${brand}, Location: ${location}, Type: ${articleType}`);
@@ -136,11 +136,11 @@ export async function POST(request: NextRequest) {
             messages: [
               { 
                 role: 'system', 
-                content: 'Provide comprehensive factual details about luxury hotel properties including opening status, location, brand, designer, unique highlights, and official links.' 
+                content: 'Provide comprehensive factual details about luxury travel assets including opening status, location, brand, designer, unique highlights, and official links.' 
               },
               { 
                 role: 'user', 
-                content: `Provide comprehensive factual details about the luxury hotel: "${hotelName}". Focus on exact opening status, location, architecture/designer highlights, unique suite offerings, and brand affiliations.` 
+                content: `Provide comprehensive factual details about: "${hotelName}". Focus on exact opening status, location, architecture/designer highlights, unique suite offerings, and brand affiliations.` 
               }
             ],
             max_tokens: 1000
@@ -245,6 +245,21 @@ export async function POST(request: NextRequest) {
     ---
     
     Return ONLY the raw content for the markdown file. Do not wrap the response in markdown blocks (\`\`\`markdown ... \`\`\`).`;
+    } else if (articleType === 'general') {
+      draftPrompt += `
+    - Output should include a YAML frontmatter block at the very top:
+    ---
+    title: "[Creative Headline, 4-10 words]"
+    excerpt: "[Poetic serif dek sentence]"
+    date: "${dateStr}"
+    category: "Travel News"
+    draft: true
+    status: "draft"
+    sources: ${citationsStr}
+    image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80"
+    ---
+    
+    Return ONLY the raw content for the markdown file. Do not wrap the response in markdown blocks (\`\`\`markdown ... \`\`\`).`;
     } else { // news
       draftPrompt += `
     - Output should include a YAML frontmatter block at the very top:
@@ -289,17 +304,53 @@ export async function POST(request: NextRequest) {
       draftContent = draftContent.replace(/^```\n/, '').replace(/\n```$/, '');
     }
 
+    // Secondary Step: Automate AI TL;DR summary generation for General articles
+    let finalDraft = draftContent;
+    if (articleType === 'general') {
+      try {
+        console.log('Generating AI TL;DR summary for general news article...');
+        const tldrModel = genAI.getGenerativeModel({
+          model: 'gemini-2.5-flash',
+          generationConfig: { temperature: 0.2 }
+        });
+        const tldrPrompt = `Summarize the following travel article into exactly 3 high-impact, professional bullet points for a "TL;DR" summary block. Keep each bullet point brief and editorial.
+        
+        ARTICLE CONTENT:
+        ${draftContent}
+        
+        Return only the markdown bullet points (e.g. - Point 1\n- Point 2\n- Point 3).`;
+
+        const tldrResult = await tldrModel.generateContent(tldrPrompt);
+        const generatedTldr = tldrResult.response.text().trim();
+        console.log('AI TL;DR summary generated:', generatedTldr);
+
+        // Inject tldr into YAML frontmatter safely
+        if (draftContent.startsWith('---')) {
+          const parts = draftContent.split('---');
+          if (parts.length >= 3) {
+            const indentedTldr = generatedTldr.split('\n').map(line => `  ${line}`).join('\n');
+            parts[1] = parts[1].trim() + `\ntldr: |-\n${indentedTldr}`;
+            finalDraft = `---${parts[1]}\n---${parts.slice(2).join('---')}`;
+          }
+        }
+      } catch (tldrErr) {
+        console.error('Failed to generate AI TL;DR summary:', tldrErr);
+      }
+    }
+
     // Save to GitHub
     const slug = slugify(hotelName);
-    let subfolder = 'news';
+    let subfolder = 'general';
     if (articleType === 'review') {
       subfolder = 'reviews';
     } else if (articleType === 'program') {
       subfolder = 'programs';
+    } else if (articleType === 'news') {
+      subfolder = 'news';
     }
 
     const relPath = `content/${subfolder}/${slug}.md`;
-    await saveContentToGithub(relPath, draftContent.trim(), `Text Webhook Ingest (${articleType}): ${slug}`);
+    await saveContentToGithub(relPath, finalDraft.trim(), `Text Webhook Ingest (${articleType}): ${slug}`);
 
     // Save locally for instant development updates
     const localDir = path.join(process.cwd(), 'content', subfolder);
@@ -307,7 +358,7 @@ export async function POST(request: NextRequest) {
       if (!fs.existsSync(localDir)) {
         fs.mkdirSync(localDir, { recursive: true });
       }
-      fs.writeFileSync(path.join(process.cwd(), relPath), draftContent.trim());
+      fs.writeFileSync(path.join(process.cwd(), relPath), finalDraft.trim());
       console.log(`Saved locally at ${relPath}`);
     } catch (localWriteErr: any) {
       console.warn('Failed to save locally:', localWriteErr.message);

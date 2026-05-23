@@ -33,11 +33,11 @@ interface ArticleItem {
   title: string;
   slug: string;
   category: string;
-  type: 'program' | 'review' | 'news';
+  type: 'program' | 'review' | 'news' | 'general';
 }
 
 interface EditorFormProps {
-  type: 'review' | 'program' | 'news';
+  type: 'review' | 'program' | 'news' | 'general';
   slug: string;
   initialData: any;
   allArticles?: ArticleItem[];
@@ -232,7 +232,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [title, setTitle] = useState(initialData?.title || '');
   const [excerpt, setExcerpt] = useState(initialData?.excerpt || '');
   const [content, setContent] = useState(initialData?.content || '');
-  const [category, setCategory] = useState(initialData?.category || (currentType === 'program' ? 'Preferred Partner' : currentType === 'news' ? 'Hotel News' : 'Hotel Review'));
+  const [category, setCategory] = useState(initialData?.category || (currentType === 'program' ? 'Preferred Partner' : currentType === 'news' ? 'Hotel News' : currentType === 'general' ? 'Travel News' : 'Hotel Review'));
   const [draft, setDraft] = useState(initialData?.draft !== undefined ? initialData.draft : true);
   const [date, setDate] = useState(initialData?.date || new Date().toISOString());
 
@@ -469,7 +469,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   };
 
   const autoGenerateSlug = () => {
-    const text = currentType === 'program' ? programName : currentType === 'news' ? propertyName : hotelName;
+    const text = currentType === 'program' ? programName : currentType === 'news' ? propertyName : currentType === 'general' ? title : hotelName;
     if (text) {
       const slugified = text
         .toLowerCase()
@@ -980,12 +980,14 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                     className="w-full text-sm bg-card border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
                     value={currentType}
                     onChange={e => {
-                      const newType = e.target.value as 'review' | 'program' | 'news';
+                      const newType = e.target.value as 'review' | 'program' | 'news' | 'general';
                       setCurrentType(newType);
                       if (newType === 'program') {
                         setCategory('Preferred Partner');
                       } else if (newType === 'news') {
                         setCategory('Hotel News');
+                      } else if (newType === 'general') {
+                        setCategory('Travel News');
                       } else {
                         setCategory('Hotel Review');
                       }
@@ -994,6 +996,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                     <option value="review">Hotel Review</option>
                     <option value="program">Preferred Partner Guide</option>
                     <option value="news">Hotel News Opening</option>
+                    <option value="general">General News</option>
                   </select>
                 </div>
 
@@ -1242,6 +1245,23 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   </div>
                 </div>
               )}
+
+              {currentType === 'general' && (
+                <div className="flex flex-col gap-6">
+                  {/* TL;DR Summary Card */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold">TL;DR Summary Card (Markdown bullet points)</label>
+                    <textarea 
+                      rows={6}
+                      placeholder="- Key takeaway one&#10;- Key takeaway two&#10;- Key takeaway three"
+                      value={tldr}
+                      onChange={e => setTldr(e.target.value)}
+                      className="w-full text-xs p-3 bg-transparent border border-ink/15 outline-none focus:border-ink rounded-none resize-y font-mono text-ink"
+                    />
+                    <p className="text-[10px] text-ink-3 italic">This TL;DR section will appear at the very top of your article page.</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1313,7 +1333,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                       <div className="flex items-center justify-center gap-3 text-[10px] text-ink-3 font-semibold uppercase tracking-wider">
                         <span>By Our Editors</span>
                         <span>·</span>
-                        <span>{currentType === 'review' ? (location || 'Inspection Location') : (location || 'Brand Headquarters')}</span>
+                        <span>{currentType === 'review' ? (location || 'Inspection Location') : currentType === 'general' ? 'Insights' : (location || 'Brand Headquarters')}</span>
                         {currentType === 'review' && (
                           <>
                             <span>·</span>
@@ -1341,7 +1361,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                         )}
                       </div>
                       <p className="text-[10px] text-ink-3 font-sans max-w-[640px] mx-auto mt-3 text-center italic">
-                        {heroCaption || (currentType === 'review' ? `${hotelName || 'Property'} inspection, captured by Our Editors.` : `${propertyName || 'Property'} brand vision announcement.`)}
+                        {heroCaption || (currentType === 'review' ? `${hotelName || 'Property'} inspection, captured by Our Editors.` : currentType === 'general' ? '' : `${propertyName || 'Property'} brand vision announcement.`)}
                       </p>
                     </div>
 

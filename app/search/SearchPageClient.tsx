@@ -56,9 +56,10 @@ interface SearchPageClientProps {
   programs: ProgramData[];
   reviews: ReviewData[];
   news?: NewsData[];
+  generals?: any[];
 }
 
-export default function SearchPageClient({ programs, reviews, news = [] }: SearchPageClientProps) {
+export default function SearchPageClient({ programs, reviews, news = [], generals = [] }: SearchPageClientProps) {
   const searchParams = useSearchParams();
 
   // Unified list of articles formatted to match ArticleCard requirements
@@ -104,6 +105,20 @@ export default function SearchPageClient({ programs, reviews, news = [] }: Searc
       cover: n.image,
       category: 'Hotel News',
       link: `/news/${n.slug}`,
+    })),
+    ...generals.map((g) => ({
+      slug: g.slug,
+      title: g.title,
+      excerpt: g.excerpt,
+      location: 'Insights',
+      eyebrow: 'TRAVEL NEWS',
+      author: 'Our Editors',
+      readTime: '3 MIN READ',
+      date: g.date,
+      rating: undefined,
+      cover: g.image,
+      category: 'General News',
+      link: `/general/${g.slug}`,
     })),
   ].sort((a, b) => b.date.localeCompare(a.date));
 
@@ -156,6 +171,7 @@ export default function SearchPageClient({ programs, reviews, news = [] }: Searc
     { value: 'Preferred Partner', label: 'The Edit' },
     { value: 'Guides', label: 'Guides' },
     { value: 'Hotel News', label: 'News' },
+    { value: 'General News', label: 'Insights' },
   ];
 
   return (

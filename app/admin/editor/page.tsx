@@ -3,9 +3,11 @@ import {
   getProgramBySlug, 
   getReviewBySlug, 
   getNewsBySlug, 
+  getGeneralBySlug,
   getPrograms, 
   getReviews, 
-  getNews 
+  getNews,
+  getGenerals
 } from '@/lib/content';
 import EditorForm from './EditorForm';
 
@@ -73,6 +75,25 @@ export default async function EditorPage({ searchParams }: EditorPageProps) {
           galleryStyle: newsItem.galleryStyle || 'grid',
         };
       }
+    } else if (type === 'general') {
+      const gen = getGeneralBySlug(slug);
+      if (gen) {
+        initialData = {
+          title: gen.title,
+          excerpt: gen.excerpt,
+          content: gen.content,
+          category: gen.category,
+          draft: gen.draft,
+          status: gen.status,
+          sources: gen.sources || [],
+          date: gen.date,
+          ogImage: gen.image,
+          tldr: gen.tldr || '',
+          galleryStyle: gen.galleryStyle || 'grid',
+          heroVideo: gen.heroVideo || '',
+          heroCaption: gen.heroCaption || '',
+        };
+      }
     } else {
       const review = getReviewBySlug(slug);
       if (review) {
@@ -108,13 +129,14 @@ export default async function EditorPage({ searchParams }: EditorPageProps) {
   const allArticles = [
     ...getPrograms(true).map(p => ({ title: p.title, slug: p.slug, category: p.category, type: 'program' as const })),
     ...getReviews(true).map(r => ({ title: r.title, slug: r.slug, category: r.category, type: 'review' as const })),
-    ...getNews(true).map(n => ({ title: n.title, slug: n.slug, category: n.category, type: 'news' as const }))
+    ...getNews(true).map(n => ({ title: n.title, slug: n.slug, category: n.category, type: 'news' as const })),
+    ...getGenerals(true).map(g => ({ title: g.title, slug: g.slug, category: g.category, type: 'general' as const }))
   ];
 
   return (
     <EditorForm 
       key={`${type}-${slug}`}
-      type={type as 'review' | 'program' | 'news'} 
+      type={type as 'review' | 'program' | 'news' | 'general'} 
       slug={slug} 
       initialData={initialData} 
       allArticles={allArticles}

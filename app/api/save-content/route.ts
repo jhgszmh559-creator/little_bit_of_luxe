@@ -62,6 +62,8 @@ export async function POST(request: NextRequest) {
       subfolder = 'reviews';
     } else if (type === 'news') {
       subfolder = 'news';
+    } else if (type === 'general') {
+      subfolder = 'general';
     }
     const relPath = `content/${subfolder}/${slug}.md`;
 
@@ -72,6 +74,8 @@ export async function POST(request: NextRequest) {
         oldSubfolder = 'reviews';
       } else if (oldType === 'news') {
         oldSubfolder = 'news';
+      } else if (oldType === 'general') {
+        oldSubfolder = 'general';
       }
       const oldRelPath = `content/${oldSubfolder}/${oldSlug}.md`;
       const oldLocalPath = path.join(process.cwd(), oldRelPath);
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest) {
       title: title || '',
       excerpt: excerpt || '',
       date: date || new Date().toISOString(),
-      category: category || (type === 'program' ? 'Preferred Partner' : type === 'news' ? 'Hotel News' : 'Hotel Review'),
+      category: category || (type === 'program' ? 'Preferred Partner' : type === 'news' ? 'Hotel News' : type === 'general' ? 'Travel News' : 'Hotel Review'),
       draft: finalDraft,
       status: finalStatus,
       sources: sources || [],
@@ -125,6 +129,8 @@ export async function POST(request: NextRequest) {
           score: verdictScore !== undefined && verdictScore !== '' ? Number(verdictScore) : ''
         };
       }
+    } else if (type === 'general') {
+      frontmatter.image = ogImage || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80';
     } else if (type === 'news') {
       frontmatter.brand = brand || '';
       frontmatter.property_name = propertyName || '';

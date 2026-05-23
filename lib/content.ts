@@ -110,6 +110,23 @@ export interface News {
   tldr?: string;
 }
 
+export interface General {
+  slug: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  category: string;
+  draft: boolean;
+  status: ArticleStatus;
+  sources?: string[];
+  image: string;
+  content: string;
+  galleryStyle?: string;
+  tldr?: string;
+  heroVideo?: string;
+  heroCaption?: string;
+}
+
 export function getPrograms(includeHidden = false): Program[] {
   const dirPath = path.join(contentDir, 'programs');
   if (!fs.existsSync(dirPath)) return [];
@@ -370,6 +387,70 @@ export function getNewsBySlug(slug: string): News | null {
     content,
     galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
     partnerLink: getField(data, 'partnerLink', 'partner_link', ''),
+    tldr: getField(data, 'tldr', 'tldr', ''),
+    heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
+    heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
+  };
+}
+
+export function getGenerals(includeHidden = false): General[] {
+  const dirPath = path.join(contentDir, 'general');
+  if (!fs.existsSync(dirPath)) return [];
+
+  const files = fs.readdirSync(dirPath);
+  const generals = files
+    .filter(file => file.endsWith('.md'))
+    .map(file => {
+      const slug = file.replace(/\.md$/, '');
+      const filePath = path.join(dirPath, file);
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const { data, content } = matter(fileContent);
+
+      const status = getStatus(data);
+
+      return {
+        slug,
+        title: data.title || '',
+        excerpt: data.excerpt || '',
+        date: data.date || '',
+        status,
+        draft: status !== 'published',
+        sources: data.sources || [],
+        category: data.category || 'Travel News',
+        image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
+        content,
+        galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
+        tldr: getField(data, 'tldr', 'tldr', ''),
+        heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
+        heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
+      };
+    })
+    .filter(general => isPostVisible(general.status, general.date, includeHidden));
+
+  return generals.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export function getGeneralBySlug(slug: string): General | null {
+  const filePath = path.join(contentDir, 'general', `${slug}.md`);
+  if (!fs.existsSync(filePath)) return null;
+
+  const fileContent = fs.readFileSync(filePath, 'utf-8');
+  const { data, content } = matter(fileContent);
+
+  const status = getStatus(data);
+
+  return {
+    slug,
+    title: data.title || '',
+    excerpt: data.excerpt || '',
+    date: data.date || '',
+    status,
+    draft: status !== 'published',
+    sources: data.sources || [],
+    category: data.category || 'Travel News',
+    image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
+    content,
+    galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
     tldr: getField(data, 'tldr', 'tldr', ''),
     heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
     heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),

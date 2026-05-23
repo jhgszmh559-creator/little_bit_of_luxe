@@ -58,13 +58,14 @@ interface AdminDashboardClientProps {
   programs: Program[];
   reviews: Review[];
   news: News[];
+  generals?: any[];
 }
 
-export default function AdminDashboardClient({ programs, reviews, news }: AdminDashboardClientProps) {
+export default function AdminDashboardClient({ programs, reviews, news, generals = [] }: AdminDashboardClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'analytics' | 'posts' | 'pages' | 'tags' | 'decap' | 'settings'>('analytics');
   const [postFilter, setPostFilter] = useState<'all' | 'published' | 'drafts' | 'needs_review' | 'scheduled' | 'archived'>('all');
-  const [selectedPostType, setSelectedPostType] = useState<'all' | 'Review' | 'News' | 'Partner Guide'>('all');
+  const [selectedPostType, setSelectedPostType] = useState<'all' | 'Review' | 'News' | 'Partner Guide' | 'General News'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Theme state
@@ -76,7 +77,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
 
   // Modal State for new article
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [articleType, setArticleType] = useState<'review' | 'news' | 'program'>('review');
+  const [articleType, setArticleType] = useState<'review' | 'news' | 'program' | 'general'>('review');
   const [propertyName, setPropertyName] = useState('');
   const [generationMode, setGenerationMode] = useState<'manual' | 'ai'>('ai');
   const [aiNotes, setAiNotes] = useState('');
@@ -177,6 +178,20 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
       brand: n.brand,
       excerpt: n.excerpt,
       rawItem: n,
+    })),
+    ...generals.map(g => ({
+      slug: g.slug,
+      title: g.title,
+      type: 'General News',
+      category: g.category || 'Travel News',
+      location: 'Insights',
+      draft: g.draft,
+      status: g.status,
+      date: g.date,
+      rating: undefined,
+      brand: 'Independent',
+      excerpt: g.excerpt,
+      rawItem: g,
     })),
     ...programs.map(p => ({
       slug: p.slug,
@@ -1058,7 +1073,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
                   
                   {/* Category Type Selector */}
                   <div className="flex gap-2">
-                    {(['all', 'Review', 'News', 'Partner Guide'] as const).map(type => (
+                    {(['all', 'Review', 'News', 'Partner Guide', 'General News'] as const).map(type => (
                       <button
                         key={type}
                         onClick={() => setSelectedPostType(type)}
@@ -1068,7 +1083,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
                             : 'bg-transparent text-ink-3 dark:text-sand/50 border-ink/15 dark:border-sand/15 hover:border-ink'
                         }`}
                       >
-                        {type === 'all' ? 'All Types' : type === 'Review' ? 'Reviews' : type === 'News' ? 'News' : 'Partners'}
+                        {type === 'all' ? 'All Types' : type === 'Review' ? 'Reviews' : type === 'News' ? 'News' : type === 'Partner Guide' ? 'Partners' : 'General'}
                       </button>
                     ))}
                   </div>
@@ -1642,8 +1657,8 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
                   <label className="text-[10px] tracking-wider uppercase text-midnight/70 dark:text-sand/70 font-semibold">
                     Article Layout type
                   </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {(['review', 'news', 'program'] as const).map((t) => (
+                  <div className="grid grid-cols-4 gap-3">
+                    {(['review', 'news', 'program', 'general'] as const).map((t) => (
                       <button
                         key={t}
                         type="button"
@@ -1654,7 +1669,7 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
                             : 'bg-transparent text-midnight/60 dark:text-sand/65 border-midnight/15 dark:border-sand/15 hover:border-midnight dark:hover:border-sand'
                         }`}
                       >
-                        {t === 'review' ? 'Hotel Review' : t === 'news' ? 'Hotel News' : 'Partner Guide'}
+                        {t === 'review' ? 'Hotel Review' : t === 'news' ? 'Hotel News' : t === 'program' ? 'Partner Guide' : 'General News'}
                       </button>
                     ))}
                   </div>
@@ -1663,11 +1678,11 @@ export default function AdminDashboardClient({ programs, reviews, news }: AdminD
                 {/* Property / Brand / Program Title */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] tracking-wider uppercase text-midnight/70 dark:text-sand/70 font-semibold">
-                    {articleType === 'review' ? 'Hotel Name' : articleType === 'news' ? 'New Property Name' : 'Program Name'}
+                    {articleType === 'review' ? 'Hotel Name' : articleType === 'news' ? 'New Property Name' : articleType === 'program' ? 'Program Name' : 'Article Topic / Name'}
                   </label>
                   <input 
                     type="text"
-                    placeholder={articleType === 'review' ? 'e.g. Aman Venice' : articleType === 'news' ? 'e.g. The Emory London' : 'e.g. Rosewood Elite'}
+                    placeholder={articleType === 'review' ? 'e.g. Aman Venice' : articleType === 'news' ? 'e.g. The Emory London' : articleType === 'program' ? 'e.g. Rosewood Elite' : 'e.g. The Rebirth of Fiesole'}
                     className="w-full text-sm bg-transparent border border-midnight/15 dark:border-sand/15 px-4 py-3 outline-none focus:border-midnight dark:focus:border-sand text-midnight dark:text-sand rounded-none min-h-[44px]"
                     value={propertyName}
                     onChange={e => setPropertyName(e.target.value)}

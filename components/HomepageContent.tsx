@@ -57,10 +57,11 @@ interface HomepageContentProps {
   programs: ProgramData[];
   reviews: ReviewData[];
   news: NewsData[];
+  generals?: any[];
   featuredReview?: ReviewData | null;
 }
 
-export default function HomepageContent({ programs, reviews, news = [], featuredReview }: HomepageContentProps) {
+export default function HomepageContent({ programs, reviews, news = [], generals = [], featuredReview }: HomepageContentProps) {
   // Combine programs, reviews, and news into a unified list of articles
   const allArticles = [
     ...programs.map((p) => ({
@@ -104,6 +105,20 @@ export default function HomepageContent({ programs, reviews, news = [], featured
       cover: n.image,
       category: 'Hotel News',
       link: `/news/${n.slug}`,
+    })),
+    ...generals.map((g) => ({
+      slug: g.slug,
+      title: g.title,
+      excerpt: g.excerpt,
+      location: 'Insights',
+      eyebrow: 'TRAVEL NEWS',
+      author: 'Our Editors',
+      readTime: '3 MIN READ',
+      date: g.date,
+      rating: undefined,
+      cover: g.image,
+      category: 'General News',
+      link: `/general/${g.slug}`,
     })),
   ].sort((a, b) => b.date.localeCompare(a.date));
 

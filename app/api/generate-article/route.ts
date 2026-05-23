@@ -124,7 +124,12 @@ metadata should contain:
 - "brands": string (comma-separated list of participating brands)
 - "official_link": string
 - "partner_link": string
-- "verdict": an object with "best_for", "highlight", and "score" (a string rating out of 10)`;
+- "verdict": an object with "best_for", "highlight", and "score" (a string rating out of 10)
+
+For layout type "general":
+metadata should contain:
+- "tldr": string (a summary block containing 3 key takeaways formatted as bullet points)
+`;
 
     const userPrompt = `Generate a travel ${type} article about "${name}".
 Additional prompt guidelines/notes: ${notes || 'None provided.'}
@@ -172,6 +177,8 @@ Please return the response as a single valid JSON object following the format co
       subfolder = 'reviews';
     } else if (type === 'news') {
       subfolder = 'news';
+    } else if (type === 'general') {
+      subfolder = 'general';
     }
 
     const relPath = `content/${subfolder}/${slug}.md`;
@@ -181,7 +188,7 @@ Please return the response as a single valid JSON object following the format co
       title: title || name,
       excerpt: excerpt || '',
       date: new Date().toISOString(),
-      category: type === 'program' ? 'Preferred Partner' : type === 'news' ? 'Hotel News' : 'Hotel Review',
+      category: type === 'program' ? 'Preferred Partner' : type === 'news' ? 'Hotel News' : type === 'general' ? 'Travel News' : 'Hotel Review',
       draft: true,
       status: 'draft',
       sources: citations,
@@ -201,6 +208,9 @@ Please return the response as a single valid JSON object following the format co
           score: metadata.verdict.score || '9.0',
         };
       }
+    } else if (type === 'general') {
+      frontmatter.image = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80';
+      frontmatter.tldr = metadata?.tldr || '';
     } else if (type === 'news') {
       frontmatter.brand = metadata?.brand || '';
       frontmatter.property_name = metadata?.property_name || name;
