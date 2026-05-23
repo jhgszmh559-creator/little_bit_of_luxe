@@ -36,6 +36,8 @@ export interface Program {
   content: string;
   galleryStyle?: string;
   tldr?: string;
+  heroVideo?: string;
+  heroCaption?: string;
   verdict?: {
     best_for?: string;
     highlight?: string;
@@ -65,6 +67,8 @@ export interface Review {
   content: string;
   galleryStyle?: string;
   partnerLink?: string;
+  heroVideo?: string;
+  heroCaption?: string;
   tldr?: string;
   verdictHead?: string;
   verdictHighlight?: string;
@@ -89,6 +93,8 @@ export interface News {
   content: string;
   galleryStyle?: string;
   partnerLink?: string;
+  heroVideo?: string;
+  heroCaption?: string;
   tldr?: string;
 }
 
@@ -136,6 +142,8 @@ export function getPrograms(includeHidden = false): Program[] {
         verdict,
         galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
         tldr: getField(data, 'tldr', 'tldr', ''),
+        heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
+        heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
       };
     })
     .filter(program => includeHidden || program.status === 'published');
@@ -185,6 +193,8 @@ export function getReviews(includeHidden = false): Review[] {
         tldr: getField(data, 'tldr', 'tldr', ''),
         verdictHead: getField(data, 'verdictHead', 'verdict_head', ''),
         verdictHighlight: getField(data, 'verdictHighlight', 'verdict_highlight', ''),
+        heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
+        heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
       };
     })
     .filter(review => includeHidden || review.status === 'published');
@@ -227,6 +237,8 @@ export function getNews(includeHidden = false): News[] {
         galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
         partnerLink: getField(data, 'partnerLink', 'partner_link', ''),
         tldr: getField(data, 'tldr', 'tldr', ''),
+        heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
+        heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
       };
     })
     .filter(news => includeHidden || news.status === 'published');
@@ -272,6 +284,8 @@ export function getProgramBySlug(slug: string): Program | null {
     verdict,
     galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
     tldr: getField(data, 'tldr', 'tldr', ''),
+    heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
+    heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
   };
 }
 
@@ -311,6 +325,8 @@ export function getReviewBySlug(slug: string): Review | null {
     tldr: getField(data, 'tldr', 'tldr', ''),
     verdictHead: getField(data, 'verdictHead', 'verdict_head', ''),
     verdictHighlight: getField(data, 'verdictHighlight', 'verdict_highlight', ''),
+    heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
+    heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
   };
 }
 
@@ -343,5 +359,7 @@ export function getNewsBySlug(slug: string): News | null {
     galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
     partnerLink: getField(data, 'partnerLink', 'partner_link', ''),
     tldr: getField(data, 'tldr', 'tldr', ''),
+    heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
+    heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
   };
 }

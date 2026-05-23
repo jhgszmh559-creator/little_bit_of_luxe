@@ -47,7 +47,9 @@ export async function POST(request: NextRequest) {
       verdictHead,
       verdictHighlight,
       verdictBestFor,
-      verdictScore
+      verdictScore,
+      heroVideo,
+      heroCaption
     } = data;
 
     if (!type || !slug) {
@@ -106,6 +108,8 @@ export async function POST(request: NextRequest) {
       galleryStyle: galleryStyle || 'grid',
       tldr: tldr || '',
       partnerLink: partnerLink || '',
+      heroVideo: heroVideo || '',
+      heroCaption: heroCaption || '',
     };
 
     if (type === 'program') {

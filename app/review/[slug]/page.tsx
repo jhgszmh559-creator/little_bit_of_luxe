@@ -153,9 +153,9 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
           {/* Media Block (Branded Video Theatre or Cover image) */}
           <div className="container" style={{ marginTop: 40 }}>
             <div className="article-hero__media">
-              {review.youtubeId ? (
+              {(review.heroVideo || review.youtubeId) ? (
                 <VideoTheatre
-                  youtubeId={review.youtubeId}
+                  youtubeId={review.heroVideo || review.youtubeId || ''}
                   title={review.hotelName}
                   coverImage={coverImage}
                 />
@@ -168,7 +168,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
               )}
             </div>
             <p className="article-hero__caption" style={{ maxWidth: 760, margin: '12px auto 0' }}>
-              {review.hotelName} in {review.location}, captured during our quiet inspection. — Our Editors
+              {review.heroCaption || `${review.hotelName} in ${review.location}, captured during our quiet inspection. — Our Editors`}
             </p>
           </div>
 

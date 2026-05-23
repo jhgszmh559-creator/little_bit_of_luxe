@@ -143,10 +143,37 @@ function nodeToMarkdown(node: Node): string {
         return childrenMarkdown;
       case 'br':
         return '\n';
+      case 'ol':
+        // Number each child <li> sequentially
+        let olResult = '\n\n';
+        let liIndex = 1;
+        element.childNodes.forEach(child => {
+          if (child.nodeType === Node.ELEMENT_NODE && (child as HTMLElement).tagName.toLowerCase() === 'li') {
+            const liContent = nodeToMarkdown(child);
+            // Strip the leading '- ' that the li case adds and replace with numbered prefix
+            const stripped = liContent.replace(/^- /, '');
+            olResult += `${liIndex}. ${stripped}`;
+            liIndex++;
+          }
+        });
+        return olResult + '\n';
       case 'ul':
         return `\n\n${childrenMarkdown}\n\n`;
-      case 'li':
-        return `- ${childrenMarkdown.trim()}\n`;
+      case 'li': {
+        // Collect child content, but if children are wrapped in <p> tags, flatten them
+        let liText = '';
+        element.childNodes.forEach(child => {
+          if (child.nodeType === Node.ELEMENT_NODE && (child as HTMLElement).tagName.toLowerCase() === 'p') {
+            // Flatten <p> inside <li> — don't add paragraph breaks
+            let pContent = '';
+            child.childNodes.forEach(pc => { pContent += nodeToMarkdown(pc); });
+            liText += pContent.trim();
+          } else {
+            liText += nodeToMarkdown(child);
+          }
+        });
+        return `- ${liText.trim()}\n`;
+      }
       default:
         return childrenMarkdown;
     }
@@ -214,6 +241,8 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [partnerLink, setPartnerLink] = useState(initialData?.partnerLink || '');
   const defaultHero = "https://cdn.prod.website-files.com/678444b2dafe38769d2ef04e/6895092d01a98987f2bbc29e_Light%20Gradient%2007.avif";
   const [ogImage, setOgImage] = useState(initialData?.image || initialData?.ogImage || defaultHero);
+  const [heroVideo, setHeroVideo] = useState(initialData?.heroVideo || '');
+  const [heroCaption, setHeroCaption] = useState(initialData?.heroCaption || '');
   const [galleryStyle, setGalleryStyle] = useState(initialData?.galleryStyle || 'grid');
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
@@ -383,6 +412,8 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
       officialLink,
       partnerLink,
       ogImage,
+      heroVideo,
+      heroCaption,
       // News specific
       propertyName,
       projectedOpening,
@@ -959,19 +990,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                   </select>
                 </div>
 
-                {/* QX Travel Partner Link */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                    QX Travel Partner Link
-                  </label>
-                  <input 
-                    type="url"
-                    placeholder="https://..."
-                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                    value={partnerLink}
-                    onChange={e => setPartnerLink(e.target.value)}
-                  />
-                </div>
+
 
                 {/* Cover/OG Image URL */}
                 <div className="md:col-span-2 flex flex-col gap-2 border-t border-ink/10 pt-6 mt-2">
@@ -990,6 +1009,37 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                       <img src={ogImage} alt="Hero preview" className="w-full h-full object-cover" />
                     </div>
                   )}
+                </div>
+
+                {/* Hero Video URL */}
+                <div className="md:col-span-2 flex flex-col gap-2 border-t border-ink/10 pt-6 mt-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                    Hero Video URL / YouTube ID
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="https://www.youtube.com/watch?v=... or YouTube Video ID"
+                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                    value={heroVideo}
+                    onChange={e => setHeroVideo(e.target.value)}
+                  />
+                  <p className="text-[10px] text-ink-3">
+                    If no video is added, the Featured Hero Image will be used instead.
+                  </p>
+                </div>
+
+                {/* Hero Caption */}
+                <div className="md:col-span-2 flex flex-col gap-2 border-t border-ink/10 pt-6 mt-2">
+                  <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
+                    Hero Media Caption Text
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder="Enter caption text to display below the hero image/video..."
+                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                    value={heroCaption}
+                    onChange={e => setHeroCaption(e.target.value)}
+                  />
                 </div>
 
               </div>

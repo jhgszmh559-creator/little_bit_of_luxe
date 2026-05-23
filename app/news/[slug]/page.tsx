@@ -8,6 +8,7 @@ import SaveButton from '@/components/SaveButton';
 import TableOfContents from '@/components/TableOfContents';
 import AudioPlayer from '@/components/AudioPlayer';
 import ShareMenu from '@/components/ShareMenu';
+import VideoTheatre from '@/components/VideoTheatre';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BeehiivForm from '@/components/BeehiivForm';
@@ -165,17 +166,25 @@ export default async function NewsPage({ params }: NewsPageProps) {
             </div>
           </header>
 
-          {/* Media Block (Cover image) */}
+          {/* Media Block (Branded Video Theatre or Cover image) */}
           <div className="container" style={{ marginTop: 40 }}>
             <div className="article-hero__media">
-              <img 
-                src={news.image} 
-                alt={news.propertyName} 
-                className="w-full h-full object-cover"
-              />
+              {news.heroVideo ? (
+                <VideoTheatre
+                  youtubeId={news.heroVideo}
+                  title={news.propertyName}
+                  coverImage={news.image}
+                />
+              ) : (
+                <img 
+                  src={news.image} 
+                  alt={news.propertyName} 
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
             <p className="article-hero__caption" style={{ maxWidth: 760, margin: '12px auto 0' }}>
-              {news.propertyName} brand vision, slated for {news.projectedOpening}. — Our Editors
+              {news.heroCaption || `${news.propertyName} brand vision, slated for ${news.projectedOpening}. — Our Editors`}
             </p>
           </div>
 

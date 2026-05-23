@@ -8,6 +8,7 @@ import SaveButton from '@/components/SaveButton';
 import TableOfContents from '@/components/TableOfContents';
 import AudioPlayer from '@/components/AudioPlayer';
 import ShareMenu from '@/components/ShareMenu';
+import VideoTheatre from '@/components/VideoTheatre';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import QxScrollBlock from '@/components/QxScrollBlock';
@@ -152,14 +153,22 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
           {/* Banner Media Block */}
           <div className="container" style={{ marginTop: 40 }}>
             <div className="article-hero__media">
-              <img 
-                src={program.image} 
-                alt={program.programName} 
-                className="w-full h-full object-cover"
-              />
+              {program.heroVideo ? (
+                <VideoTheatre
+                  youtubeId={program.heroVideo}
+                  title={program.programName}
+                  coverImage={program.image}
+                />
+              ) : (
+                <img 
+                  src={program.image} 
+                  alt={program.programName} 
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
             <p className="article-hero__caption" style={{ maxWidth: 760, margin: '12px auto 0' }}>
-              {program.programName} portfolio, curated with considered luxury. — Our Editors
+              {program.heroCaption || `${program.programName} portfolio, curated with considered luxury. — Our Editors`}
             </p>
           </div>
 
