@@ -18,8 +18,6 @@ metaDescription: ""
 ogImage: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=1200&q=80"
 ---
 
-<div className="tldr-box"><h4 className="tldr-box__title">The TL;DR</h4><ul><li><p>n</p></li><li><p>Aman e</p></li><li><p>Palazc</p></li></ul></div>
-
 ## Aman Venice: Palazzo Elegance Refined
 
 Set within the majestic 16th-century Palazzo Papadopoli on the Grand Canal, Aman Venice represents a masterful synthesis of historic opulence and modern restraint. With only 24 rooms and suites, the property feels less like a hotel and more like the private residence of an aristocratic friend. The arrival sequence, typically via water taxi directly to the palazzo's private jetty, sets a tone of quiet exclusivity.
