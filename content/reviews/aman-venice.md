@@ -30,14 +30,11 @@ Set within the majestic 16th-century Palazzo Papadopoli on the Grand Canal, Aman
 
 The palazzo itself is a work of art, featuring soaring ceilings, gilded mirrors, and museum-quality frescoes by the 18th-century master Giovanni Battista Tiepolo. Rather than overwhelming the space, the contemporary furnishings designed by Jean-Michel Gathy provide a sleek, minimalist counterpoint, allowing the historic architecture to speak for itself.
 
-- e
-- i
-
 ## The Historic Accommodations
 
-<u>Each room and suite is unique</u>, configured around the palazzo's original layout. The Alcova Palazzo Chamber is particularly noteworthy, featuring a ceiling painted by <a href="qxtravel.io" target="_blank" rel="noopener noreferrer nofollow">Tiepolo</a>, a carved fireplace, and views over the canal. The integration of modern technology and luxury amenities is handled with signature Aman subtlety, ensuring nothing detracts from the historic character of the room.
+Each room and suite is unique, configured around the palazzo's original layout. The Alcova Palazzo Chamber is particularly noteworthy, featuring a ceiling painted by Tiepolo, a carved fireplace, and views over the canal. The integration of modern technology and luxury amenities is handled with signature Aman subtlety, ensuring nothing detracts from the historic character of the room.
 
-The gardens, a rarity in **Venice**, offer a tranquil green sanctuary on the Grand Canal, providing the perfect setting for an unhurried breakfast or a sunset cocktail. The service is intuitive and warm, operating with the effortless grace that is the hallmark of the Aman brand.
+The gardens, a rarity in Venice, offer a tranquil green sanctuary on the Grand Canal, providing the perfect setting for an unhurried breakfast or a sunset cocktail. The service is intuitive and warm, operating with the effortless grace that is the hallmark of the Aman brand.
 
 ## Culinary Journeys and Wellness
 
