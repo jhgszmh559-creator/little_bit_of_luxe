@@ -12,6 +12,8 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+export const maxDuration = 300; // Extend to 5 minutes to prevent Perplexity + Gemini generation timeouts
+
 export async function POST(request: NextRequest) {
   try {
     const secret = request.headers.get('x-admin-secret') || request.headers.get('X-Admin-Secret');

@@ -12,7 +12,7 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-export const maxDuration = 60;
+export const maxDuration = 300; // Extend to 5 minutes to prevent Perplexity + Gemini generation timeouts
 
 export async function POST(request: NextRequest) {
   try {

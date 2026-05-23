@@ -15,6 +15,8 @@ function slugify(text: string): string {
     .replace(/\-\-+/g, '-');  // Replace multiple - with single -
 }
 
+export const maxDuration = 300; // Extend to 5 minutes to prevent Perplexity + Claude generation timeouts
+
 export async function POST(request: NextRequest) {
   try {
     if (!process.env.GITHUB_ACCESS_TOKEN) {
