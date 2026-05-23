@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { saveContentToGithub } from '@/lib/github';
+import Anthropic from '@anthropic-ai/sdk';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
 
     // Step 3: Claude/Gemini Drafting - Generate the structured, editorial, on-brand article
     let draftingModel = genAI.getGenerativeModel({ 
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: { temperature: 0.3 }
     });
 
@@ -174,36 +175,58 @@ export async function POST(request: NextRequest) {
     Return ONLY the raw content for the markdown file. Do not wrap the response in markdown blocks (\`\`\`markdown ... \`\`\`).`;
 
     let draftContent = '';
-    let success = false;
-    let attempts = 0;
-    
-    while (attempts < 3 && !success) {
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    if (anthropicKey) {
       try {
-        const draftResult = await draftingModel.generateContent(draftPrompt);
-        draftContent = draftResult.response.text();
-        success = true;
-      } catch (err: any) {
-        attempts++;
-        const status = err?.status || err?.response?.status;
-        const msg = err?.message || '';
-        if (status === 503 || status === 429 || msg.includes('503') || msg.includes('429')) {
-          console.warn(`Gemini 3.5 Flash failed (Attempt ${attempts}). Retrying in 2s...`);
-          await new Promise(r => setTimeout(r, 2000));
-        } else {
-          console.warn(`Gemini 3.5 Flash failed with non-retryable error: ${msg}`);
-          break;
-        }
+        console.log('Querying Claude (claude-sonnet-4-6) for news article draft...');
+        const anthropic = new Anthropic({ apiKey: anthropicKey });
+        const response = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4000,
+          messages: [{ role: 'user', content: draftPrompt }],
+        });
+        draftContent = response.content[0].type === 'text' ? response.content[0].text : '';
+      } catch (claudeErr: any) {
+        console.error('Claude generation failed, falling back to Gemini:', claudeErr.message || claudeErr);
       }
     }
 
-    if (!success) {
-      console.warn('Gemini 3.5 Flash failed completely. Failing over to gemini-1.5-pro...');
+    if (!draftContent) {
+      console.warn('Claude not available or failed. Falling back to Gemini...');
+      let success = false;
+      let attempts = 0;
       draftingModel = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-flash',
         generationConfig: { temperature: 0.3 }
       });
-      const draftResult = await draftingModel.generateContent(draftPrompt);
-      draftContent = draftResult.response.text();
+      while (attempts < 3 && !success) {
+        try {
+          const draftResult = await draftingModel.generateContent(draftPrompt);
+          draftContent = draftResult.response.text();
+          success = true;
+        } catch (err: any) {
+          attempts++;
+          const status = err?.status || err?.response?.status;
+          const msg = err?.message || '';
+          if (status === 503 || status === 429 || msg.includes('503') || msg.includes('429')) {
+            console.warn(`Gemini 2.5 Flash failed (Attempt ${attempts}). Retrying in 2s...`);
+            await new Promise(r => setTimeout(r, 2000));
+          } else {
+            console.warn(`Gemini 2.5 Flash failed with non-retryable error: ${msg}`);
+            break;
+          }
+        }
+      }
+
+      if (!success) {
+        console.warn('Gemini 2.5 Flash failed completely. Failing over to gemini-1.5-pro...');
+        draftingModel = genAI.getGenerativeModel({ 
+          model: 'gemini-1.5-pro',
+          generationConfig: { temperature: 0.3 }
+        });
+        const draftResult = await draftingModel.generateContent(draftPrompt);
+        draftContent = draftResult.response.text();
+      }
     }
 
     // Clean markdown wrap wraps if any

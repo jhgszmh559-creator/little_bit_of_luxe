@@ -214,7 +214,7 @@ export default function AdminDashboardClient({ programs, reviews, news, generals
     if (!trafficData || !trafficData.urls) return 0;
     
     // Normalize type to path segment
-    const prefix = type === 'Review' ? '/review/' : type === 'News' ? '/news/' : '/program/';
+    const prefix = type === 'Review' ? '/review/' : type === 'News' ? '/news/' : type === 'General News' ? '/general/' : '/program/';
     const path = `${prefix}${slug}`;
     
     const metric = trafficData.urls.find((u: any) => u.x === path || u.x === `/${path}`);
@@ -1116,9 +1116,11 @@ export default function AdminDashboardClient({ programs, reviews, news, generals
                                     ? 'bg-sage/10 text-sage' 
                                     : post.type === 'News' 
                                       ? 'bg-terracotta/10 text-terracotta' 
-                                      : 'bg-midnight/10 dark:bg-sand/10 text-midnight dark:text-sand'
+                                      : post.type === 'General News'
+                                        ? 'bg-bordeaux/15 text-bordeaux dark:bg-gold-soft/10 dark:text-gold-soft'
+                                        : 'bg-midnight/10 dark:bg-sand/10 text-midnight dark:text-sand'
                                 }`}>
-                                  {post.type === 'Review' ? 'Review' : post.type === 'News' ? 'News' : 'Partner'}
+                                  {post.type === 'Review' ? 'Review' : post.type === 'News' ? 'News' : post.type === 'General News' ? 'General' : 'Partner'}
                                 </span>
                                 
                                 <span className="text-[9px] tracking-wider uppercase text-ink-3 dark:text-sand/50 font-semibold flex items-center gap-1">
@@ -1175,7 +1177,7 @@ export default function AdminDashboardClient({ programs, reviews, news, generals
 
                               {post.status === 'published' && (
                                 <a 
-                                  href={post.type === 'Review' ? `/review/${post.slug}` : post.type === 'News' ? `/news/${post.slug}` : `/program/${post.slug}`}
+                                  href={post.type === 'Review' ? `/review/${post.slug}` : post.type === 'News' ? `/news/${post.slug}` : post.type === 'General News' ? `/general/${post.slug}` : `/program/${post.slug}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="px-2.5 py-1.5 border border-ink/20 dark:border-sand/20 text-ink dark:text-sand hover:border-ink text-[10px] font-semibold uppercase tracking-wider rounded-none cursor-pointer flex items-center gap-1 min-h-[32px]"
@@ -1186,7 +1188,7 @@ export default function AdminDashboardClient({ programs, reviews, news, generals
                               )}
 
                               <Link 
-                                href={`/admin/editor?type=${post.type === 'Review' ? 'review' : post.type === 'News' ? 'news' : 'program'}&slug=${post.slug}`}
+                                href={`/admin/editor?type=${post.type === 'Review' ? 'review' : post.type === 'News' ? 'news' : post.type === 'General News' ? 'general' : 'program'}&slug=${post.slug}`}
                                 className="px-3 py-1.5 bg-midnight text-sand dark:bg-sand dark:text-midnight text-[10px] font-semibold uppercase tracking-wider hover:bg-bordeaux dark:hover:bg-gold-soft rounded-none min-h-[32px] flex items-center"
                               >
                                 Edit

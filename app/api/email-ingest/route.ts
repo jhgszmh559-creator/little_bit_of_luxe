@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { saveContentToGithub } from '@/lib/github';
+import Anthropic from '@anthropic-ai/sdk';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -163,8 +164,28 @@ export async function POST(request: NextRequest) {
     
     Return ONLY the raw content for the markdown file. Do not wrap the response in markdown blocks (\`\`\`markdown ... \`\`\`).`;
 
-    const draftResult = await draftModel.generateContent(draftPrompt);
-    let draftContent = draftResult.response.text();
+    let draftContent = '';
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    if (anthropicKey) {
+      try {
+        console.log('Querying Claude (claude-sonnet-4-6) for email-ingested news article draft...');
+        const anthropic = new Anthropic({ apiKey: anthropicKey });
+        const response = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4000,
+          messages: [{ role: 'user', content: draftPrompt }],
+        });
+        draftContent = response.content[0].type === 'text' ? response.content[0].text : '';
+      } catch (claudeErr: any) {
+        console.error('Claude generation failed, falling back to Gemini:', claudeErr.message || claudeErr);
+      }
+    }
+
+    if (!draftContent) {
+      console.warn('Claude not available or failed. Falling back to Gemini...');
+      const draftResult = await draftModel.generateContent(draftPrompt);
+      draftContent = draftResult.response.text();
+    }
 
     // Clean wraps
     if (draftContent.startsWith('```markdown')) {

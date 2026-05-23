@@ -4,6 +4,7 @@ import { saveContentToGithub } from '@/lib/github';
 import fs from 'fs';
 import path from 'path';
 import { after } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -297,17 +298,36 @@ export async function POST(request: NextRequest) {
         }
 
         let draftContent = '';
-        try {
-          const draftResult = await draftingModel.generateContent(draftPrompt);
-          draftContent = draftResult.response.text();
-        } catch (err: any) {
-          console.warn('[Background Queue] Gemini 2.5 Flash failed, trying gemini-1.5-pro...', err.message);
-          draftingModel = genAI.getGenerativeModel({ 
-            model: 'gemini-1.5-pro',
-            generationConfig: { temperature: 0.3 }
-          });
-          const draftResult = await draftingModel.generateContent(draftPrompt);
-          draftContent = draftResult.response.text();
+        const anthropicKey = process.env.ANTHROPIC_API_KEY;
+        if (anthropicKey) {
+          try {
+            console.log('[Background Queue] Querying Claude (claude-sonnet-4-6) for article draft...');
+            const anthropic = new Anthropic({ apiKey: anthropicKey });
+            const response = await anthropic.messages.create({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 4000,
+              messages: [{ role: 'user', content: draftPrompt }],
+            });
+            draftContent = response.content[0].type === 'text' ? response.content[0].text : '';
+          } catch (claudeErr: any) {
+            console.error('[Background Queue] Claude generation failed, falling back to Gemini:', claudeErr.message || claudeErr);
+          }
+        }
+
+        if (!draftContent) {
+          try {
+            console.log('[Background Queue] Querying Gemini (gemini-2.5-flash) for article draft...');
+            const draftResult = await draftingModel.generateContent(draftPrompt);
+            draftContent = draftResult.response.text();
+          } catch (err: any) {
+            console.warn('[Background Queue] Gemini 2.5 Flash failed, trying gemini-1.5-pro...', err.message);
+            draftingModel = genAI.getGenerativeModel({ 
+              model: 'gemini-1.5-pro',
+              generationConfig: { temperature: 0.3 }
+            });
+            const draftResult = await draftingModel.generateContent(draftPrompt);
+            draftContent = draftResult.response.text();
+          }
         }
 
         // Clean wraps
