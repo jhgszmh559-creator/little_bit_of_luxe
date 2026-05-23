@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     const citationsStr = JSON.stringify(citations);
 
     const draftPrompt = `You are a Principal Luxury Travel Editorial Director for "Little Bit of Luxe".
-    Write a gorgeous, 800-word magazine-style review draft for: "${hotelName}".
+    Write a gorgeous, 800-word magazine-style hotel news opening announcement/coverage draft for: "${hotelName}".
     
     Use the following gathered raw intelligence:
     ---
@@ -149,35 +149,23 @@ export async function POST(request: NextRequest) {
     - Use em-dashes (—) for structural pauses. Maintain a quiet, trusted, architectural tone.
     - Focus heavily on heritage, design details, tactile materials, and sense of place.
     - Write 4-5 extensive, flowing, gorgeous prose paragraphs.
-    - Inject a signature QX Perks CTA block using this EXACT HTML:
-      <div className="my-12 p-8 bg-midnight text-sand border-none">
-        <p className="lbl-eyebrow mb-2 text-sand/70">The Preferred Privilege</p>
-        <h3 className="lbl-h3 text-sand mb-4">Book \${hotelName} with Perks</h3>
-        <p className="lbl-body text-sand/85 mb-6">
-          Through our preferred partnership, we unlock daily breakfast, priority upgrades, and property credits — matching the best flexible rates available directly, with all your standard loyalty nights and points fully recognized.
-        </p>
-        <a href="https://www.qxtravel.io/search-hotels" target="_blank" rel="noopener noreferrer" className="btn--subscribe">
-          Book with Perks <span className="arrow">→</span>
-        </a>
-      </div>
     
     - Output should include a YAML frontmatter block at the very top:
     ---
     title: "[Creative Headline, 4-10 words]"
     excerpt: "[Poetic serif dek sentence]"
-    hotelName: "${hotelName}"
-    brand: "[Extracted Hotel Brand, e.g. Rosewood or Independent]"
-    location: "[Extracted City, Country]"
-    rating: 9.2
-    roomType: "[Typical Room/Suite Category]"
-    youtubeId: ""
-    showQxPerks: true
     date: "${new Date().toISOString()}"
-    category: "Hotel Review"
+    category: "Hotel News"
     draft: true
     status: "draft"
     sources: ${citationsStr}
-    ogImage: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+    brand: "[Extracted Hotel Brand, e.g. Rosewood or Independent]"
+    property_name: "${hotelName}"
+    location: "[Extracted City, Country]"
+    projected_opening: "[Projected Opening, e.g. Opening late 2026 or Now Open]"
+    early_newsletter_cta: true
+    source_url: "${citations[0] || ''}"
+    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
     ---
     
     Return ONLY the raw content for the markdown file. Do not wrap the response in markdown blocks (\`\`\`markdown ... \`\`\`).`;
@@ -222,12 +210,12 @@ export async function POST(request: NextRequest) {
       draftContent = draftContent.replace(/^```\n/, '').replace(/\n```$/, '');
     }
 
-    // Save draft directly to content/reviews/
+    // Save draft directly to content/news/
     const slug = slugify(hotelName);
-    const relPath = `content/reviews/${slug}.md`;
+    const relPath = `content/news/${slug}.md`;
     await saveContentToGithub(relPath, draftContent.trim(), `News Ingest: ${slug}`);
 
-    console.log(`Successfully ingested and saved news-ingest review draft at: ${relPath}`);
+    console.log(`Successfully ingested and saved news-ingest news draft at: ${relPath}`);
 
     return NextResponse.json({
       success: true,

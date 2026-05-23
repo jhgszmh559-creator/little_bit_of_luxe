@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 3: Draft editorial hotel review markdown using Gemini 3.5 Flash
+    // Step 3: Draft editorial hotel news opening markdown using Gemini 3.5 Flash
     const draftModel = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash',
       generationConfig: { temperature: 0.3 }
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     const citationsStr = JSON.stringify(citations);
 
     const draftPrompt = `You are a Principal Luxury Travel Editorial Director for "Little Bit of Luxe".
-    Write a gorgeous, 800-word magazine-style review draft for: "${hotelName}".
+    Write a gorgeous, 800-word magazine-style hotel news opening announcement/coverage draft for: "${hotelName}".
     
     Use the following gathered intel:
     ---
@@ -132,40 +132,28 @@ export async function POST(request: NextRequest) {
     
     Writing Guidelines:
     - Never use exclamation marks (!) or emojis.
-    - Title should be 4 to 10 words, with EXACTLY one evocative word italicized and bolded inside * ** ** *, e.g. *The quiet poetry of a weekend in **Sintra***.
+    - Title should be 4 to 10 words, with EXACTLY one evocative word italicized and bolded inside * ** ** *, e.g. *The quiet rebirth of a historic **Lisbon** icon*.
     - Set the tone with a single poetic serif italic dek sentence beneath the H1.
     - Use em-dashes (—) for structural pauses. Maintain a quiet, trusted, architectural tone.
     - Focus heavily on heritage, design details, tactile materials, and sense of place.
     - Write 4-5 extensive, flowing, gorgeous prose paragraphs.
-    - Inject a signature QX Perks CTA block using this EXACT HTML:
-      <div className="my-12 p-8 bg-midnight text-sand border-none">
-        <p className="lbl-eyebrow mb-2 text-sand/70">The Preferred Privilege</p>
-        <h3 className="lbl-h3 text-sand mb-4">Book \${hotelName} with Perks</h3>
-        <p className="lbl-body text-sand/85 mb-6">
-          Through our preferred partnership, we unlock daily breakfast, priority upgrades, and property credits — matching the best flexible rates available directly, with all your standard loyalty nights and points fully recognized.
-        </p>
-        <a href="https://www.qxtravel.io/search-hotels" target="_blank" rel="noopener noreferrer" className="btn--subscribe">
-          Book with Perks <span className="arrow">→</span>
-        </a>
-      </div>
     
     - Output should include a YAML frontmatter block at the very top:
     ---
     title: "[Creative Headline, 4-10 words]"
     excerpt: "[Poetic serif dek sentence]"
-    hotelName: "${hotelName}"
-    brand: "[Extracted Hotel Brand, e.g. Belmond or Independent]"
-    location: "[Extracted City, Country]"
-    rating: 9.3
-    roomType: "[Typical Room/Suite Category]"
-    youtubeId: ""
-    showQxPerks: true
     date: "${new Date().toISOString()}"
-    category: "Hotel Review"
+    category: "Hotel News"
     draft: true
     status: "draft"
     sources: ${citationsStr}
-    ogImage: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+    brand: "[Extracted Hotel Brand, e.g. Belmond or Independent]"
+    property_name: "${hotelName}"
+    location: "[Extracted City, Country]"
+    projected_opening: "[Projected Opening, e.g. Opening late 2026 or Now Open]"
+    early_newsletter_cta: true
+    source_url: "${citations[0] || ''}"
+    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
     ---
     
     Return ONLY the raw content for the markdown file. Do not wrap the response in markdown blocks (\`\`\`markdown ... \`\`\`).`;
@@ -180,12 +168,12 @@ export async function POST(request: NextRequest) {
       draftContent = draftContent.replace(/^```\n/, '').replace(/\n```$/, '');
     }
 
-    // Save draft
+    // Save draft to content/news/
     const slug = slugify(hotelName);
-    const relPath = `content/reviews/${slug}.md`;
+    const relPath = `content/news/${slug}.md`;
     await saveContentToGithub(relPath, draftContent.trim(), `Email Ingest: ${slug}`);
 
-    console.log(`Successfully parsed email and saved review draft at: ${relPath}`);
+    console.log(`Successfully parsed email and saved news draft at: ${relPath}`);
 
     return NextResponse.json({
       success: true,
