@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Search as SearchIcon } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -245,7 +246,7 @@ export default function SearchPageClient({ programs, reviews, news = [], general
               {filtered.map((a) => (
                 <Link key={a.slug} href={a.link} className="card-article">
                   <div className="card-article__media">
-                    <img src={a.cover} alt={a.title} loading="lazy" className="w-full h-full object-cover" />
+                    <Image src={a.cover} alt={a.title} fill sizes="(max-width: 576px) 100vw, (max-width: 992px) 50vw, 33vw" className="object-cover" loading="lazy" />
                     {a.rating != null && (
                       <div className="card-article__rating">
                         <em>★</em> {a.rating.toFixed(1)}

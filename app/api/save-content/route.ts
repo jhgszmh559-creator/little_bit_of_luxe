@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { saveContentToGithub, deleteContentFromGithub } from '@/lib/github';
 import fs from 'fs';
 import path from 'path';
+import { validateArticle } from '@/lib/schemaValidator';
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,7 +58,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing type or slug parameter' }, { status: 400 });
     }
 
+    // Run automated schema validation checks
+    const validation = validateArticle(type, data, content || '');
+    if (!validation.isValid) {
+      return NextResponse.json({ 
+        error: 'Validation failed. Please resolve all blocking errors before saving.',
+        errors: validation.errors, 
+        warnings: validation.warnings 
+      }, { status: 400 });
+    }
+
     // Determine target directory and filename
+
     let subfolder = 'programs';
     if (type === 'review') {
       subfolder = 'reviews';

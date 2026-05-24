@@ -13,6 +13,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BeehiivForm from '@/components/BeehiivForm';
 import Link from 'next/link';
+import Image from 'next/image';
+import { getPartnerProgramForHotel } from '@/lib/perks';
+import BookingWidget from '@/components/BookingWidget';
 
 interface NewsPageProps {
   params: Promise<{
@@ -35,6 +38,12 @@ export default async function NewsPage({ params }: NewsPageProps) {
   if (!news || news.status !== 'published') {
     notFound();
   }
+
+  // Resolve dynamic partner program perks
+  const program = getPartnerProgramForHotel(news.propertyName, news.brand);
+  const programName = program ? program.programName : 'Preferred Partner';
+  const programNotes = program ? program.notes : 'Through our preferred partnerships, we unlock daily breakfast, priority upgrades, and property credits for standard direct bookings.';
+  const bookingLink = news.partnerLink || (program ? program.partnerLink : 'https://www.qxtravel.io/search-hotels');
 
   // Parse markdown body
   const htmlContent = parseMarkdown(news.content);
@@ -174,12 +183,16 @@ export default async function NewsPage({ params }: NewsPageProps) {
                   youtubeId={news.heroVideo}
                   title={news.propertyName}
                   coverImage={news.image}
+                  preload={true}
                 />
               ) : (
-                <img 
+                <Image 
                   src={news.image} 
                   alt={news.propertyName} 
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 1280px) 100vw, 1280px"
+                  className="object-cover"
+                  preload
                 />
               )}
             </div>
@@ -224,6 +237,16 @@ export default async function NewsPage({ params }: NewsPageProps) {
                 )}
 
                 {renderedContent}
+
+                {/* QX Preferred Partner Perks CTA */}
+                {news.showQxPerks && news.propertyName && !news.content.includes('article-cta-box') && (
+                  <BookingWidget 
+                    hotelName={news.propertyName}
+                    programName={programName}
+                    programNotes={programNotes}
+                    bookingLink={bookingLink}
+                  />
+                )}
               </section>
             </div>
           </div>
@@ -239,11 +262,13 @@ export default async function NewsPage({ params }: NewsPageProps) {
               {relatedNews.map((related) => (
                 <Link key={related.slug} href={`/news/${related.slug}`} className="card-article">
                   <div className="card-article__media">
-                    <img 
+                    <Image 
                       src={related.image} 
                       alt={related.propertyName} 
-                      loading="lazy" 
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 576px) 100vw, (max-width: 992px) 50vw, 33vw"
+                      className="object-cover"
+                      loading="lazy"
                     />
                   </div>
                   <div className="card-article__eyebrow">

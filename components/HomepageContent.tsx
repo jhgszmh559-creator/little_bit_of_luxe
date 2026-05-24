@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { parseInlineMarkdown } from '@/lib/markdown';
@@ -160,7 +161,7 @@ export default function HomepageContent({ programs, reviews, news = [], generals
           {featured ? (
             <article className="featured">
               <Link href={featured.link} className="featured__media">
-                <img src={featured.cover} alt={featured.title} />
+                <Image src={featured.cover} alt={featured.title} fill sizes="(max-width: 768px) 100vw, 58vw" className="object-cover" preload />
                 <span className="featured__pill">{featured.location}</span>
               </Link>
               <div className="featured__body">
@@ -238,7 +239,7 @@ export default function HomepageContent({ programs, reviews, news = [], generals
               {latest.map((a) => (
                 <Link key={a.slug} href={a.link} className="card-article">
                   <div className="card-article__media">
-                    <img src={a.cover} alt={a.title} loading="lazy" />
+                    <Image src={a.cover} alt={a.title} fill sizes="(max-width: 576px) 100vw, (max-width: 992px) 50vw, 33vw" className="object-cover" loading="lazy" />
                     {a.rating != null && (
                       <div className="card-article__rating">
                         <em>★</em> {a.rating.toFixed(1)}
@@ -276,7 +277,7 @@ export default function HomepageContent({ programs, reviews, news = [], generals
                 {edit.map((a) => (
                   <Link key={a.slug} href={a.link} className="card-article">
                     <div className="card-article__media">
-                      <img src={a.cover} alt={a.title} loading="lazy" />
+                      <Image src={a.cover} alt={a.title} fill sizes="(max-width: 576px) 100vw, (max-width: 992px) 50vw, 25vw" className="object-cover" loading="lazy" />
                       {a.rating != null && (
                         <div className="card-article__rating">
                           <em>★</em> {a.rating.toFixed(1)}
@@ -314,7 +315,7 @@ export default function HomepageContent({ programs, reviews, news = [], generals
               {more.map((a) => (
                 <Link key={a.slug} href={a.link} className="card-article">
                   <div className="card-article__media">
-                    <img src={a.cover} alt={a.title} loading="lazy" />
+                    <Image src={a.cover} alt={a.title} fill sizes="(max-width: 576px) 100vw, (max-width: 992px) 50vw, 33vw" className="object-cover" loading="lazy" />
                     {a.rating != null && (
                       <div className="card-article__rating">
                         <em>★</em> {a.rating.toFixed(1)}

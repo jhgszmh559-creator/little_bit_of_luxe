@@ -2,14 +2,16 @@
 
 import React, { useState } from 'react';
 import { Play } from 'lucide-react';
+import Image from 'next/image';
 
 interface VideoTheatreProps {
   youtubeId: string;
   title: string;
   coverImage: string;
+  preload?: boolean;
 }
 
-export default function VideoTheatre({ youtubeId, title, coverImage }: VideoTheatreProps) {
+export default function VideoTheatre({ youtubeId, title, coverImage, preload = false }: VideoTheatreProps) {
   const [isPlaying, setIsPlaying] = useState(false);
 
   if (isPlaying) {
@@ -31,10 +33,13 @@ export default function VideoTheatre({ youtubeId, title, coverImage }: VideoThea
       className="relative w-full h-full cursor-pointer group overflow-hidden bg-midnight"
       onClick={() => setIsPlaying(true)}
     >
-      <img
+      <Image
         src={coverImage || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"}
         alt={title}
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        fill
+        sizes="(max-width: 1280px) 100vw, 1280px"
+        className="object-cover transition-transform duration-700 group-hover:scale-105"
+        preload={preload}
       />
       {/* Branded Overlay */}
       <div className="absolute inset-0 bg-midnight/35 group-hover:bg-midnight/45 transition-colors flex items-center justify-center">

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { saveContentToGithub } from '@/lib/github';
+import fs from 'fs';
+import path from 'path';
+import matter from 'gray-matter';
+import { validateArticle } from '@/lib/schemaValidator';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+
 
 export const dynamic = 'force-dynamic';
 
@@ -170,7 +177,7 @@ Please return the response as a single valid JSON object following the format co
       return NextResponse.json({ error: 'Claude returned invalid JSON', raw: responseText }, { status: 500 });
     }
 
-    const { title, excerpt, content, metadata } = articleData;
+    let { title, excerpt, content, metadata } = articleData;
     const slug = slugify(name);
 
     // Save generated content to file
@@ -186,7 +193,7 @@ Please return the response as a single valid JSON object following the format co
     const relPath = `content/${subfolder}/${slug}.md`;
 
     // Prepare frontmatter
-    const frontmatter: Record<string, any> = {
+    let frontmatter: Record<string, any> = {
       title: title || name,
       excerpt: excerpt || '',
       date: new Date().toISOString(),
@@ -259,7 +266,65 @@ Please return the response as a single valid JSON object following the format co
     yamlLines.push('---');
     yamlLines.push('');
 
-    const fileContents = `${yamlLines.join('\n')}\n${content.trim()}`;
+    let fileContents = `${yamlLines.join('\n')}\n${content.trim()}`;
+
+    // Run validation on the generated article contents
+    let validation = { isValid: false, errors: [] as string[], warnings: [] as string[] };
+    try {
+      const { data: parsedData, content: parsedBody } = matter(fileContents);
+      validation = validateArticle(type, { ...parsedData, slug }, parsedBody);
+    } catch (parseErr) {
+      validation.errors.push("Failed to parse YAML frontmatter block.");
+    }
+
+    if (!validation.isValid) {
+      console.warn(`[Generate Article] Validation failed: ${validation.errors.join(', ')}. Attempting AI self-repair...`);
+      try {
+        const genAIInstance = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+        const repairModel = genAIInstance.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const repairPrompt = `You are a schema correction assistant for the luxury travel journal "Little Bit of Luxe".
+The generated article markdown failed validation with these errors:
+${validation.errors.map(e => `- ${e}`).join('\n')}
+
+Please fix the YAML frontmatter format and content structure of the article below.
+Rules:
+1. Ensure the YAML frontmatter is at the top of the file, starting with --- and ending with ---.
+2. The title must contain exactly one word or short phrase surrounded by single asterisks for italic style (e.g. *Aman* Venice).
+3. Do not include Heading 1 (#) inside the body content. Only use H2 (##) or H3 (###).
+4. Do not include markdown code block wraps (\`\`\`markdown ... \`\`\`) in your output. Return only the raw markdown text.
+
+ORIGINAL CONTENT:
+${fileContents}
+
+Return the complete, repaired markdown file.`;
+
+        const repairResult = await repairModel.generateContent(repairPrompt);
+        let repairedContent = repairResult.response.text().trim();
+        if (repairedContent.startsWith('```markdown')) {
+          repairedContent = repairedContent.replace(/^```markdown\n/, '').replace(/\n```$/, '');
+        } else if (repairedContent.startsWith('```')) {
+          repairedContent = repairedContent.replace(/^```\n/, '').replace(/\n```$/, '');
+        }
+
+        // Re-validate repaired content
+        const { data: repData, content: repBody } = matter(repairedContent);
+        const repValidation = validateArticle(type, { ...repData, slug }, repBody);
+        if (repValidation.isValid) {
+          console.log('[Generate Article] AI self-repair succeeded.');
+          fileContents = repairedContent;
+          title = repData.title || title;
+          excerpt = repData.excerpt || excerpt;
+          content = repBody;
+          frontmatter = repData;
+        } else {
+          console.warn(`[Generate Article] AI self-repair finished with remaining issues: ${repValidation.errors.join(', ')}. Saving with errors.`);
+          fileContents = repairedContent;
+        }
+      } catch (repairErr: any) {
+        console.error('[Generate Article] AI self-repair failed:', repairErr.message || repairErr);
+      }
+    }
+
     await saveContentToGithub(relPath, fileContents, `Generate ${type}: ${slug}`);
 
     return NextResponse.json({

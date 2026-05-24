@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { parseMarkdown } from '@/lib/markdown';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { validateArticle } from '@/lib/schemaValidator';
+
 
 
 interface ArticleItem {
@@ -274,8 +276,42 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   // UI state
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const [editorTab, setEditorTab] = useState<'write' | 'design' | 'editorial' | 'preview'>('write');
+  const [editorTab, setEditorTab] = useState<'write' | 'design' | 'editorial' | 'preview' | 'quality'>('write');
   const [previewViewport, setPreviewViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [validation, setValidation] = useState<{ isValid: boolean; errors: string[]; warnings: string[] }>({ isValid: true, errors: [], warnings: [] });
+
+  useEffect(() => {
+    const payload = {
+      title,
+      slug,
+      excerpt,
+      date,
+      category,
+      hotelName,
+      brand,
+      location,
+      rating,
+      roomType,
+      verdictHead,
+      verdictHighlight,
+      propertyName,
+      projectedOpening,
+      sourceUrl,
+      programName,
+      loyaltyNetwork,
+      brands,
+      tldr
+    };
+    const result = validateArticle(currentType, payload, content || '');
+    setValidation(result);
+  }, [
+    title, slug, excerpt, date, category, currentType, content,
+    hotelName, brand, location, rating, roomType, verdictHead, verdictHighlight,
+    propertyName, projectedOpening, sourceUrl,
+    programName, loyaltyNetwork, brands,
+    tldr
+  ]);
+
 
 
   // Lifecycle & Citations State
@@ -389,10 +425,42 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
       return;
     }
 
+    // Run frontmatter & body validations before saving
+    const currentStatus = overrideStatus || status;
+    const validationPayload = {
+      title,
+      slug,
+      excerpt,
+      date,
+      category,
+      hotelName,
+      brand,
+      location,
+      rating,
+      roomType,
+      verdictHead,
+      verdictHighlight,
+      propertyName,
+      projectedOpening,
+      sourceUrl,
+      programName,
+      loyaltyNetwork,
+      brands,
+      tldr
+    };
+    
+    const valResult = validateArticle(currentType, validationPayload, content || '');
+    if (!valResult.isValid) {
+      setSaving(false);
+      setEditorTab('quality');
+      setMessage('Quality Check Error: Please resolve all blocking errors listed on the Quality tab before saving.');
+      return;
+    }
+
     setSaving(true);
+
     setMessage('');
 
-    const currentStatus = overrideStatus || status;
     if (overrideStatus && overrideStatus !== status) {
       setStatus(overrideStatus);
     }
@@ -716,7 +784,27 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
           >
             <Eye className="w-4 h-4" /> Live Preview
           </button>
+          <button
+            onClick={() => setEditorTab('quality')}
+            className={`flex-1 py-3 text-xs uppercase font-bold tracking-wider rounded-none transition-colors flex items-center justify-center gap-2 min-h-[44px] cursor-pointer relative ${
+              editorTab === 'quality' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight font-bold' : 'text-ink-3 hover:text-ink bg-transparent font-medium'
+            }`}
+          >
+            <BookOpenCheck className="w-4 h-4" /> 
+            <span>Quality Check</span>
+            {validation.errors.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-bordeaux text-white rounded-full flex items-center justify-center text-[8px] font-bold">
+                {validation.errors.length}
+              </span>
+            )}
+            {validation.errors.length === 0 && validation.warnings.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white rounded-full flex items-center justify-center text-[8px] font-bold">
+                {validation.warnings.length}
+              </span>
+            )}
+          </button>
         </div>
+
 
         {/* Dynamic Split Layout */}
         <div className="flex-grow">
@@ -1437,7 +1525,85 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
               </div>
             </div>
           )}
+
+          {editorTab === 'quality' && (
+            <div className="max-w-[900px] mx-auto w-full bg-card border border-ink/10 p-8 shadow-sm flex flex-col gap-6 animate-fadeIn">
+              <div className="flex items-center gap-3 border-b border-ink/10 pb-4">
+                <BookOpenCheck className="w-6 h-6 text-midnight dark:text-sand" />
+                <h2 className="lbl-h3 text-midnight dark:text-sand font-serif text-xl">Journal Quality &amp; SEO Checker</h2>
+              </div>
+
+              {/* Status Summary Banner */}
+              {validation.errors.length > 0 ? (
+                <div className="p-5 bg-bordeaux/15 border-l-4 border-bordeaux text-ink dark:text-sand flex gap-4 items-start rounded-none">
+                  <span className="text-xl">❌</span>
+                  <div>
+                    <h4 className="font-bold text-sm uppercase tracking-wider text-bordeaux">Article Fails Validation</h4>
+                    <p className="text-xs text-ink-3 dark:text-sand-3 mt-1">There are {validation.errors.length} blocking issues that must be corrected before this article can be successfully saved to the database.</p>
+                  </div>
+                </div>
+              ) : validation.warnings.length > 0 ? (
+                <div className="p-5 bg-amber-500/10 border-l-4 border-amber-500 text-ink dark:text-sand flex gap-4 items-start rounded-none">
+                  <span className="text-xl">⚠️</span>
+                  <div>
+                    <h4 className="font-bold text-sm uppercase tracking-wider text-amber-600 dark:text-amber-400">Stylistic Recommendations</h4>
+                    <p className="text-xs text-ink-3 dark:text-sand-3 mt-1">The article passes basic validations and can be saved, but has {validation.warnings.length} recommendations to align with style guides and SEO standards.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-5 bg-sage/10 border-l-4 border-sage text-ink dark:text-sand flex gap-4 items-start rounded-none">
+                  <span className="text-xl">✅</span>
+                  <div>
+                    <h4 className="font-bold text-sm uppercase tracking-wider text-sage">Perfect Quality Score</h4>
+                    <p className="text-xs text-ink-3 dark:text-sand-3 mt-1">This article meets all editorial guidelines, contains appropriate heading hierarchies, required fields, and is fully optimized for publication.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Blocking Errors Section */}
+              {validation.errors.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <h3 className="text-xs uppercase font-bold tracking-widest text-bordeaux">Blocking Errors ({validation.errors.length})</h3>
+                  <div className="flex flex-col gap-2">
+                    {validation.errors.map((err, i) => (
+                      <div key={i} className="text-xs text-ink dark:text-sand-2 flex items-start gap-2 bg-bordeaux/5 p-3 border border-bordeaux/10">
+                        <span className="text-bordeaux font-bold">▪</span>
+                        <span>{err}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Warnings Section */}
+              {validation.warnings.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <h3 className="text-xs uppercase font-bold tracking-widest text-amber-600 dark:text-amber-400 font-sans font-semibold">Editorial &amp; SEO Suggestions ({validation.warnings.length})</h3>
+                  <div className="flex flex-col gap-2">
+                    {validation.warnings.map((warn, i) => (
+                      <div key={i} className="text-xs text-ink dark:text-sand-2 flex items-start gap-2 bg-amber-500/5 p-3 border border-amber-500/10">
+                        <span className="text-amber-500 font-bold">▪</span>
+                        <span>{warn}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Brand Style Reminder Card */}
+              <div className="border-t border-ink/10 pt-6 mt-4">
+                <h4 className="text-[10px] uppercase tracking-widest text-ink-3 font-semibold mb-2">Visual &amp; Editorial Standards Reminder</h4>
+                <ul className="text-xs text-ink-3 dark:text-sand-3 flex flex-col gap-1.5 list-disc pl-4 italic">
+                  <li>Headline titles must contain *exactly one word or phrase italicized* using asterisks to match layout typography.</li>
+                  <li>Keep excerpt sizes between 40 and 300 characters to prevent overflow on grid displays.</li>
+                  <li>Headings inside body copy must only use Heading 2 (##) or Heading 3 (###) to populate the sidebar index. Do not use Heading 1 (#) which is reserved for the page title.</li>
+                  <li>Star ratings for hotels are formatted as decimals (e.g. 9.3) out of 10.</li>
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
+
       </main>
 {/* CLOUDINARY LOADER POPUP */}
       {cloudinaryOpen && (

@@ -13,6 +13,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import QxScrollBlock from '@/components/QxScrollBlock';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface ProgramPageProps {
   params: Promise<{
@@ -158,12 +159,16 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
                   youtubeId={program.heroVideo}
                   title={program.programName}
                   coverImage={program.image}
+                  preload={true}
                 />
               ) : (
-                <img 
+                <Image 
                   src={program.image} 
                   alt={program.programName} 
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 1280px) 100vw, 1280px"
+                  className="object-cover"
+                  preload
                 />
               )}
             </div>
@@ -237,11 +242,13 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
               {relatedPrograms.map((related) => (
                 <Link key={related.slug} href={`/program/${related.slug}`} className="card-article">
                   <div className="card-article__media">
-                    <img 
+                    <Image 
                       src={related.image} 
                       alt={related.programName} 
-                      loading="lazy" 
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 576px) 100vw, (max-width: 992px) 50vw, 33vw"
+                      className="object-cover"
+                      loading="lazy"
                     />
                   </div>
                   <div className="card-article__eyebrow">

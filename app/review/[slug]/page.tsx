@@ -12,6 +12,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import VideoTheatre from '@/components/VideoTheatre';
 import Link from 'next/link';
+import Image from 'next/image';
+import { getPartnerProgramForHotel } from '@/lib/perks';
+import BookingWidget from '@/components/BookingWidget';
 
 interface ReviewPageProps {
   params: Promise<{
@@ -34,6 +37,12 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   if (!review || review.status !== 'published') {
     notFound();
   }
+
+  // Resolve dynamic partner program perks
+  const program = getPartnerProgramForHotel(review.hotelName, review.brand);
+  const programName = program ? program.programName : 'Preferred Partner';
+  const programNotes = program ? program.notes : 'Through our preferred partnerships, we unlock daily breakfast, priority upgrades, and property credits for standard direct bookings.';
+  const bookingLink = review.partnerLink || (program ? program.partnerLink : 'https://www.qxtravel.io/search-hotels');
 
   // Parse markdown body
   const htmlContent = parseMarkdown(review.content);
@@ -158,12 +167,16 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
                   youtubeId={review.heroVideo || review.youtubeId || ''}
                   title={review.hotelName}
                   coverImage={coverImage}
+                  preload={true}
                 />
               ) : (
-                <img 
+                <Image 
                   src={coverImage} 
                   alt={review.hotelName} 
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 1280px) 100vw, 1280px"
+                  className="object-cover"
+                  preload
                 />
               )}
             </div>
@@ -214,21 +227,12 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
 
                 {/* QX Preferred Partner Perks CTA */}
                 {review.showQxPerks && !review.content.includes('article-cta-box') && (
-                  <div className="article-cta-box">
-                    <p className="lbl-eyebrow mb-2 text-sand/70">The Preferred Privilege</p>
-                    <h3 className="lbl-h3 mb-4">Book {review.hotelName} with Perks</h3>
-                    <p className="lbl-body mb-6">
-                      Through our preferred partnerships, we unlock daily breakfast, priority upgrades, and property credits for standard direct bookings.
-                    </p>
-                    <a 
-                      href={review.partnerLink || "https://www.qxtravel.io/search-hotels"} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="btn-subscribe"
-                    >
-                      Book with Perks <span className="btn-subscribe__arrow">→</span>
-                    </a>
-                  </div>
+                  <BookingWidget 
+                    hotelName={review.hotelName}
+                    programName={programName}
+                    programNotes={programNotes}
+                    bookingLink={bookingLink}
+                  />
                 )}
 
                 {/* The Verdict Box (Detailed) */}
@@ -274,10 +278,13 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
               {relatedReviews.map((related) => (
                 <Link key={related.slug} href={`/review/${related.slug}`} className="card-article">
                   <div className="card-article__media">
-                    <img 
+                    <Image 
                       src={related.ogImage || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80"} 
                       alt={related.hotelName} 
-                      loading="lazy" 
+                      fill
+                      sizes="(max-width: 576px) 100vw, (max-width: 992px) 50vw, 33vw"
+                      className="object-cover"
+                      loading="lazy"
                     />
                     <div className="card-article__rating">
                       <em>★</em> {related.rating.toFixed(1)}

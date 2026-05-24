@@ -12,6 +12,9 @@ import VideoTheatre from '@/components/VideoTheatre';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
+import Image from 'next/image';
+import { getPartnerProgramForHotel } from '@/lib/perks';
+import BookingWidget from '@/components/BookingWidget';
 
 interface GeneralPageProps {
   params: Promise<{
@@ -33,6 +36,13 @@ export default async function GeneralPage({ params }: GeneralPageProps) {
   if (!general || general.status !== 'published') {
     notFound();
   }
+
+  // Resolve dynamic partner program perks if a hotel/brand is specified
+  const hasHotelInfo = !!(general.hotelName || general.brand);
+  const program = hasHotelInfo ? getPartnerProgramForHotel(general.hotelName || '', general.brand || '') : null;
+  const programName = program ? program.programName : '';
+  const programNotes = program ? program.notes : '';
+  const bookingLink = program ? program.partnerLink : '';
 
   // Parse markdown body
   const htmlContent = parseMarkdown(general.content);
@@ -142,12 +152,16 @@ export default async function GeneralPage({ params }: GeneralPageProps) {
                   youtubeId={general.heroVideo}
                   title={general.title}
                   coverImage={general.image}
+                  preload={true}
                 />
               ) : (
-                <img 
+                <Image 
                   src={general.image} 
                   alt={general.title} 
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 1280px) 100vw, 1280px"
+                  className="object-cover"
+                  preload
                 />
               )}
             </div>
@@ -177,6 +191,16 @@ export default async function GeneralPage({ params }: GeneralPageProps) {
                   className="prose"
                   dangerouslySetInnerHTML={{ __html: htmlContent }} 
                 />
+
+                {/* QX Preferred Partner Perks CTA */}
+                {general.showQxPerks && program && !general.content.includes('article-cta-box') && (
+                  <BookingWidget 
+                    hotelName={general.hotelName || 'this hotel'}
+                    programName={programName}
+                    programNotes={programNotes}
+                    bookingLink={bookingLink}
+                  />
+                )}
               </section>
             </div>
           </div>
@@ -192,11 +216,13 @@ export default async function GeneralPage({ params }: GeneralPageProps) {
               {relatedGenerals.map((related) => (
                 <Link key={related.slug} href={`/general/${related.slug}`} className="card-article">
                   <div className="card-article__media">
-                    <img 
+                    <Image 
                       src={related.image} 
                       alt={related.title} 
-                      loading="lazy" 
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 576px) 100vw, (max-width: 992px) 50vw, 33vw"
+                      className="object-cover"
+                      loading="lazy"
                     />
                   </div>
                   <div className="card-article__eyebrow">

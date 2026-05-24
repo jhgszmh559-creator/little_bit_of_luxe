@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useBookmarks } from '@/hooks/useBookmarks';
@@ -40,8 +41,8 @@ export default function SavedArticlesPage() {
               {bookmarks.map((a) => (
                 <div key={a.slug} className="relative group">
                   <Link href={`/${a.type}/${a.slug}`} className="card-article block">
-                    <div className="card-article__image">
-                      <img src={a.image} alt={a.title} />
+                    <div className="card-article__media">
+                      <Image src={a.image} alt={a.title} fill sizes="(max-width: 576px) 100vw, (max-width: 992px) 50vw, 25vw" className="object-cover" loading="lazy" />
                       <span className="featured__pill">{a.location || a.type.toUpperCase()}</span>
                     </div>
                     <div className="card-article__eyebrow mt-4 mb-2">

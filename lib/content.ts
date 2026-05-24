@@ -108,6 +108,7 @@ export interface News {
   heroVideo?: string;
   heroCaption?: string;
   tldr?: string;
+  showQxPerks?: boolean;
 }
 
 export interface General {
@@ -125,6 +126,9 @@ export interface General {
   tldr?: string;
   heroVideo?: string;
   heroCaption?: string;
+  hotelName?: string;
+  brand?: string;
+  showQxPerks?: boolean;
 }
 
 export function getPrograms(includeHidden = false): Program[] {
@@ -265,6 +269,7 @@ export function getNews(includeHidden = false): News[] {
         content,
         galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
         partnerLink: getField(data, 'partnerLink', 'partner_link', ''),
+        showQxPerks: getField<boolean>(data, 'showQxPerks', 'show_qx_perks', getField<boolean>(data, 'showPerks', 'show_perks', true)) !== false,
         tldr: getField(data, 'tldr', 'tldr', ''),
         heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
         heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
@@ -387,6 +392,7 @@ export function getNewsBySlug(slug: string): News | null {
     content,
     galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
     partnerLink: getField(data, 'partnerLink', 'partner_link', ''),
+    showQxPerks: getField<boolean>(data, 'showQxPerks', 'show_qx_perks', getField<boolean>(data, 'showPerks', 'show_perks', true)) !== false,
     tldr: getField(data, 'tldr', 'tldr', ''),
     heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
     heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
@@ -420,6 +426,9 @@ export function getGenerals(includeHidden = false): General[] {
         image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
         content,
         galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
+        hotelName: getField(data, 'hotelName', 'hotel_name', getField(data, 'propertyName', 'property_name', '')),
+        brand: data.brand || '',
+        showQxPerks: getField<boolean>(data, 'showQxPerks', 'show_qx_perks', getField<boolean>(data, 'showPerks', 'show_perks', true)) !== false,
         tldr: getField(data, 'tldr', 'tldr', ''),
         heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
         heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),
@@ -451,6 +460,9 @@ export function getGeneralBySlug(slug: string): General | null {
     image: getField(data, 'image', 'image', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80'),
     content,
     galleryStyle: getField(data, 'galleryStyle', 'gallery_style', 'grid'),
+    hotelName: getField(data, 'hotelName', 'hotel_name', getField(data, 'propertyName', 'property_name', '')),
+    brand: data.brand || '',
+    showQxPerks: getField<boolean>(data, 'showQxPerks', 'show_qx_perks', getField<boolean>(data, 'showPerks', 'show_perks', true)) !== false,
     tldr: getField(data, 'tldr', 'tldr', ''),
     heroVideo: getField(data, 'heroVideo', 'hero_video', ''),
     heroCaption: getField(data, 'heroCaption', 'hero_caption', ''),

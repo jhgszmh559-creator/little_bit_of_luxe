@@ -7,7 +7,8 @@ import {
   FileText, Plus, Search, Settings, CheckCircle, Check,
   AlertCircle, ExternalLink, Link2, MapPin, 
   Sun, Moon, Loader2, Sparkles, BarChart2, Calendar, Eye,
-  Tag, User, TrendingUp, Globe, ChevronRight, X, Layout, Menu
+  Tag, User, TrendingUp, Globe, ChevronRight, X, Layout, Menu,
+  Mail, Trash2
 } from 'lucide-react';
 
 type ArticleStatus = 'published' | 'draft' | 'needs_review' | 'scheduled' | 'archived';
@@ -54,16 +55,98 @@ interface News {
   category: string;
 }
 
+export interface BookingInquiry {
+  id: string;
+  name: string;
+  email: string;
+  hotelName: string;
+  checkIn: string;
+  checkOut: string;
+  adults: number;
+  children: number;
+  childAges?: number[];
+  roomType: string;
+  notes: string;
+  programName: string;
+  date: string;
+  status: 'pending' | 'replied' | 'cancelled';
+}
+
 interface AdminDashboardClientProps {
   programs: Program[];
   reviews: Review[];
   news: News[];
   generals?: any[];
+  initialInquiries?: BookingInquiry[];
 }
 
-export default function AdminDashboardClient({ programs, reviews, news, generals = [] }: AdminDashboardClientProps) {
+export default function AdminDashboardClient({ 
+  programs, 
+  reviews, 
+  news, 
+  generals = [], 
+  initialInquiries = [] 
+}: AdminDashboardClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'posts' | 'pages' | 'tags' | 'decap' | 'settings'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'posts' | 'pages' | 'tags' | 'decap' | 'settings' | 'inquiries'>('analytics');
+  const [inquiries, setInquiries] = useState<BookingInquiry[]>(initialInquiries);
+  const [inquiryFilter, setInquiryFilter] = useState<'all' | 'pending' | 'replied' | 'cancelled'>('all');
+  const [selectedInquiry, setSelectedInquiry] = useState<BookingInquiry | null>(null);
+  const [updatingInquiryId, setUpdatingInquiryId] = useState<string | null>(null);
+
+  const handleUpdateStatus = async (id: string, newStatus: 'pending' | 'replied' | 'cancelled') => {
+    setUpdatingInquiryId(id);
+    try {
+      const res = await fetch('/api/booking-inquiry', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+      if (res.ok) {
+        setInquiries(prev => prev.map(inq => inq.id === id ? { ...inq, status: newStatus } : inq));
+        if (selectedInquiry?.id === id) {
+          setSelectedInquiry(prev => prev ? { ...prev, status: newStatus } : null);
+        }
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to update inquiry status');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('A network error occurred while updating status');
+    } finally {
+      setUpdatingInquiryId(null);
+    }
+  };
+
+  const handleDeleteInquiry = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this booking inquiry? This action cannot be undone.')) {
+      return;
+    }
+    setUpdatingInquiryId(id);
+    try {
+      const res = await fetch(`/api/booking-inquiry?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setInquiries(prev => prev.filter(inq => inq.id !== id));
+        if (selectedInquiry?.id === id) {
+          setSelectedInquiry(null);
+        }
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete inquiry');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('A network error occurred while deleting the inquiry');
+    } finally {
+      setUpdatingInquiryId(null);
+    }
+  };
+
   const [postFilter, setPostFilter] = useState<'all' | 'published' | 'drafts' | 'needs_review' | 'scheduled' | 'archived'>('all');
   const [selectedPostType, setSelectedPostType] = useState<'all' | 'Review' | 'News' | 'Partner Guide' | 'General News'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -562,6 +645,29 @@ export default function AdminDashboardClient({ programs, reviews, news, generals
 
             <div className="flex flex-col mt-4">
               <span className="px-3 py-2 text-[10px] uppercase font-bold text-ink-3 dark:text-sand/50 tracking-widest mb-1">
+                Leads &amp; Booking
+              </span>
+              <button 
+                onClick={() => { setActiveTab('inquiries'); setIsMobileMenuOpen(false); }}
+                className={`flex items-center justify-between px-3 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer transition-colors ${
+                  activeTab === 'inquiries' 
+                    ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight' 
+                    : 'text-ink-3 hover:text-ink dark:text-sand/70 dark:hover:text-white hover:bg-paper/50 dark:hover:bg-paper/5'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 shrink-0" /> Booking Inquiries
+                </span>
+                {inquiries.filter(i => i.status === 'pending').length > 0 && (
+                  <span className="bg-bordeaux text-sand text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                    {inquiries.filter(i => i.status === 'pending').length}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            <div className="flex flex-col mt-4">
+              <span className="px-3 py-2 text-[10px] uppercase font-bold text-ink-3 dark:text-sand/50 tracking-widest mb-1">
                 Configure Site
               </span>
               
@@ -684,6 +790,22 @@ export default function AdminDashboardClient({ programs, reviews, news, generals
                   <Layout className="w-4 h-4" /> Decap CMS
                 </button>
                 <button 
+                  onClick={() => { setActiveTab('inquiries'); setIsMobileMenuOpen(false); }}
+                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-left rounded-none w-full ${
+                    activeTab === 'inquiries' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight' : 'text-ink-3'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Mail className="w-4 h-4" /> Booking Inquiries
+                  </span>
+                  {inquiries.filter(i => i.status === 'pending').length > 0 && (
+                    <span className="bg-bordeaux text-sand text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                      {inquiries.filter(i => i.status === 'pending').length}
+                    </span>
+                  )}
+                </button>
+
+                <button 
                   onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }}
                   className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-left rounded-none ${
                     activeTab === 'settings' ? 'bg-midnight text-sand dark:bg-sand dark:text-midnight' : 'text-ink-3'
@@ -742,6 +864,7 @@ export default function AdminDashboardClient({ programs, reviews, news, generals
               {activeTab === 'tags' && 'Categories & Destinations'}
               {activeTab === 'decap' && 'Decap CMS Admin'}
               {activeTab === 'settings' && 'System Settings'}
+              {activeTab === 'inquiries' && 'Booking Inquiries Log'}
             </h2>
           </div>
 
@@ -1515,6 +1638,246 @@ export default function AdminDashboardClient({ programs, reviews, news, generals
                     className="px-4 py-2 border border-ink/20 dark:border-sand/20 hover:border-ink hover:text-bordeaux text-xs uppercase font-bold tracking-wider rounded-none cursor-pointer"
                   >
                     Theme: {theme === 'light' ? 'Light' : 'Dark'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW: INQUIRIES */}
+          {activeTab === 'inquiries' && (
+            <div className="flex flex-col gap-6">
+              {/* Inquiry Filter Tabs */}
+              <div className="flex items-center justify-between border-b border-ink/10 dark:border-sand/10 pb-4 transition-colors">
+                <div className="flex gap-2">
+                  {(['all', 'pending', 'replied', 'cancelled'] as const).map(filter => (
+                    <button
+                      key={filter}
+                      onClick={() => setInquiryFilter(filter)}
+                      className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer border transition-all ${
+                        inquiryFilter === filter
+                          ? 'bg-midnight text-sand border-midnight dark:bg-sand dark:text-midnight dark:border-sand'
+                          : 'bg-transparent text-ink-3 border-ink/15 hover:border-ink hover:text-ink dark:text-sand/70 dark:border-sand/15 dark:hover:text-white dark:hover:border-sand'
+                      }`}
+                    >
+                      {filter} ({
+                        filter === 'all' 
+                          ? inquiries.length 
+                          : inquiries.filter(i => i.status === filter).length
+                      })
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Inquiries List */}
+              {inquiries.length === 0 ? (
+                <div className="bg-card dark:bg-[#121A33] border border-ink/10 dark:border-sand/10 p-12 text-center text-ink-3 dark:text-sand/65">
+                  <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p className="font-serif italic text-sm">No booking inquiries logged yet.</p>
+                </div>
+              ) : inquiries.filter(inq => inquiryFilter === 'all' || inq.status === inquiryFilter).length === 0 ? (
+                <div className="bg-card dark:bg-[#121A33] border border-ink/10 dark:border-sand/10 p-12 text-center text-ink-3 dark:text-sand/65">
+                  <Mail className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p className="font-serif italic text-sm">No booking inquiries match this filter.</p>
+                </div>
+              ) : (
+                <div className="bg-card dark:bg-[#121A33] border border-ink/10 dark:border-sand/10 rounded-none overflow-hidden transition-colors">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-ink/10 dark:border-sand/10 text-[9px] uppercase tracking-widest text-ink-3 dark:text-sand/50 bg-paper/50 dark:bg-midnight/35 font-bold">
+                          <th className="px-6 py-4">Submission Date</th>
+                          <th className="px-6 py-4">Traveler</th>
+                          <th className="px-6 py-4">Hotel &amp; Program</th>
+                          <th className="px-6 py-4">Dates</th>
+                          <th className="px-6 py-4">Guests &amp; Room</th>
+                          <th className="px-6 py-4">Status</th>
+                          <th className="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {inquiries
+                          .filter(inq => inquiryFilter === 'all' || inq.status === inquiryFilter)
+                          .map(inq => {
+                            const dateStr = new Date(inq.date).toLocaleDateString(undefined, { 
+                              month: 'short', 
+                              day: 'numeric', 
+                              year: 'numeric' 
+                            });
+                            return (
+                              <tr 
+                                key={inq.id} 
+                                className="border-b border-ink/5 dark:border-sand/5 last:border-0 hover:bg-paper/25 dark:hover:bg-paper/5 transition-colors text-xs"
+                              >
+                                <td className="px-6 py-4 font-sans text-ink-3 dark:text-sand/60">{dateStr}</td>
+                                <td className="px-6 py-4">
+                                  <div className="font-bold text-ink dark:text-sand">{inq.name}</div>
+                                  <div className="text-[10px] text-ink-3 dark:text-sand/50">
+                                    <a href={`mailto:${inq.email}`} className="hover:underline">{inq.email}</a>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="font-serif font-bold text-midnight dark:text-sand">{inq.hotelName}</div>
+                                  <div className="text-[9px] uppercase tracking-wider text-sage font-bold">{inq.programName}</div>
+                                </td>
+                                <td className="px-6 py-4 font-sans text-ink dark:text-sand/90">
+                                  <div>In: {inq.checkIn}</div>
+                                  <div>Out: {inq.checkOut}</div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="text-ink dark:text-sand">{inq.adults} Adults {inq.children > 0 && `· ${inq.children} Children`}</div>
+                                  <div className="text-[10px] text-ink-3 dark:text-sand/50 italic">{inq.roomType}</div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold border rounded-none ${
+                                    inq.status === 'pending'
+                                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
+                                      : inq.status === 'replied'
+                                      ? 'bg-sage/10 border-sage/30 text-sage'
+                                      : 'bg-ink-3/10 border-ink-3/30 text-ink-3'
+                                  }`}>
+                                    {inq.status}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    <button 
+                                      onClick={() => setSelectedInquiry(inq)}
+                                      className="px-2 py-1 text-[10px] uppercase font-bold tracking-wider border border-ink/15 hover:border-ink hover:text-ink dark:border-sand/15 dark:hover:border-sand dark:hover:text-white cursor-pointer rounded-none"
+                                    >
+                                      View Details
+                                    </button>
+                                    
+                                    {inq.status === 'pending' && (
+                                      <button 
+                                        disabled={updatingInquiryId === inq.id}
+                                        onClick={() => handleUpdateStatus(inq.id, 'replied')}
+                                        className="px-2 py-1 text-[10px] uppercase font-bold tracking-wider bg-sage text-white hover:bg-sage/90 cursor-pointer rounded-none disabled:opacity-50"
+                                      >
+                                        Reply
+                                      </button>
+                                    )}
+
+                                    <button 
+                                      disabled={updatingInquiryId === inq.id}
+                                      onClick={() => handleDeleteInquiry(inq.id)}
+                                      className="p-1 hover:bg-bordeaux/15 hover:text-bordeaux text-ink-3 dark:text-sand/50 rounded-none cursor-pointer disabled:opacity-50"
+                                      title="Delete Inquiry"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* INQUIRY DETAIL MODAL */}
+          {selectedInquiry && (
+            <div className="fixed inset-0 bg-midnight/60 dark:bg-black/70 flex items-center justify-center p-4 z-50 animate-fade-in">
+              <div className="bg-ivory dark:bg-[#0D152D] text-midnight dark:text-sand border border-midnight/20 dark:border-sand/20 p-6 md:p-8 max-w-[560px] w-full shadow-2xl rounded-none flex flex-col gap-6 max-h-[90vh] overflow-y-auto animate-zoom-in">
+                <div className="flex items-center justify-between border-b border-midnight/10 dark:border-sand/10 pb-4">
+                  <h3 className="font-serif text-2xl font-semibold">Booking Inquiry Details</h3>
+                  <button 
+                    onClick={() => setSelectedInquiry(null)}
+                    className="text-midnight/60 dark:text-sand/60 hover:text-midnight dark:hover:text-sand text-xl font-bold min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] uppercase tracking-wider text-ink-3 dark:text-sand/50 font-bold">Traveler Name</span>
+                    <span className="font-semibold">{selectedInquiry.name}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] uppercase tracking-wider text-ink-3 dark:text-sand/50 font-bold">Email Address</span>
+                    <span className="font-semibold"><a href={`mailto:${selectedInquiry.email}`} className="hover:underline">{selectedInquiry.email}</a></span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] uppercase tracking-wider text-ink-3 dark:text-sand/50 font-bold">Hotel Subject</span>
+                    <span className="font-serif font-bold text-midnight dark:text-sand text-sm">{selectedInquiry.hotelName}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] uppercase tracking-wider text-ink-3 dark:text-sand/50 font-bold">Preferred Program</span>
+                    <span className="font-semibold text-sage">{selectedInquiry.programName}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] uppercase tracking-wider text-ink-3 dark:text-sand/50 font-bold">Check-In</span>
+                    <span className="font-semibold">{selectedInquiry.checkIn}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] uppercase tracking-wider text-ink-3 dark:text-sand/50 font-bold">Check-Out</span>
+                    <span className="font-semibold">{selectedInquiry.checkOut}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] uppercase tracking-wider text-ink-3 dark:text-sand/50 font-bold">Guests</span>
+                    <span className="font-semibold">{selectedInquiry.adults} Adults {selectedInquiry.children > 0 && `· ${selectedInquiry.children} Children`}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] uppercase tracking-wider text-ink-3 dark:text-sand/50 font-bold">Room Category</span>
+                    <span className="font-semibold">{selectedInquiry.roomType}</span>
+                  </div>
+                </div>
+
+                {selectedInquiry.children > 0 && selectedInquiry.childAges && selectedInquiry.childAges.length > 0 && (
+                  <div className="flex flex-col gap-1.5 p-3 bg-paper dark:bg-midnight border border-ink/10 dark:border-sand/10 text-xs">
+                    <span className="text-[9px] uppercase tracking-wider text-ink-3 dark:text-sand/50 font-bold">Child Ages</span>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {selectedInquiry.childAges.map((age, i) => (
+                        <span key={i} className="px-2.5 py-1 bg-midnight/5 dark:bg-white/5 border border-ink/15 dark:border-sand/15 font-sans font-semibold">
+                          Child {i + 1}: {age} yrs
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1 text-xs">
+                  <span className="text-[9px] uppercase tracking-wider text-ink-3 dark:text-sand/50 font-bold">Special Requests &amp; Notes</span>
+                  <div className="p-3 bg-paper dark:bg-midnight border border-ink/10 dark:border-sand/10 min-h-[60px] whitespace-pre-wrap text-ink-2 dark:text-sand/90">
+                    {selectedInquiry.notes || <span className="text-ink-3 italic">No special requests noted.</span>}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center border-t border-midnight/10 dark:border-sand/10 pt-4 mt-2">
+                  <div className="flex gap-2">
+                    {selectedInquiry.status !== 'replied' && (
+                      <button
+                        onClick={() => handleUpdateStatus(selectedInquiry.id, 'replied')}
+                        className="px-4 py-2 bg-sage text-white text-[10px] uppercase font-bold tracking-widest cursor-pointer hover:bg-sage/90 rounded-none"
+                      >
+                        Mark as Replied
+                      </button>
+                    )}
+                    {selectedInquiry.status !== 'cancelled' && (
+                      <button
+                        onClick={() => handleUpdateStatus(selectedInquiry.id, 'cancelled')}
+                        className="px-4 py-2 border border-bordeaux text-bordeaux text-[10px] uppercase font-bold tracking-widest cursor-pointer hover:bg-bordeaux/10 rounded-none"
+                      >
+                        Cancel Inquiry
+                      </button>
+                    )}
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      if (confirm('Delete this inquiry permanently?')) {
+                        handleDeleteInquiry(selectedInquiry.id);
+                      }
+                    }}
+                    className="px-4 py-2 border border-ink/20 hover:border-bordeaux hover:text-bordeaux text-ink-3 text-[10px] uppercase font-bold tracking-widest cursor-pointer rounded-none"
+                  >
+                    Delete
                   </button>
                 </div>
               </div>

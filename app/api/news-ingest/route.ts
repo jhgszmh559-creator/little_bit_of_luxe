@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { saveContentToGithub } from '@/lib/github';
 import Anthropic from '@anthropic-ai/sdk';
+import { getPartnerProgramForHotel } from '@/lib/perks';
+import fs from 'fs';
+import path from 'path';
+import matter from 'gray-matter';
+import { validateArticle } from '@/lib/schemaValidator';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -120,7 +125,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 3: Claude/Gemini Drafting - Generate the structured, editorial, on-brand article
+    // Step 3: Resolve partner program perks & Claude/Gemini Drafting - Generate the structured, editorial, on-brand article
+    const program = getPartnerProgramForHotel(hotelName);
+    const programName = program ? program.programName : 'Virtuoso';
+    const programNotes = program ? program.notes : 'Consortia for high end luxury travel agents. Prestige in the industry a large range of hotels & resorts, villas, cruises and experiences - rooms get US$100 one time credit, suites get US$200 one time credit and multi-bedroom residences get US$200 per bedroom. Breakfast benefit can be in the restaurant or in-room';
+    const programPartnerLink = program ? program.partnerLink : 'https://www.qxtravel.io/search-hotels';
+
     let draftingModel = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash',
       generationConfig: { temperature: 0.3 }
@@ -130,6 +140,11 @@ export async function POST(request: NextRequest) {
 
     const draftPrompt = `You are a Principal Luxury Travel Editorial Director for "Little Bit of Luxe".
     Write a gorgeous, 800-word to 1000-word magazine-style hotel news opening announcement/coverage draft for: "${hotelName}".
+    
+    PREFERRED PARTNER BOOKING INFO (Ground Truth - use these details for the "How to Book" section at the end of the article, do not hallucinate other details):
+    - Preferred Program: ${programName}
+    - Program Perks: ${programNotes}
+    - QX Travel Booking URL: ${programPartnerLink}
     
     Use the following gathered raw intelligence:
     ---
@@ -168,6 +183,8 @@ export async function POST(request: NextRequest) {
     location: "[Extracted City, Country]"
     projected_opening: "[Projected Opening, e.g. Opening late 2026 or Now Open]"
     early_newsletter_cta: true
+    partnerLink: "${programPartnerLink}"
+    showQxPerks: true
     source_url: "${citations[0] || ''}"
     image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
     ---
@@ -236,8 +253,61 @@ export async function POST(request: NextRequest) {
       draftContent = draftContent.replace(/^```\n/, '').replace(/\n```$/, '');
     }
 
-    // Save draft directly to content/news/
     const slug = slugify(hotelName);
+
+    // Run validation on generated content
+    let validation = { isValid: false, errors: [] as string[], warnings: [] as string[] };
+    try {
+      const { data: parsedData, content: parsedBody } = matter(draftContent);
+      validation = validateArticle('news', { ...parsedData, slug }, parsedBody);
+    } catch (parseErr) {
+      validation.errors.push("Failed to parse YAML frontmatter block.");
+    }
+
+    if (!validation.isValid) {
+      console.warn(`[News Ingest] Ingest validation failed: ${validation.errors.join(', ')}. Attempting AI self-repair...`);
+      try {
+        const repairModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const repairPrompt = `You are a schema correction assistant for the luxury travel journal "Little Bit of Luxe".
+The generated article markdown failed validation with these errors:
+${validation.errors.map(e => `- ${e}`).join('\n')}
+
+Please fix the YAML frontmatter format and content structure of the article below.
+Rules:
+1. Ensure the YAML frontmatter is at the top of the file, starting with --- and ending with ---.
+2. The title must contain exactly one word or short phrase surrounded by single asterisks for italic style (e.g. *Aman* Venice).
+3. Do not include Heading 1 (#) inside the body content. Only use H2 (##) or H3 (###).
+4. Do not include markdown code block wraps (\`\`\`markdown ... \`\`\`) in your output. Return only the raw markdown text.
+
+ORIGINAL CONTENT:
+${draftContent}
+
+Return the complete, repaired markdown file.`;
+
+        const repairResult = await repairModel.generateContent(repairPrompt);
+        let repairedContent = repairResult.response.text().trim();
+        if (repairedContent.startsWith('```markdown')) {
+          repairedContent = repairedContent.replace(/^```markdown\n/, '').replace(/\n```$/, '');
+        } else if (repairedContent.startsWith('```')) {
+          repairedContent = repairedContent.replace(/^```\n/, '').replace(/\n```$/, '');
+        }
+
+        // Re-validate repaired content
+        const { data: repData, content: repBody } = matter(repairedContent);
+        const repValidation = validateArticle('news', { ...repData, slug }, repBody);
+        if (repValidation.isValid) {
+          console.log('[News Ingest] AI self-repair succeeded.');
+          draftContent = repairedContent;
+        } else {
+          console.warn(`[News Ingest] AI self-repair finished with remaining issues: ${repValidation.errors.join(', ')}. Saving draft with errors for manual editor fixing.`);
+          draftContent = repairedContent;
+        }
+      } catch (repairErr: any) {
+        console.error('[News Ingest] AI self-repair failed:', repairErr.message || repairErr);
+      }
+    }
+
+    // Save draft directly to content/news/
     const relPath = `content/news/${slug}.md`;
     await saveContentToGithub(relPath, draftContent.trim(), `News Ingest: ${slug}`);
 
