@@ -275,7 +275,7 @@ export default function BookingWidget({
           )}
 
           {/* Hotel Property Autocomplete combo box (shows on Partner program pages) */}
-          {hotels.length > 0 && (
+          {hotels.length > 0 ? (
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] tracking-wider uppercase text-sand-3 font-semibold">
                 Select Hotel Property *
@@ -286,6 +286,21 @@ export default function BookingWidget({
                 onChange={setSelectedHotel}
                 placeholder="Type or select a hotel name..."
                 disabled={isLoading}
+              />
+            </div>
+          ) : !hotelName && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] tracking-wider uppercase text-sand-3 font-semibold">
+                Hotel Property Name *
+              </label>
+              <input
+                type="text"
+                required
+                disabled={isLoading}
+                placeholder="e.g. Aman Venice"
+                className="w-full text-sm bg-transparent border border-white/15 px-4 py-3 outline-none focus:border-sand text-sand rounded-none"
+                value={selectedHotel}
+                onChange={e => setSelectedHotel(e.target.value)}
               />
             </div>
           )}
