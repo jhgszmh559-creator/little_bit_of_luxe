@@ -5,16 +5,23 @@ date: "2026-05-25T23:53:06.716Z"
 category: "Hotel News"
 draft: true
 status: "draft"
-sources: ["https://www.empireentertainment.com/our-work/front-row-tokyos-rosewood-miyakojima-opening","https://travelsort.com/rosewood-miyakojima-japan-open-2024/","https://rosewoodhotelgroup.com/en-us/news-and-media/rosewood-makes-its-urban-debut-in-japan-with-landmark-tokyo-opening","https://www.luxurytraveladvisor.com/hotels/rosewood-makes-its-urban-debut-japan-tokyo-opening"]
+sources:
+  - "https://www.empireentertainment.com/our-work/front-row-tokyos-rosewood-miyakojima-opening"
+  - "https://travelsort.com/rosewood-miyakojima-japan-open-2024/"
+  - "https://rosewoodhotelgroup.com/en-us/news-and-media/rosewood-makes-its-urban-debut-in-japan-with-landmark-tokyo-opening"
+  - "https://www.luxurytraveladvisor.com/hotels/rosewood-makes-its-urban-debut-japan-tokyo-opening"
+galleryStyle: "grid"
+tldr: ""
+partnerLink: "https://www.qxtravel.io/search-hotels"
+heroVideo: ""
+heroCaption: "Rendering of Rosewood Tokyo"
 brand: "Rosewood"
 property_name: "Rosewood Tokyo"
 location: "Tokyo, Japan"
 projected_opening: "Opening announced, date to be confirmed"
 early_newsletter_cta: true
-partnerLink: "https://www.qxtravel.io/search-hotels"
-showQxPerks: true
 source_url: "https://www.empireentertainment.com/our-work/front-row-tokyos-rosewood-miyakojima-opening"
-image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+image: "https://media.licdn.com/dms/image/v2/D5612AQF_FCQ6oRFGIw/article-cover_image-shrink_720_1280/B56Z4pzWGcHkAQ-/0/1778817788755?e=2147483647&v=beta&t=doAh6WHpI5OCANvr73rHawNmi8cq9DPOUyXyoFy4IX8"
 ---
 
 *Where the vertical ambitions of Roppongi Hills meet the unhurried grace of Rosewood's most considered urban arrival yet.*
