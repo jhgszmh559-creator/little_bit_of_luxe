@@ -1395,3 +1395,71 @@ h1 em, h2 em, h3 em, .lbl-display em {
   color: rgba(245, 242, 205, 0.85);
 }
 
+/* ===== FLATPICKR LUXURY OVERRIDES ===== */
+.flatpickr-calendar {
+  background: var(--lbl-midnight) !important;
+  border: 1px solid rgba(244, 241, 211, 0.22) !important;
+  border-radius: 0px !important; /* Premium sharp corners */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  font-family: var(--lbl-sans) !important;
+}
+.flatpickr-calendar.arrowTop:before, .flatpickr-calendar.arrowTop:after {
+  border-bottom-color: var(--lbl-midnight) !important;
+}
+.flatpickr-calendar.arrowBottom:before, .flatpickr-calendar.arrowBottom:after {
+  border-top-color: var(--lbl-midnight) !important;
+}
+.flatpickr-months {
+  background: var(--lbl-midnight) !important;
+}
+.flatpickr-months .flatpickr-month {
+  color: var(--lbl-sand) !important;
+  fill: var(--lbl-sand) !important;
+}
+.flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month {
+  color: var(--lbl-sand) !important;
+  fill: var(--lbl-sand) !important;
+}
+.flatpickr-months .flatpickr-prev-month:hover, .flatpickr-months .flatpickr-next-month:hover {
+  color: var(--lbl-bordeaux, #800020) !important;
+}
+.flatpickr-weekday {
+  color: rgba(244, 241, 211, 0.6) !important;
+  font-weight: 600 !important;
+}
+.flatpickr-day {
+  color: var(--lbl-sand) !important;
+  border-radius: 0px !important;
+  transition: all 180ms ease;
+}
+.flatpickr-day:hover, .flatpickr-day:focus {
+  background: rgba(244, 241, 211, 0.1) !important;
+  border-color: transparent !important;
+  color: var(--lbl-sand) !important;
+}
+.flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange {
+  background: var(--lbl-sand) !important;
+  color: var(--lbl-midnight) !important;
+  border-color: var(--lbl-sand) !important;
+  font-weight: 700 !important;
+}
+.flatpickr-day.inRange {
+  background: rgba(244, 241, 211, 0.15) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover {
+  color: rgba(244, 241, 211, 0.22) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+.flatpickr-current-month span.cur-month {
+  font-weight: 500 !important;
+}
+.flatpickr-current-month input.cur-year {
+  color: inherit !important;
+  font-weight: inherit !important;
+}
+input.flatpickr-input[type="text"] {
+  cursor: pointer;
+}

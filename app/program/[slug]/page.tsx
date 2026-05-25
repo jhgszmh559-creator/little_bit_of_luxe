@@ -14,6 +14,8 @@ import Footer from '@/components/Footer';
 import QxScrollBlock from '@/components/QxScrollBlock';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getAirtableHotels } from '@/lib/airtable';
+import BookingWidget from '@/components/BookingWidget';
 
 interface ProgramPageProps {
   params: Promise<{
@@ -32,6 +34,12 @@ export async function generateStaticParams() {
 export default async function ProgramPage({ params }: ProgramPageProps) {
   const { slug } = await params;
   const program = getProgramBySlug(slug);
+
+  // Load and filter hotels belonging to this program from Airtable
+  const airtableHotels = await getAirtableHotels();
+  const programHotels = airtableHotels
+    .filter((h) => h.program.toLowerCase().includes(program?.programName?.toLowerCase() || ''))
+    .map((h) => ({ name: h.name, benefits: h.benefits }));
 
   if (!program || program.status !== 'published') {
     notFound();
@@ -265,6 +273,16 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             </div>
           </section>
         )}
+
+        {/* Dynamic Booking Inquiry Form */}
+        <div className="container container--narrow" style={{ marginTop: 80, marginBottom: 80 }}>
+          <BookingWidget
+            hotelName=""
+            programName={program.programName}
+            programNotes={program.excerpt}
+            hotels={programHotels}
+          />
+        </div>
       </main>
 
       {/* QX Travel Engine Scroll Block */}

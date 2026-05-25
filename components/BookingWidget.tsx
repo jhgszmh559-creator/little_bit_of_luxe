@@ -1,12 +1,21 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
+import HotelComboBox from './HotelComboBox';
+
+interface AirtableHotel {
+  name: string;
+  benefits?: string;
+}
 
 interface BookingWidgetProps {
   hotelName: string;
   programName: string;
   programNotes: string;
   bookingLink?: string;
+  hotels?: AirtableHotel[]; // Optional list of program hotels from Airtable
 }
 
 export default function BookingWidget({
@@ -14,15 +23,29 @@ export default function BookingWidget({
   programName,
   programNotes,
   bookingLink = 'https://www.qxtravel.io/search-hotels',
+  hotels = [],
 }: BookingWidgetProps) {
+  // Traveler details
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  
+  // Selected hotel state (defaults to passed name, can be updated via combo box)
+  const [selectedHotel, setSelectedHotel] = useState(hotelName || '');
+
+  // Dates state (synchronized via Flatpickr range selector)
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
+  
+  // Guests state
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [childAges, setChildAges] = useState<string[]>([]);
-  const [roomType, setRoomType] = useState('Luxury Suite');
+  
+  // Room category structured state
+  const [selectedRoomCategory, setSelectedRoomCategory] = useState('Suite');
+  const [customRoomCategory, setCustomRoomCategory] = useState('');
+  
+  // Notes
   const [notes, setNotes] = useState('');
 
   // UI States
@@ -33,6 +56,8 @@ export default function BookingWidget({
   // Date Boundaries
   const [todayStr, setTodayStr] = useState('');
   const [oneYearStr, setOneYearStr] = useState('');
+
+  const flatpickrRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const today = new Date();
@@ -58,28 +83,6 @@ export default function BookingWidget({
     });
   }, [children]);
 
-  // Minimum check-out date is check-in + 1 day
-  const getMinCheckOutDate = () => {
-    if (!checkIn) return todayStr;
-    const checkInDate = new Date(checkIn);
-    checkInDate.setDate(checkInDate.getDate() + 1);
-    return checkInDate.toISOString().split('T')[0];
-  };
-
-  const handleCheckInChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setCheckIn(value);
-
-    // If check-out is now before or same as check-in, reset check-out
-    if (checkOut) {
-      const inDate = new Date(value);
-      const outDate = new Date(checkOut);
-      if (outDate <= inDate) {
-        setCheckOut('');
-      }
-    }
-  };
-
   const handleChildAgeChange = (index: number, age: string) => {
     setChildAges(prev => {
       const next = [...prev];
@@ -88,26 +91,82 @@ export default function BookingWidget({
     });
   };
 
+  // Initialize Flatpickr Date Range Selector
+  useEffect(() => {
+    if (!flatpickrRef.current) return;
+
+    const fp = flatpickr(flatpickrRef.current, {
+      mode: 'range',
+      minDate: 'today',
+      maxDate: (() => {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() + 1);
+        return d;
+      })(),
+      dateFormat: 'Y-m-d',
+      altInput: true,
+      altFormat: 'M j, Y',
+      onClose: (selectedDates) => {
+        if (selectedDates.length === 2) {
+          const startStr = selectedDates[0].toISOString().split('T')[0];
+          const endStr = selectedDates[1].toISOString().split('T')[0];
+          setCheckIn(startStr);
+          setCheckOut(endStr);
+        } else {
+          // If range is incomplete, clear dates to trigger validation
+          setCheckIn('');
+          setCheckOut('');
+        }
+      }
+    });
+
+    return () => fp.destroy();
+  }, [todayStr, oneYearStr]);
+
+  // Find active benefits: try hotel-specific benefits from Airtable, fall back to program notes
+  const activeHotel = hotels.find(h => h.name.toLowerCase() === selectedHotel.toLowerCase());
+  const activeBenefitsText = activeHotel?.benefits || programNotes;
+
+  // Convert notes/benefits into privileges list
+  const parsedPerksList = activeBenefitsText
+    .split(/[;.\n]/)
+    .map(p => p.trim())
+    .filter(p => p.length > 12); // Exclude short or empty snippets
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
-    // Client-side validation checks
+    const finalHotelName = selectedHotel.trim();
+    if (!finalHotelName) {
+      setErrorMsg('Please select or specify a hotel property.');
+      return;
+    }
+
     if (!name.trim() || !email.trim() || !checkIn || !checkOut) {
-      setErrorMsg('Please complete all required fields.');
+      setErrorMsg('Please complete all required fields (Name, Email, and Dates).');
       return;
     }
 
     const inDate = new Date(checkIn);
     const outDate = new Date(checkOut);
 
-    if (inDate === outDate) {
+    if (inDate.getTime() === outDate.getTime()) {
       setErrorMsg('Check-out date cannot be the same as check-in date (minimum 1 night).');
       return;
     }
 
     if (outDate < inDate) {
       setErrorMsg('Check-out date must be after check-in date.');
+      return;
+    }
+
+    const finalRoomType = selectedRoomCategory === 'custom'
+      ? customRoomCategory.trim()
+      : selectedRoomCategory;
+
+    if (selectedRoomCategory === 'custom' && !finalRoomType) {
+      setErrorMsg('Please specify your custom room category preference.');
       return;
     }
 
@@ -122,13 +181,13 @@ export default function BookingWidget({
         body: JSON.stringify({
           name,
           email,
-          hotelName,
+          hotelName: finalHotelName,
           checkIn,
           checkOut,
           adults,
           children,
           childAges: children > 0 ? childAges.map(Number) : [],
-          roomType,
+          roomType: finalRoomType,
           notes,
           programName,
         }),
@@ -148,12 +207,6 @@ export default function BookingWidget({
     }
   };
 
-  // Convert notes into checklist benefits
-  const parsedPerksList = programNotes
-    .split(/[;.\n]/)
-    .map(p => p.trim())
-    .filter(p => p.length > 12); // Exclude very short chunks
-
   return (
     <div className="my-12 relative border border-white/10 bg-midnight text-sand p-8 md:p-10 shadow-2xl">
       {success ? (
@@ -163,7 +216,7 @@ export default function BookingWidget({
           </div>
           <h3 className="lbl-h3 text-sand mb-4">Inquiry Received</h3>
           <p className="lbl-body text-sand/80 max-w-[440px] text-sm mb-6 leading-relaxed">
-            Your booking inquiry for <strong>{hotelName}</strong> via the <strong>{programName}</strong> program has been dispatched.
+            Your booking inquiry for <strong>{selectedHotel}</strong> via the <strong>{programName}</strong> program has been dispatched.
           </p>
           <p className="text-xs text-sand-3 italic max-w-[360px] leading-relaxed">
             Our booking specialists at QX Travel will contact you at <strong>{email}</strong> shortly with your preferred rates and confirmed privileges.
@@ -176,7 +229,7 @@ export default function BookingWidget({
               THE PREFERRED PRIVILEGE &mdash; {programName}
             </p>
             <h3 className="lbl-h3 text-sand font-serif text-2xl mb-4">
-              Book {hotelName} with Perks
+              Book {selectedHotel || 'Hotel'} with Perks
             </h3>
             
             {parsedPerksList.length > 0 ? (
@@ -185,7 +238,7 @@ export default function BookingWidget({
                   EXCLUSIVE PRIVILEGES INCLUDED:
                 </span>
                 {parsedPerksList.map((perk, i) => (
-                  <div key={i} className="flex items-start gap-3 text-xs text-sand/90">
+                  <div key={i} className="flex items-start gap-3 text-xs text-sand/90 animate-fadeIn">
                     <span className="text-sand shrink-0">✦</span>
                     <span>{perk}</span>
                   </div>
@@ -193,7 +246,7 @@ export default function BookingWidget({
               </div>
             ) : (
               <p className="lbl-body text-sand/80 text-xs mb-6 leading-relaxed">
-                {programNotes}
+                {activeBenefitsText}
               </p>
             )}
           </div>
@@ -201,6 +254,22 @@ export default function BookingWidget({
           {errorMsg && (
             <div className="p-4 bg-bordeaux/20 border border-bordeaux/40 text-sand text-xs">
               <strong>Error:</strong> {errorMsg}
+            </div>
+          )}
+
+          {/* Hotel Property Autocomplete combo box (shows on Partner program pages) */}
+          {hotels.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] tracking-wider uppercase text-sand-3 font-semibold">
+                Select Hotel Property *
+              </label>
+              <HotelComboBox
+                hotels={hotels.map(h => h.name)}
+                selectedValue={selectedHotel}
+                onChange={setSelectedHotel}
+                placeholder="Type or select a hotel name..."
+                disabled={isLoading}
+              />
             </div>
           )}
 
@@ -237,39 +306,19 @@ export default function BookingWidget({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Dates range picker */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] tracking-wider uppercase text-sand-3 font-semibold">
-                Check-in Date *
-              </label>
-              <input
-                type="date"
-                required
-                disabled={isLoading}
-                min={todayStr}
-                max={oneYearStr}
-                className="w-full text-sm bg-transparent border border-white/15 px-4 py-3 outline-none focus:border-sand text-sand rounded-none"
-                value={checkIn}
-                onChange={handleCheckInChange}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] tracking-wider uppercase text-sand-3 font-semibold">
-                Check-out Date *
-              </label>
-              <input
-                type="date"
-                required
-                disabled={isLoading || !checkIn}
-                min={getMinCheckOutDate()}
-                max={oneYearStr}
-                className="w-full text-sm bg-transparent border border-white/15 px-4 py-3 outline-none focus:border-sand text-sand rounded-none disabled:opacity-50"
-                value={checkOut}
-                onChange={e => setCheckOut(e.target.value)}
-              />
-            </div>
+          {/* Flatpickr Single Date Range Picker Input */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] tracking-wider uppercase text-sand-3 font-semibold">
+              Travel Dates (Check-in &rarr; Check-out) *
+            </label>
+            <input
+              ref={flatpickrRef}
+              type="text"
+              required
+              disabled={isLoading}
+              placeholder="Select dates range..."
+              className="w-full text-sm bg-transparent border border-white/15 px-4 py-3 outline-none focus:border-sand text-sand rounded-none"
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -306,26 +355,49 @@ export default function BookingWidget({
               </select>
             </div>
 
+            {/* Room Category Select Dropdown */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] tracking-wider uppercase text-sand-3 font-semibold">
                 Preferred Room Category
               </label>
-              <input
-                type="text"
+              <select
                 disabled={isLoading}
-                placeholder="e.g. Grand Suite"
-                className="w-full text-sm bg-transparent border border-white/15 px-4 py-3 outline-none focus:border-sand text-sand rounded-none"
-                value={roomType}
-                onChange={e => setRoomType(e.target.value)}
-              />
+                className="w-full text-sm bg-midnight border border-white/15 px-4 py-3 outline-none focus:border-sand text-sand rounded-none"
+                value={selectedRoomCategory}
+                onChange={e => setSelectedRoomCategory(e.target.value)}
+              >
+                <option value="Standard room">Standard room</option>
+                <option value="Premium room">Premium room</option>
+                <option value="Junior Suite">Junior Suite</option>
+                <option value="Suite">Suite</option>
+                <option value="custom">Custom category...</option>
+              </select>
             </div>
           </div>
+
+          {/* Custom Room Category Input */}
+          {selectedRoomCategory === 'custom' && (
+            <div className="flex flex-col gap-1.5 animate-fadeIn">
+              <label className="text-[10px] tracking-wider uppercase text-sand-3 font-semibold">
+                Specify Custom Room Category *
+              </label>
+              <input
+                type="text"
+                required
+                disabled={isLoading}
+                placeholder="e.g. Royal Ocean Villa, Presidential Suite..."
+                className="w-full text-sm bg-transparent border border-white/15 px-4 py-3 outline-none focus:border-sand text-sand rounded-none"
+                value={customRoomCategory}
+                onChange={e => setCustomRoomCategory(e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Child age selectors */}
           {children > 0 && (
             <div className="flex flex-col gap-3 p-4 bg-white/5 border border-white/10 border-t-0 -mt-2 animate-fadeIn">
               <span className="text-[9px] tracking-wider uppercase text-sand-3 font-semibold">
-                Please specify child ages (required to calculate benefits & room capacities):
+                Please specify child ages (required to calculate benefits &amp; room capacities):
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {childAges.map((age, idx) => (
