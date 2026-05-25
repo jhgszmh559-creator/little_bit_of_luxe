@@ -4,7 +4,7 @@ excerpt: "Where the vertical ambitions of Roppongi Hills meet the unhurried grac
 date: "2026-05-25T23:53:06.716Z"
 category: "Hotel News"
 draft: true
-status: "draft"
+status: "scheduled"
 sources:
   - "https://www.empireentertainment.com/our-work/front-row-tokyos-rosewood-miyakojima-opening"
   - "https://travelsort.com/rosewood-miyakojima-japan-open-2024/"
