@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
       title: title || '',
       excerpt: excerpt || '',
       date: date || new Date().toISOString(),
-      category: category || (type === 'program' ? 'Preferred Partner' : type === 'news' ? 'Hotel News' : type === 'general' ? 'Travel News' : 'Hotel Review'),
+      category: category || (type === 'program' ? 'Guides' : type === 'news' ? 'Hotel News' : type === 'general' ? 'Travel News' : 'Hotel Review'),
       draft: finalDraft,
       status: finalStatus,
       sources: sources || [],

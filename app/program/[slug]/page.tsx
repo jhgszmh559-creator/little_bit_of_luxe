@@ -14,7 +14,7 @@ import Footer from '@/components/Footer';
 import QxScrollBlock from '@/components/QxScrollBlock';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAirtableHotels } from '@/lib/airtable';
+import { getAirtableProgram, getAirtableHotelsForProgram, PROGRAM_SLUG_MAP } from '@/lib/airtable';
 import BookingWidget from '@/components/BookingWidget';
 
 interface ProgramPageProps {
@@ -35,11 +35,12 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
   const { slug } = await params;
   const program = getProgramBySlug(slug);
 
-  // Load and filter hotels belonging to this program from Airtable
-  const airtableHotels = await getAirtableHotels();
-  const programHotels = airtableHotels
-    .filter((h) => h.program.toLowerCase().includes(program?.programName?.toLowerCase() || ''))
-    .map((h) => ({ name: h.name, benefits: h.benefits }));
+  // Load Airtable program details and hotels belonging to this program
+  const airtableSlug = PROGRAM_SLUG_MAP[slug] || slug;
+  const [airtableProgram, programHotels] = await Promise.all([
+    getAirtableProgram(airtableSlug),
+    getAirtableHotelsForProgram(airtableSlug),
+  ]);
 
   if (!program || program.status !== 'published') {
     notFound();
@@ -111,7 +112,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
             <div className="article-hero__crumbs">
               <Link href="/">JOURNAL</Link>
               <span>/</span>
-              <Link href="/search?category=Preferred+Partner">THE EDIT</Link>
+              <Link href="/search?category=Guides">GUIDES</Link>
               <span>/</span>
               <span>{program.loyaltyNetwork.toUpperCase()}</span>
             </div>
@@ -279,7 +280,7 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
           <BookingWidget
             hotelName=""
             programName={program.programName}
-            programNotes={program.excerpt}
+            programNotes={airtableProgram?.benefits || program.excerpt}
             hotels={programHotels}
           />
         </div>

@@ -54,8 +54,8 @@ export default function Navbar({ onSearchClick }: NavbarProps) {
 
   const navLinks = [
     { href: '/search?category=Hotel+Review', label: 'Reviews' },
-    { href: '/search?category=Dispatch', label: 'Dispatches' },
-    { href: '/search?category=Preferred+Partner', label: 'The Edit' },
+    { href: '/search?category=Deals', label: 'Deals' },
+    { href: '/search?category=Hotel+News', label: 'News' },
     { href: '/search?category=Guides', label: 'Guides' },
   ];
 

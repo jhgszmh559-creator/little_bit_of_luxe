@@ -127,11 +127,28 @@ export default function BookingWidget({
   const activeHotel = hotels.find(h => h.name.toLowerCase() === selectedHotel.toLowerCase());
   const activeBenefitsText = activeHotel?.benefits || programNotes;
 
-  // Convert notes/benefits into privileges list
-  const parsedPerksList = activeBenefitsText
-    .split(/[;.\n]/)
-    .map(p => p.trim())
-    .filter(p => p.length > 12); // Exclude short or empty snippets
+  // Helper to parse benefits (handles both HTML lists and semicolon/newline separated strings)
+  const parseBenefits = (text: string): string[] => {
+    if (!text) return [];
+    
+    // Check for HTML <li> tags from Airtable
+    if (text.includes('<li>')) {
+      const matches = text.match(/<li>(.*?)<\/li>/gi);
+      if (matches) {
+        return matches
+          .map(m => m.replace(/<\/?li>/gi, '').replace(/<[^>]*>/g, '').trim())
+          .filter(m => m.length > 2);
+      }
+    }
+    
+    // Fall back to splitting by semicolon, period, or newline
+    return text
+      .split(/[;.\n]/)
+      .map(p => p.replace(/<[^>]*>/g, '').trim())
+      .filter(p => p.length > 12); // Exclude short or empty snippets
+  };
+
+  const parsedPerksList = parseBenefits(activeBenefitsText);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

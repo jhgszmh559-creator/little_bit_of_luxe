@@ -60,13 +60,13 @@ export default function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/search?category=Preferred+Partner">
-                Preferred Partners
+              <Link href="/search?category=Hotel+News">
+                News
               </Link>
             </li>
             <li>
-              <Link href="/search?category=Dispatch">
-                Dispatches
+              <Link href="/search?category=Deals">
+                Deals
               </Link>
             </li>
             <li>

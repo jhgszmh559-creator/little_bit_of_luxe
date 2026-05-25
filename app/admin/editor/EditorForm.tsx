@@ -234,7 +234,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [title, setTitle] = useState(initialData?.title || '');
   const [excerpt, setExcerpt] = useState(initialData?.excerpt || '');
   const [content, setContent] = useState(initialData?.content || '');
-  const [category, setCategory] = useState(initialData?.category || (currentType === 'program' ? 'Preferred Partner' : currentType === 'news' ? 'Hotel News' : currentType === 'general' ? 'Travel News' : 'Hotel Review'));
+  const [category, setCategory] = useState(initialData?.category || (currentType === 'program' ? 'Guides' : currentType === 'news' ? 'Hotel News' : currentType === 'general' ? 'Travel News' : 'Hotel Review'));
   const [draft, setDraft] = useState(initialData?.draft !== undefined ? initialData.draft : true);
   const [date, setDate] = useState(initialData?.date || new Date().toISOString());
 
@@ -1071,7 +1071,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                       const newType = e.target.value as 'review' | 'program' | 'news' | 'general';
                       setCurrentType(newType);
                       if (newType === 'program') {
-                        setCategory('Preferred Partner');
+                        setCategory('Guides');
                       } else if (newType === 'news') {
                         setCategory('Hotel News');
                       } else if (newType === 'general') {
@@ -1082,7 +1082,7 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                     }}
                   >
                     <option value="review">Hotel Review</option>
-                    <option value="program">Preferred Partner Guide</option>
+                    <option value="program">Guide</option>
                     <option value="news">Hotel News Opening</option>
                     <option value="general">General News</option>
                   </select>

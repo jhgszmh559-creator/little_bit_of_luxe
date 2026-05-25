@@ -70,13 +70,13 @@ export default function SearchPageClient({ programs, reviews, news = [], general
       title: p.title,
       excerpt: p.excerpt,
       location: p.loyaltyNetwork + ' Network',
-      eyebrow: 'PREFERRED PARTNER · ' + p.loyaltyNetwork.toUpperCase(),
+      eyebrow: 'GUIDE · ' + p.loyaltyNetwork.toUpperCase(),
       author: 'Our Editors',
       readTime: '5 MIN READ',
       date: p.date,
       rating: undefined,
       cover: p.image,
-      category: 'Preferred Partner',
+      category: 'Guides',
       link: `/program/${p.slug}`,
     })),
     ...reviews.map((r) => ({
@@ -168,10 +168,9 @@ export default function SearchPageClient({ programs, reviews, news = [], general
   const categories = [
     { value: 'All', label: 'All Sections' },
     { value: 'Hotel Review', label: 'Reviews' },
-    { value: 'Dispatch', label: 'Dispatches' },
-    { value: 'Preferred Partner', label: 'The Edit' },
-    { value: 'Guides', label: 'Guides' },
+    { value: 'Deals', label: 'Deals' },
     { value: 'Hotel News', label: 'News' },
+    { value: 'Guides', label: 'Guides' },
     { value: 'General News', label: 'Insights' },
   ];
 

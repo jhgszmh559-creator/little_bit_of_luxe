@@ -280,7 +280,7 @@ export default function AdminDashboardClient({
       slug: p.slug,
       title: p.programName || p.title,
       type: 'Partner Guide',
-      category: 'Preferred Partner',
+      category: 'Guides',
       location: p.loyaltyNetwork,
       draft: p.draft,
       status: p.status,
@@ -308,7 +308,7 @@ export default function AdminDashboardClient({
   const runAudit = (item: any) => {
     setSelectedAuditItem(item);
     
-    const isProgram = item.category === 'Preferred Partner' || item.type === 'Partner Guide';
+    const isProgram = item.category === 'Guides' || item.type === 'Partner Guide';
     const isNews = item.category === 'Hotel News' || item.type === 'News';
     const views = getPostViews(item.slug, item.type);
     
@@ -486,13 +486,13 @@ export default function AdminDashboardClient({
   const pagesList = [
     { title: 'Homepage', path: '/', views: trafficData?.urls?.find((u: any) => u.x === '/' || u.x === '')?.y || 2420, seo: 100 },
     { title: 'Hotel Reviews Search', path: '/search?category=Hotel+Review', views: trafficData?.urls?.find((u: any) => u.x?.includes('Hotel+Review'))?.y || 480, seo: 85 },
-    { title: 'Preferred Partners Index', path: '/search?category=Preferred+Partner', views: trafficData?.urls?.find((u: any) => u.x?.includes('Preferred+Partner'))?.y || 382, seo: 92 },
-    { title: 'Dispatches Index', path: '/search?category=Dispatch', views: trafficData?.urls?.find((u: any) => u.x?.includes('Dispatch'))?.y || 194, seo: 80 },
-    { title: 'Guides Index', path: '/search?category=Guides', views: trafficData?.urls?.find((u: any) => u.x?.includes('Guides'))?.y || 112, seo: 75 },
+    { title: 'Guides Index', path: '/search?category=Guides', views: trafficData?.urls?.find((u: any) => u.x?.includes('Guides'))?.y || 494, seo: 92 },
+    { title: 'News Index', path: '/search?category=Hotel+News', views: trafficData?.urls?.find((u: any) => u.x?.includes('Hotel+News'))?.y || 382, seo: 85 },
+    { title: 'Deals Index', path: '/search?category=Deals', views: trafficData?.urls?.find((u: any) => u.x?.includes('Deals'))?.y || 112, seo: 80 },
   ];
 
   // Dynamic tags calculations
-  const categoriesList = ['Hotel Review', 'Preferred Partner', 'Hotel News', 'Dispatch', 'Guides'];
+  const categoriesList = ['Hotel Review', 'Guides', 'Hotel News', 'Deals', 'General News'];
   const locationsList = Array.from(new Set(unifiedPosts.map(p => p.location).filter(Boolean)));
   const brandsList = Array.from(new Set(unifiedPosts.map(p => p.brand).filter(Boolean)));
 
@@ -2248,7 +2248,7 @@ export default function AdminDashboardClient({
               </span>
               <ul className="list-disc pl-4 text-[11px] text-ink-2 dark:text-sand/85 flex flex-col gap-1.5">
                 <li>Optimize layout headings to embed italic adjectives near brand names.</li>
-                <li>Add at least two internal backlinks pointing to the live {selectedPostForAnalytics.type === 'Partner Guide' ? 'Partner Guide' : 'Preferred PartnerGuide'} lists.</li>
+                <li>Add at least two internal backlinks pointing to the live {selectedPostForAnalytics.type === 'Partner Guide' ? 'Guide' : 'Guide'} lists.</li>
                 {getPostViews(selectedPostForAnalytics.slug, selectedPostForAnalytics.type) < 100 && (
                   <li>This article has low page views (~{getPostViews(selectedPostForAnalytics.slug, selectedPostForAnalytics.type)} views). Boost engagement by featuring it at the top of the homepage featured hero layout.</li>
                 )}
