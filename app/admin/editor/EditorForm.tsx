@@ -520,7 +520,19 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
 
       const resData = await response.json();
       if (response.ok) {
-        setMessage('Draft saved successfully.');
+        const statusLabel = 
+          currentStatus === 'published' ? 'published' :
+          currentStatus === 'scheduled' ? 'scheduled' :
+          currentStatus === 'needs_review' ? 'submitted for review' :
+          currentStatus === 'archived' ? 'archived' : 'saved as draft';
+        
+        setMessage(`Article ${statusLabel} successfully.`);
+        
+        // Auto-dismiss after 6 seconds
+        setTimeout(() => {
+          setMessage('');
+        }, 6000);
+
         if (currentType !== type || slug !== initialSlug) {
           router.push(`/admin/editor?type=${currentType}&slug=${slug}`);
         } else {
@@ -738,12 +750,38 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
         </div>
       </header>
 
-      {/* Message Banner */}
+      {/* Sticky Message Pill */}
       {message && (
-        <div className={`text-center py-3 px-6 text-xs uppercase tracking-wider font-semibold ${
-          message.includes('successfully') ? 'bg-sage/10 text-sage border-b border-sage/20' : 'bg-bordeaux/10 text-bordeaux border-b border-bordeaux/20'
-        }`}>
-          {message}
+        <div 
+          onClick={() => setMessage('')}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-fade-in cursor-pointer"
+          title="Click to dismiss"
+        >
+          <div className={`flex flex-col gap-1 items-center py-4 px-8 shadow-2xl border backdrop-blur-md rounded-full max-w-md text-center transition-all duration-300 hover:scale-[1.02] ${
+            message.includes('successfully') 
+              ? 'bg-midnight/95 text-sand border-sand/30 dark:bg-sand/95 dark:text-midnight dark:border-midnight/30' 
+              : 'bg-bordeaux/95 text-sand border-bordeaux/40'
+          }`}>
+            <span className="text-[10px] uppercase tracking-widest font-bold opacity-90 flex items-center gap-1.5">
+              {message.includes('successfully') ? (
+                <>
+                  <span className="text-sand dark:text-midnight">✦</span> Save Successful
+                </>
+              ) : (
+                <>
+                  <span className="text-sand">⚠</span> Save Failed
+                </>
+              )}
+            </span>
+            <span className="text-xs font-semibold leading-relaxed">
+              {message}
+            </span>
+            {message.includes('successfully') && (
+              <span className="text-[9px] opacity-80 italic leading-normal mt-0.5 max-w-[290px]">
+                Committed to GitHub. Vercel will rebuild & deploy changes in 1-2 minutes.
+              </span>
+            )}
+          </div>
         </div>
       )}
 
