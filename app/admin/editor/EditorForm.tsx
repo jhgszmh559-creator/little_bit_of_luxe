@@ -347,7 +347,40 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
   const [citationReadiness, setCitationReadiness] = useState(false);
   const [directAnswerFormatting, setDirectAnswerFormatting] = useState(false);
 
-    // AI Summary Generator
+    // Hero Image Upload State
+  const [uploadingHero, setUploadingHero] = useState(false);
+
+  const handleHeroImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingHero(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await res.json();
+      if (data.url) {
+        setOgImage(data.url);
+      }
+    } catch (err) {
+      console.error('Hero image upload failed:', err);
+      alert('Failed to upload hero image. Please try again.');
+    } finally {
+      setUploadingHero(false);
+    }
+  };
+
+  // AI Summary Generator
   const generateSummary = async () => {
     if (!content) return;
     setIsGeneratingSummary(true);
@@ -1165,18 +1198,37 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
                 {/* Cover/OG Image URL */}
                 <div className="md:col-span-2 flex flex-col gap-2 border-t border-ink/10 pt-6 mt-2">
                   <label className="text-[10px] tracking-wider uppercase text-ink-3 font-semibold">
-                    Featured Hero Image URL
+                    Featured Hero Image
                   </label>
-                  <input 
-                    type="text"
-                    placeholder="https://images.unsplash.com/photo-..."
-                    className="w-full text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
-                    value={ogImage}
-                    onChange={e => setOgImage(e.target.value)}
-                  />
+                  <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+                    <input 
+                      type="text"
+                      placeholder="Paste image URL (e.g. Unsplash) or upload below..."
+                      className="flex-1 text-sm bg-transparent border border-ink/15 px-4 py-3 outline-none focus:border-ink text-ink rounded-none min-h-[44px]"
+                      value={ogImage}
+                      onChange={e => setOgImage(e.target.value)}
+                    />
+                    <label className="cursor-pointer flex items-center justify-center border border-ink px-6 py-3 text-xs tracking-wider uppercase bg-ink text-paper hover:bg-ink-2 transition-colors min-h-[44px] shrink-0 font-medium select-none">
+                      {uploadingHero ? 'Uploading...' : 'Upload Image'}
+                      <input 
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleHeroImageUpload}
+                        disabled={uploadingHero}
+                      />
+                    </label>
+                  </div>
                   {ogImage && (
-                    <div className="relative w-full aspect-[16/9] overflow-hidden border border-ink/10 bg-paper/50 rounded-none mt-2">
+                    <div className="relative w-full aspect-[16/9] overflow-hidden border border-ink/10 bg-paper/50 rounded-none mt-2 group">
                       <img src={ogImage} alt="Hero preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setOgImage('')}
+                        className="absolute top-4 right-4 bg-ink/85 text-paper hover:bg-ink text-[10px] uppercase tracking-wider font-semibold px-3 py-1.5 backdrop-blur-sm transition-colors border border-paper/10"
+                      >
+                        Remove Image
+                      </button>
                     </div>
                   )}
                 </div>
