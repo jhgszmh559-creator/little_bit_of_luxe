@@ -533,11 +533,10 @@ export default function EditorForm({ type, slug: initialSlug, initialData, allAr
           setMessage('');
         }, 6000);
 
-        if (currentType !== type || slug !== initialSlug) {
-          router.push(`/admin/editor?type=${currentType}&slug=${slug}`);
-        } else {
-          router.refresh();
-        }
+        // Redirect to the main dashboard after a short delay so the user can read the success pill
+        setTimeout(() => {
+          router.push('/admin');
+        }, 1800);
       } else {
         setMessage(`Error: ${resData.error || 'Failed to save'}`);
       }
